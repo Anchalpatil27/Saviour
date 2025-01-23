@@ -23,22 +23,17 @@ export default function LoginPage() {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
-    try {
-      const result = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
-      })
+    const result = await signIn('credentials', {
+      redirect: false,
+      email,
+      password,
+    })
 
-      if (result?.error) {
-        setError('Invalid email or password')
-      } else {
-        router.push('/dashboard')
-      }
-    } catch (error) {
-      setError('An unexpected error occurred. Please try again.')
-    } finally {
+    if (result?.error) {
+      setError('Invalid email or password')
       setIsLoading(false)
+    } else {
+      router.push('/dashboard')
     }
   }
 
