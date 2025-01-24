@@ -45,6 +45,12 @@ export const authOptions: NextAuthOptions = {
     async signOut({ token }) {
       const userId = token.sub;
 
+      // Ensure userId is defined
+      if (!userId) {
+        console.error("User ID is undefined during sign-out.");
+        return;
+      }
+
       // 1. Clear server-side session data
       await prisma.session.deleteMany({
         where: {
@@ -55,7 +61,7 @@ export const authOptions: NextAuthOptions = {
       // 2. Log sign-out activity
       await prisma.activityLog.create({
         data: {
-          userId: userId,
+          userId: userId, // userId is guaranteed to be a string here
           action: "SIGN_OUT",
           details: "User signed out",
         },
