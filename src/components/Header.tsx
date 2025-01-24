@@ -76,12 +76,10 @@ export default function Header() {
             {session && (
               <>
                 <Button asChild variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors">
-                <Link href={session.user.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
-                    Dashboard
-                  </Link>
+                  <Link href="/dashboard">Dashboard</Link>
                 </Button>
                 <Button onClick={handleSignOut} variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors">
-                  Log Out
+                  Sign Out
                 </Button>
               </>
             )}
