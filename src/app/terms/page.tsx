@@ -108,10 +108,10 @@ export default function TermsPage() {
         </CardHeader>
         <CardContent>
           <p>
-            SAVIOUR provides its services on an "as is" and "as available" basis. While we strive for accuracy and
-            reliability, we cannot guarantee that our services will be uninterrupted, timely, or error-free, especially
-            during large-scale emergencies. SAVIOUR shall not be liable for any direct, indirect, incidental,
-            consequential, or exemplary damages resulting from the use or inability to use our services.
+            SAVIOUR provides its services on an &quot;as is&quot; and &quot;as available&quot; basis. While we strive
+            for accuracy and reliability, we cannot guarantee that our services will be uninterrupted, timely, or
+            error-free, especially during large-scale emergencies. SAVIOUR shall not be liable for any direct, indirect,
+            incidental, consequential, or exemplary damages resulting from the use or inability to use our services.
           </p>
         </CardContent>
       </Card>

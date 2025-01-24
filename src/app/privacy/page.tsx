@@ -1,9 +1,9 @@
-import { Metadata } from 'next'
+import type { Metadata } from "next"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy - SAVIOUR',
-  description: 'Privacy Policy for the SAVIOUR disaster management platform',
+  title: "Privacy Policy - SAVIOUR",
+  description: "Privacy Policy for the SAVIOUR disaster management platform",
 }
 
 export default function PrivacyPage() {
@@ -15,7 +15,10 @@ export default function PrivacyPage() {
           <CardTitle>1. Introduction</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Welcome to SAVIOUR's Privacy Policy. Your privacy is critically important to us. This Privacy Policy document contains types of information that is collected and recorded by SAVIOUR and how we use it.</p>
+          <p>
+            Welcome to SAVIOUR&apos;s Privacy Policy. Your privacy is critically important to us. This Privacy Policy
+            document contains types of information that is collected and recorded by SAVIOUR and how we use it.
+          </p>
         </CardContent>
       </Card>
 
@@ -24,11 +27,19 @@ export default function PrivacyPage() {
           <CardTitle>2. Data Collection</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>We collect several different types of information for various purposes to provide and improve our Service to you:</p>
+          <p>
+            We collect several different types of information for various purposes to provide and improve our Service to
+            you:
+          </p>
           <ul className="list-disc list-inside mt-2">
-            <li>Personal Data: While using our Service, we may ask you to provide us with certain personally identifiable information that can be used to contact or identify you.</li>
+            <li>
+              Personal Data: While using our Service, we may ask you to provide us with certain personally identifiable
+              information that can be used to contact or identify you.
+            </li>
             <li>Usage Data: We may also collect information on how the Service is accessed and used.</li>
-            <li>Location Data: We collect real-time location information to provide critical services during emergencies.</li>
+            <li>
+              Location Data: We collect real-time location information to provide critical services during emergencies.
+            </li>
           </ul>
         </CardContent>
       </Card>
@@ -72,7 +83,11 @@ export default function PrivacyPage() {
           <CardTitle>5. Security of Data</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>The security of your data is important to us, but remember that no method of transmission over the Internet, or method of electronic storage is 100% secure. While we strive to use commercially acceptable means to protect your Personal Data, we cannot guarantee its absolute security.</p>
+          <p>
+            The security of your data is important to us, but remember that no method of transmission over the Internet,
+            or method of electronic storage is 100% secure. While we strive to use commercially acceptable means to
+            protect your Personal Data, we cannot guarantee its absolute security.
+          </p>
         </CardContent>
       </Card>
 
@@ -81,7 +96,10 @@ export default function PrivacyPage() {
           <CardTitle>6. Your Data Protection Rights</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>SAVIOUR aims to take reasonable steps to allow you to correct, amend, delete, or limit the use of your Personal Data. You have the following data protection rights:</p>
+          <p>
+            SAVIOUR aims to take reasonable steps to allow you to correct, amend, delete, or limit the use of your
+            Personal Data. You have the following data protection rights:
+          </p>
           <ul className="list-disc list-inside mt-2">
             <li>The right to access, update or to delete the information we have on you.</li>
             <li>The right of rectification.</li>
@@ -98,7 +116,12 @@ export default function PrivacyPage() {
           <CardTitle>7. Changes to This Privacy Policy</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. We will let you know via email and/or a prominent notice on our Service, prior to the change becoming effective and update the "effective date" at the top of this Privacy Policy.</p>
+          <p>
+            We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new
+            Privacy Policy on this page. We will let you know via email and/or a prominent notice on our Service, prior
+            to the change becoming effective and update the &quot;effective date&quot; at the top of this Privacy
+            Policy.
+          </p>
         </CardContent>
       </Card>
 
@@ -117,3 +140,4 @@ export default function PrivacyPage() {
     </div>
   )
 }
+
