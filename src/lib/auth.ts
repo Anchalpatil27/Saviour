@@ -2,7 +2,6 @@ import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import type { DefaultSession } from "next-auth";
 import { PrismaClient } from "@prisma/client";
-import { NextApiRequest, NextApiResponse } from "next";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -60,21 +59,14 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        // 2. Clear all tokens (if stored in the database)
-        await prisma.token.deleteMany({
-          where: {
-            userId: userId,
-          },
-        });
-
-        // 3. Clear user activity history
+        // 2. Clear user activity history
         await prisma.activityLog.deleteMany({
           where: {
             userId: userId,
           },
         });
 
-        // 4. Log sign-out activity
+        // 3. Log sign-out activity
         await prisma.activityLog.create({
           data: {
             userId: userId,
@@ -90,53 +82,3 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
-
-// Optional: Add a custom API route to handle sign-out and redirect
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === "POST") {
-    // Perform sign-out cleanup (if needed)
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: "User ID is required." });
-    }
-
-    try {
-      // Clear all user-related data
-      await prisma.session.deleteMany({
-        where: {
-          userId: userId,
-        },
-      });
-
-      await prisma.token.deleteMany({
-        where: {
-          userId: userId,
-        },
-      });
-
-      await prisma.activityLog.deleteMany({
-        where: {
-          userId: userId,
-        },
-      });
-
-      // Log sign-out activity
-      await prisma.activityLog.create({
-        data: {
-          userId: userId,
-          action: "SIGN_OUT",
-          details: "User signed out and all data cleared via API",
-        },
-      });
-
-      // Redirect the user to the homepage
-      res.redirect("/");
-    } catch (error) {
-      console.error("Error during sign-out cleanup:", error);
-      res.status(500).json({ error: "Internal server error during sign-out." });
-    }
-  } else {
-    res.status(405).json({ error: "Method not allowed." });
-  }
-}
