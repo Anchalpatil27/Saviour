@@ -12,8 +12,8 @@ export default function Header() {
   const { data: session } = useSession()
 
   const handleSignOut = async () => {
-  await signOut({ redirect: false }); // Sign out without redirecting
-  window.location.href = "/"; // Redirect to the homepage
+  await signOut({ redirect: true }); // Sign out without redirecting
+  window.location.href = "/";
 };
 
   return (
