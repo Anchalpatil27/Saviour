@@ -16,7 +16,7 @@ model User {
 }
 
 model Session {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   userId    String   @db.ObjectId
   expires   DateTime
   user      User     @relation(fields: [userId], references: [id])
