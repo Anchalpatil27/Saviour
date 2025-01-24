@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
@@ -11,10 +10,9 @@ import { useSession, signOut } from "next-auth/react"
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { data: session } = useSession()
-  const router = useRouter()
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false, callbackUrl: "/" })
+    await signOut({ redirect: true, callbackUrl: "/" })
   }
 
   return (
