@@ -5,8 +5,8 @@ import type { DefaultSession } from "next-auth"
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
-      id: string;
-      role?: string;
+      id: string
+      role?: string
     } & DefaultSession["user"]
   }
 }
@@ -20,22 +20,23 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
-        token.role = "user" // Default role for all users
+        token.role = user.email === "vikrantkrd@gmail.com" ? "admin" : "user"
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.sub as string;
-        session.user.role = token.role as string;
+        session.user.id = token.sub as string
+        session.user.role = token.role as string
       }
-      return session;
+      return session
     },
   },
   pages: {
-    signIn: '/auth/login',
+    signIn: "/auth/login",
+    error: "/auth/error",
   },
   events: {
     async signOut() {

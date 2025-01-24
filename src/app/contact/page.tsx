@@ -24,8 +24,8 @@ export default function ContactPage() {
                 <Input id="name" type="text" placeholder="Your Name" required className="w-full" />
               </div>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <Input id="email" type="email" placeholder="your@email.com" required className="w-full" />
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                <Input id="email" type="email" placeholder="your@gmail.com" required className="w-full" />
               </div>
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">Message</label>

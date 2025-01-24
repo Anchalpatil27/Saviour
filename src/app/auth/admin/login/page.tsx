@@ -1,9 +1,9 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { signIn } from "next-auth/react"
-import { useRouter, useSearchParams } from "next/navigation"
-import Link from "next/link"
+import { useState } from 'react'
+import { signIn } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,38 +13,32 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsLoading(true)
     setError(null)
-
+    
     const formData = new FormData(event.currentTarget)
-    const email = formData.get("email") as string
-    const password = formData.get("password") as string
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
 
-    const result = await signIn("credentials", {
+    const result = await signIn('credentials', {
       redirect: false,
       email,
       password,
     })
 
     if (result?.error) {
-      setError("Invalid email or password")
+      setError('Invalid email or password')
       setIsLoading(false)
     } else {
-      if (email === "vikrantkrd@gmail.com") {
-        router.push("/admin/dashboard")
-      } else {
-        router.push(callbackUrl)
-      }
+      router.push('/dashboard')
     }
   }
 
   const handleGoogleLogin = () => {
-    signIn("google", { callbackUrl: "/auth/check-admin" })
+    signIn('google', { callbackUrl: '/dashboard' })
   }
 
   return (
@@ -65,12 +59,8 @@ export default function LoginPage() {
               <Input id="password" name="password" type="password" required />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600"
-              disabled={isLoading}
-            >
-              {isLoading ? "Logging in..." : "Log in"}
+            <Button type="submit" className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600" disabled={isLoading}>
+              {isLoading ? 'Logging in...' : 'Log in'}
             </Button>
           </form>
         </CardContent>
