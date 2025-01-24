@@ -76,7 +76,7 @@ export default function Header() {
                   size="sm"
                   className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
                 >
-                  Sign Out
+                  <Link href="/">Log Out</Link>
                 </Button>
               </>
             )}
