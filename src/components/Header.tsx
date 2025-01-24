@@ -1,38 +1,21 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
-import { useSession, signOut } from "next-auth/react"
+import { useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Menu, X } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { data: session } = useSession()
+  const router = useRouter()
 
   const handleSignOut = async () => {
-    try {
-      const response = await signOut({
-        redirect: false,
-        callbackUrl: "/",
-      })
-
-      if (response?.url) {
-        window.location.href = response.url
-      } else {
-        console.error("Sign out successful, but no redirect URL provided")
-        window.location.href = "/"
-      }
-    } catch (error) {
-      console.error("Error during sign out:", error)
-      // Log the error response for debugging
-      if (error instanceof Error) {
-        console.error("Error message:", error.message)
-      }
-      // Fallback: redirect to home page
-      window.location.href = "/"
-    }
+    await signOut({ redirect: false });
+    router.push('/');
   }
 
   return (
@@ -43,56 +26,26 @@ export default function Header() {
             <Image src="/Saviour.png" alt="SAVIOUR Logo" width={180} height={40} />
           </Link>
           <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/about" className="hover:text-blue-600 transition-colors hover:scale-105 transform">
-              About
-            </Link>
-            <Link href="/services" className="hover:text-blue-600 transition-colors hover:scale-105 transform">
-              Services
-            </Link>
-            <Link href="/contact" className="hover:text-blue-600 transition-colors hover:scale-105 transform">
-              Contact
-            </Link>
-            <Link href="/donate" className="hover:text-blue-600 transition-colors hover:scale-105 transform">
-              Donate
-            </Link>
+            <Link href="/about" className="hover:text-blue-600 transition-colors hover:scale-105 transform">About</Link>
+            <Link href="/services" className="hover:text-blue-600 transition-colors hover:scale-105 transform">Services</Link>
+            <Link href="/contact" className="hover:text-blue-600 transition-colors hover:scale-105 transform">Contact</Link>
+            <Link href="/donate" className="hover:text-blue-600 transition-colors hover:scale-105 transform">Donate</Link>
             {!session && (
               <>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-                >
+                <Button asChild variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors">
                   <Link href="/auth/login">Log In</Link>
                 </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-                >
+                <Button asChild variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors">
                   <Link href="/auth/signup">Sign Up</Link>
                 </Button>
               </>
             )}
             {session && (
               <>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-                >
-                  <Link href={session.user.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
-                    Dashboard
-                  </Link>
+                <Button asChild variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors">
+                  <Link href="/dashboard">Dashboard</Link>
                 </Button>
-                <Button
-                  onClick={handleSignOut}
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-                >
+                <Button onClick={handleSignOut} variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors">
                   Sign Out
                 </Button>
               </>
@@ -106,56 +59,26 @@ export default function Header() {
       {isMenuOpen && (
         <div className="md:hidden">
           <nav className="flex flex-col items-center py-4 space-y-4">
-            <Link href="/about" className="hover:text-blue-600 transition-colors">
-              About
-            </Link>
-            <Link href="/services" className="hover:text-blue-600 transition-colors">
-              Services
-            </Link>
-            <Link href="/contact" className="hover:text-blue-600 transition-colors">
-              Contact
-            </Link>
-            <Link href="/donate" className="hover:text-blue-600 transition-colors">
-              Donate
-            </Link>
+            <Link href="/about" className="hover:text-blue-600 transition-colors">About</Link>
+            <Link href="/services" className="hover:text-blue-600 transition-colors">Services</Link>
+            <Link href="/contact" className="hover:text-blue-600 transition-colors">Contact</Link>
+            <Link href="/donate" className="hover:text-blue-600 transition-colors">Donate</Link>
             {!session && (
               <>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-                >
+                <Button asChild variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors">
                   <Link href="/auth/login">Log In</Link>
                 </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-                >
+                <Button asChild variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors">
                   <Link href="/auth/signup">Sign Up</Link>
                 </Button>
               </>
             )}
             {session && (
               <>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-                >
-                  <Link href={session.user.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
-                    Dashboard
-                  </Link>
+                <Button asChild variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors">
+                  <Link href="/dashboard">Dashboard</Link>
                 </Button>
-                <Button
-                  onClick={handleSignOut}
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-                >
+                <Button onClick={handleSignOut} variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors">
                   Sign Out
                 </Button>
               </>
