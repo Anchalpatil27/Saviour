@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import type { DefaultSession } from "next-auth"
+import { PrismaClient } from "@prisma/client"
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -11,6 +12,8 @@ declare module "next-auth" {
   }
 }
 
+const prisma = new PrismaClient()
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
@@ -20,7 +23,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.role = user.email === "vikrantkrd@gmail.com" ? "admin" : "user"
       }
@@ -39,9 +42,30 @@ export const authOptions: NextAuthOptions = {
     error: "/auth/error",
   },
   events: {
-    async signOut() {
-      // Clear any server-side session data here if needed
+    async signOut({ token }) {
+      const userId = token.sub;
+
+      // 1. Clear server-side session data
+      await prisma.session.deleteMany({
+        where: {
+          userId: userId,
+        },
+      });
+
+      // 2. Revoke tokens (example with a hypothetical token revocation service)
+      // await revokeToken(userId);
+
+      // 3. Log sign-out activity
+      await prisma.activityLog.create({
+        data: {
+          userId: userId,
+          action: "SIGN_OUT",
+          details: "User signed out",
+        },
+      });
+
+      // 4. Optionally, you can notify the client to clear client-side storage
+      // This would typically be handled by the client-side code
     },
   },
 }
-
