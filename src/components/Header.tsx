@@ -13,11 +13,25 @@ export default function Header() {
 
   const handleSignOut = async () => {
     try {
-      await signOut({
-        callbackUrl: "https://saviour-chi.vercel.app/",
+      const response = await signOut({
+        redirect: false,
+        callbackUrl: "/",
       })
+
+      if (response?.url) {
+        window.location.href = response.url
+      } else {
+        console.error("Sign out successful, but no redirect URL provided")
+        window.location.href = "/"
+      }
     } catch (error) {
-      console.error("Error signing out:", error)
+      console.error("Error during sign out:", error)
+      // Log the error response for debugging
+      if (error instanceof Error) {
+        console.error("Error message:", error.message)
+      }
+      // Fallback: redirect to home page
+      window.location.href = "/"
     }
   }
 
