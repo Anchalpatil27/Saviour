@@ -14,7 +14,7 @@ export default function Header() {
   const handleSignOut = async () => {
     try {
       await signOut({
-        callbackUrl: "/",
+        callbackUrl: "https://saviour-chi.vercel.app/",
       })
     } catch (error) {
       console.error("Error signing out:", error)
