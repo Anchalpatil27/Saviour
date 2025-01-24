@@ -1,7 +1,6 @@
 import type { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import type { DefaultSession } from "next-auth"
-import { PrismaClient } from "@prisma/client"
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -11,8 +10,6 @@ declare module "next-auth" {
     } & DefaultSession["user"]
   }
 }
-
-const prisma = new PrismaClient()
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -42,44 +39,8 @@ export const authOptions: NextAuthOptions = {
     error: "/auth/error",
   },
   events: {
-    async signOut({ token }) {
-      const userId = token.sub
-
-      if (!userId) {
-        console.error("User ID is undefined during sign-out.")
-        return
-      }
-
-      try {
-        // 1. Clear all server-side session data
-        await prisma.session.deleteMany({
-          where: {
-            userId: userId,
-          },
-        })
-
-        // 2. Clear user activity history
-        await prisma.activityLog.deleteMany({
-          where: {
-            userId: userId,
-          },
-        })
-
-        // 3. Log sign-out activity
-        await prisma.activityLog.create({
-          data: {
-            userId: userId,
-            action: "SIGN_OUT",
-            details: "User signed out and all data cleared",
-          },
-        })
-
-        console.log(`User ${userId} signed out and all data cleared.`)
-      } catch (error) {
-        console.error("Error during sign-out cleanup:", error)
-        // Ensure the error is properly serialized
-        throw new Error(JSON.stringify({ message: "Error during sign-out cleanup", error }))
-      }
+    async signOut() {
+      // Clear any server-side session data here if needed
     },
   },
 }
