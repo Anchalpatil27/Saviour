@@ -12,7 +12,13 @@ export default function Header() {
   const { data: session } = useSession()
 
   const handleSignOut = async () => {
-    await signOut({ redirect: true, callbackUrl: "/" })
+    try {
+      await signOut({
+        callbackUrl: "/",
+      })
+    } catch (error) {
+      console.error("Error signing out:", error)
+    }
   }
 
   return (
