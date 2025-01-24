@@ -1,18 +1,18 @@
-import type { NextAuthOptions } from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
-import type { DefaultSession } from "next-auth"
-import { PrismaClient } from "@prisma/client"
+import type { NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import type { DefaultSession } from "next-auth";
+import { PrismaClient } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
-      id: string
-      role?: string
-    } & DefaultSession["user"]
+      id: string;
+      role?: string;
+    } & DefaultSession["user"];
   }
 }
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -25,16 +25,16 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.email === "vikrantkrd@gmail.com" ? "admin" : "user"
+        token.role = user.email === "vikrantkrd@gmail.com" ? "admin" : "user";
       }
-      return token
+      return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.sub as string
-        session.user.role = token.role as string
+        session.user.id = token.sub as string;
+        session.user.role = token.role as string;
       }
-      return session
+      return session;
     },
   },
   pages: {
@@ -52,10 +52,7 @@ export const authOptions: NextAuthOptions = {
         },
       });
 
-      // 2. Revoke tokens (example with a hypothetical token revocation service)
-      // await revokeToken(userId);
-
-      // 3. Log sign-out activity
+      // 2. Log sign-out activity
       await prisma.activityLog.create({
         data: {
           userId: userId,
@@ -64,8 +61,8 @@ export const authOptions: NextAuthOptions = {
         },
       });
 
-      // 4. Optionally, you can notify the client to clear client-side storage
+      // 3. Optionally, you can notify the client to clear client-side storage
       // This would typically be handled by the client-side code
     },
   },
-}
+};
