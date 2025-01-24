@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
@@ -11,11 +10,29 @@ import { useSession, signOut } from "next-auth/react"
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { data: session } = useSession()
-  const router = useRouter()
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false })
-    router.push("/")
+    try {
+      const response = await signOut({
+        redirect: false,
+        callbackUrl: "/",
+      })
+
+      if (response?.url) {
+        window.location.href = response.url
+      } else {
+        console.error("Sign out successful, but no redirect URL provided")
+        window.location.href = "/"
+      }
+    } catch (error) {
+      console.error("Error during sign out:", error)
+      // Log the error response for debugging
+      if (error instanceof Error) {
+        console.error("Error message:", error.message)
+      }
+      // Fallback: redirect to home page
+      window.location.href = "/"
+    }
   }
 
   return (
@@ -66,7 +83,7 @@ export default function Header() {
                   size="sm"
                   className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
                 >
-                  <Link href={session.user.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
+                  <Link href={session?.user?.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
                     Dashboard
                   </Link>
                 </Button>
@@ -129,7 +146,7 @@ export default function Header() {
                   size="sm"
                   className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
                 >
-                  <Link href={session.user.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
+                  <Link href={session?.user?.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
                     Dashboard
                   </Link>
                 </Button>

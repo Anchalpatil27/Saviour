@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth"
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions)
 
-  if (!session || session.user.role !== "admin") {
+  if (!session?.user?.email || session.user.email !== "vikrantkrd@gmail.com") {
     redirect("/auth/login")
   }
 
