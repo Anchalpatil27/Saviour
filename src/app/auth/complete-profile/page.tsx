@@ -54,7 +54,7 @@ export default function CompleteProfilePage() {
       })
 
       router.push("/dashboard")
-    } catch (error) {
+    } catch (err) {
       showToast({
         title: "Error",
         description: "Failed to complete your profile. Please try again.",

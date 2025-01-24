@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ available: true })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to check email" }, { status: 500 })
   }
 }
