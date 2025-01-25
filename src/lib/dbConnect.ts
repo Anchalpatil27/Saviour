@@ -7,6 +7,7 @@ if (!process.env.MONGODB_URI) {
 const MONGODB_URI: string = process.env.MONGODB_URI
 
 declare global {
+  // eslint-disable-next-line no-var
   var mongoose: {
     conn: mongoose.Mongoose | null
     promise: Promise<mongoose.Mongoose> | null
@@ -47,4 +48,3 @@ async function dbConnect() {
 }
 
 export default dbConnect
-
