@@ -1,98 +1,103 @@
-import dbConnect from "@/lib/dbConnect"
-import type { NextAuthOptions } from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
+import type { NextAuthOptions, DefaultSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import bcrypt from "bcryptjs"
+import GoogleProvider from "next-auth/providers/google"
+import dbConnect from "@/lib/dbConnect"
 import { User } from "@/lib/db/schema"
-import { DefaultSession, DefaultUser } from "next-auth"
+import bcrypt from "bcryptjs"
 
-// Extend the User type to include the `id` property
+// Extend the User type to include the role property
 declare module "next-auth" {
-  interface User extends DefaultUser {
-    id: string
+  interface User {
+    id?: string
+    role?: string
   }
+}
 
-  interface Session extends DefaultSession {
-    user?: User
+// Extend the Session type to include the id and role properties
+declare module "next-auth" {
+  interface Session {
+    user?: {
+      id?: string
+      role?: string
+    } & DefaultSession["user"]
   }
 }
 
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        username: { label: "Username", type: "text" },
+        emailOrUsername: { label: "Email or Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) return null
+        if (!credentials?.emailOrUsername || !credentials?.password) {
+          return null
+        }
 
         await dbConnect()
 
-        const user = await User.findOne({ username: credentials.username })
-        if (!user) return null
+        const user = await User.findOne({
+          $or: [{ email: credentials.emailOrUsername }, { username: credentials.emailOrUsername }],
+        })
 
-        const isValid = await bcrypt.compare(credentials.password, user.password!)
-        if (!isValid) return null
+        if (!user) {
+          return null
+        }
+
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+
+        if (!isPasswordValid) {
+          return null
+        }
 
         return {
           id: user._id.toString(),
           email: user.email,
           name: user.name,
-          image: user.image,
+          role: user.email === "vikrantkrd@gmail.com" ? "admin" : "user",
         }
       },
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         await dbConnect()
-
         const existingUser = await User.findOne({ email: user.email })
-        if (existingUser) {
-          if (!existingUser.username) {
-            // User exists but hasn't completed their profile
-            return `/auth/complete-profile?email=${user.email}&name=${user.name}&image=${user.image}`
-          }
-          // User exists and has completed their profile, allow sign in
-          return true
+        if (!existingUser) {
+          // If the user doesn't exist in the database, create a new user
+          await User.create({
+            email: user.email,
+            name: user.name,
+            image: user.image,
+          })
         }
-
-        // If user doesn't exist, create a new user record and redirect to complete profile
-        await User.create({
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-
-        return `/auth/complete-profile?email=${user.email}&name=${user.name}&image=${user.image}`
       }
       return true
     },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
+        token.role = user.role
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
+        session.user.role = token.role as string
       }
       return session
     },
   },
   pages: {
     signIn: "/auth/login",
-    error: "/auth/error",
   },
+  secret: process.env.NEXTAUTH_SECRET,
 }
