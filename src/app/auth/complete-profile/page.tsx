@@ -15,6 +15,7 @@ interface FormData {
   name: string | null
   image: string | null
   username: string
+  password: string
   phoneNumber: string
   address: string
   emergencyContact: {
@@ -46,6 +47,7 @@ export default function CompleteProfilePage() {
       name,
       image,
       username: formData.get("username") as string,
+      password: formData.get("password") as string,
       phoneNumber: formData.get("phoneNumber") as string,
       address: formData.get("address") as string,
       emergencyContact: {
@@ -123,7 +125,7 @@ export default function CompleteProfilePage() {
                 <Input
                   id="username"
                   name="username"
-                  placeholder="Choose a username"
+                  placeholder="Choose a Username"
                   required
                   disabled={isLoading}
                   className="w-full"
@@ -136,7 +138,7 @@ export default function CompleteProfilePage() {
                   id="phoneNumber"
                   name="phoneNumber"
                   type="tel"
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="+91 0000000000"
                   required
                   disabled={isLoading}
                   className="w-full"
@@ -176,7 +178,7 @@ export default function CompleteProfilePage() {
                       id="emergencyContactPhone"
                       name="emergencyContactPhone"
                       type="tel"
-                      placeholder="+1 (555) 000-0000"
+                      placeholder="+91 0000000000"
                       required
                       disabled={isLoading}
                       className="w-full"
