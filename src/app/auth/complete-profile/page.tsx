@@ -18,6 +18,7 @@ interface FormData {
   password: string
   phoneNumber: string
   address: string
+  city: string // Added city field
   emergencyContact: {
     name: string
     phone: string
@@ -50,6 +51,7 @@ export default function CompleteProfilePage() {
       password: formData.get("password") as string,
       phoneNumber: formData.get("phoneNumber") as string,
       address: formData.get("address") as string,
+      city: formData.get("city") as string, // Added city field
       emergencyContact: {
         name: formData.get("emergencyContactName") as string,
         phone: formData.get("emergencyContactPhone") as string,
@@ -58,7 +60,7 @@ export default function CompleteProfilePage() {
     }
 
     // Basic validation
-    if (!data.username || !data.phoneNumber || !data.address) {
+    if (!data.username || !data.phoneNumber || !data.address || !data.city || !data.password) {
       setFormError("Please fill in all required fields")
       setIsLoading(false)
       return
@@ -133,6 +135,19 @@ export default function CompleteProfilePage() {
               </div>
 
               <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Enter a password"
+                  required
+                  disabled={isLoading}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="grid gap-2">
                 <Label htmlFor="phoneNumber">Phone Number</Label>
                 <Input
                   id="phoneNumber"
@@ -151,6 +166,18 @@ export default function CompleteProfilePage() {
                   id="address"
                   name="address"
                   placeholder="Your full address"
+                  required
+                  disabled={isLoading}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  name="city"
+                  placeholder="Your city"
                   required
                   disabled={isLoading}
                   className="w-full"
