@@ -1,27 +1,25 @@
 import mongoose from "mongoose"
 
-interface GlobalMongoose {
-  conn: typeof mongoose | null
-  promise: Promise<typeof mongoose> | null
-}
-
-declare global {
-  var mongoose: GlobalMongoose | undefined
-}
-
 if (!process.env.MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable inside .env.local")
 }
 
 const MONGODB_URI: string = process.env.MONGODB_URI
 
-const cached = global.mongoose ?? { conn: null, promise: null }
-
-if (!global.mongoose) {
-  global.mongoose = cached
+declare global {
+  var mongoose: {
+    conn: mongoose.Mongoose | null
+    promise: Promise<mongoose.Mongoose> | null
+  }
 }
 
-export async function connectToDatabase(): Promise<typeof mongoose> {
+let cached = global.mongoose
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null }
+}
+
+async function dbConnect() {
   if (cached.conn) {
     return cached.conn
   }
@@ -32,6 +30,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     }
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log("Connected to MongoDB")
       return mongoose
     })
   }
@@ -40,9 +39,12 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     cached.conn = await cached.promise
   } catch (e) {
     cached.promise = null
+    console.error("Error connecting to MongoDB:", e)
     throw e
   }
 
   return cached.conn
 }
+
+export default dbConnect
 
