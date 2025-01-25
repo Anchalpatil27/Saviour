@@ -22,20 +22,24 @@ export default function LoginPage() {
     setError(null)
 
     const formData = new FormData(event.currentTarget)
-    const emailOrUsername = formData.get("emailOrUsername") as string
+    const email = formData.get("email") as string
     const password = formData.get("password") as string
 
     const result = await signIn("credentials", {
       redirect: false,
-      emailOrUsername,
+      email,
       password,
     })
 
     if (result?.error) {
-      setError("Invalid credentials")
+      setError("Invalid email or password")
       setIsLoading(false)
     } else {
-      router.push(callbackUrl)
+      if (email === "vikrantkrd@gmail.com") {
+        router.push("/admin/dashboard")
+      } else {
+        router.push(callbackUrl)
+      }
     }
   }
 
@@ -53,8 +57,8 @@ export default function LoginPage() {
         <CardContent className="mt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="emailOrUsername">Email or Username</Label>
-              <Input id="emailOrUsername" name="emailOrUsername" type="text" placeholder="Email or Username" required />
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" type="email" placeholder="youremail@example.com" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

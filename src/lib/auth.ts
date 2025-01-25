@@ -1,25 +1,18 @@
-import type { NextAuthOptions, DefaultSession } from "next-auth"
+import type { NextAuthOptions, Session } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import dbConnect from "@/lib/dbConnect"
 import { User } from "@/lib/db/schema"
 import bcrypt from "bcryptjs"
 
-// Extend the User type to include the role property
-declare module "next-auth" {
-  interface User {
-    id?: string
-    role?: string
-  }
-}
-
-// Extend the Session type to include the id and role properties
 declare module "next-auth" {
   interface Session {
-    user?: {
-      id?: string
-      role?: string
-    } & DefaultSession["user"]
+    user: {
+      id: string
+      name?: string | null
+      email?: string | null
+      image?: string | null
+    }
   }
 }
 
@@ -28,19 +21,17 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        emailOrUsername: { label: "Email or Username", type: "text" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.emailOrUsername || !credentials?.password) {
+        if (!credentials?.email || !credentials?.password) {
           return null
         }
 
         await dbConnect()
 
-        const user = await User.findOne({
-          $or: [{ email: credentials.emailOrUsername }, { username: credentials.emailOrUsername }],
-        })
+        const user = await User.findOne({ email: credentials.email })
 
         if (!user) {
           return null
@@ -56,7 +47,6 @@ export const authOptions: NextAuthOptions = {
           id: user._id.toString(),
           email: user.email,
           name: user.name,
-          role: user.email === "vikrantkrd@gmail.com" ? "admin" : "user",
         }
       },
     }),
@@ -66,32 +56,15 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === "google") {
-        await dbConnect()
-        const existingUser = await User.findOne({ email: user.email })
-        if (!existingUser) {
-          // If the user doesn't exist in the database, create a new user
-          await User.create({
-            email: user.email,
-            name: user.name,
-            image: user.image,
-          })
-        }
-      }
-      return true
-    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.role = user.role
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
-        session.user.role = token.role as string
       }
       return session
     },
@@ -101,3 +74,4 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 }
+

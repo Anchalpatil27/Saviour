@@ -20,8 +20,8 @@ export default function Dashboard() {
     redirect("/auth/login")
   }
 
-  // Safely access the role property
-  const userRole = session.user.role
+  // Add a type assertion or check for the role property
+  const userRole = (session.user as any).role // Use type assertion if role is not in the default type
 
   if (userRole === "admin") {
     redirect("/admin/dashboard")
