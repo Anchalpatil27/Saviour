@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import bcrypt from "bcryptjs" // Import bcryptjs
 
 interface FormData {
   email: string | null
@@ -18,7 +19,7 @@ interface FormData {
   password: string
   phoneNumber: string
   address: string
-  city: string // Added city field
+  city: string
   emergencyContact: {
     name: string
     phone: string
@@ -43,15 +44,20 @@ export default function CompleteProfilePage() {
     setFormError(null)
 
     const formData = new FormData(event.currentTarget)
+    const plaintextPassword = formData.get("password") as string
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(plaintextPassword, 10) // 10 is the salt rounds
+
     const data: FormData = {
       email,
       name,
       image,
       username: formData.get("username") as string,
-      password: formData.get("password") as string,
+      password: hashedPassword,
       phoneNumber: formData.get("phoneNumber") as string,
       address: formData.get("address") as string,
-      city: formData.get("city") as string, // Added city field
+      city: formData.get("city") as string,
       emergencyContact: {
         name: formData.get("emergencyContactName") as string,
         phone: formData.get("emergencyContactPhone") as string,
@@ -60,7 +66,7 @@ export default function CompleteProfilePage() {
     }
 
     // Basic validation
-    if (!data.username || !data.phoneNumber || !data.address || !data.city || !data.password) {
+    if (!data.username || !data.phoneNumber || !data.address || !data.city || !plaintextPassword) {
       setFormError("Please fill in all required fields")
       setIsLoading(false)
       return

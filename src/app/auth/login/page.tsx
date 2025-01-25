@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import bcrypt from "bcryptjs"
+import dbConnect from "@/lib/dbConnect"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -25,26 +26,39 @@ export default function LoginPage() {
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-    })
+    try {
+      // Connect to the database
+      const db = await dbConnect()
+      const usersCollection = db.connection.collection("users")
 
-    if (result?.error) {
-      setError("Invalid email or password")
-      setIsLoading(false)
-    } else {
+      // Find the user by email
+      const user = await usersCollection.findOne({ email })
+
+      if (!user) {
+        throw new Error("Invalid email or password")
+      }
+
+      // Compare the plaintext password with the hashed password
+      const isPasswordValid = await bcrypt.compare(password, user.password)
+      if (!isPasswordValid) {
+        throw new Error("Invalid email or password")
+      }
+
+      // If credentials are valid, redirect to the dashboard
       if (email === "vikrantkrd@gmail.com") {
         router.push("/admin/dashboard")
       } else {
         router.push(callbackUrl)
       }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Something went wrong")
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleGoogleLogin = () => {
-    signIn("google", { callbackUrl: "/auth/check-admin" })
+    // Handle Google login logic here
   }
 
   return (
@@ -58,7 +72,13 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" placeholder="youremail@example.com" required />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="youremail@example.com"
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -117,4 +137,3 @@ export default function LoginPage() {
     </div>
   )
 }
-

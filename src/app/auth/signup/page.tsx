@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +9,6 @@ import { useToast } from "@/components/ui/use-toast"
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const router = useRouter()
   const { showToast } = useToast()
 
   const handleGoogleSignup = () => {
