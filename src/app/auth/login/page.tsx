@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import bcrypt from "bcryptjs"
-import dbConnect from "@/lib/dbConnect"
+import clientPromise from "@/lib/mongodb"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -23,29 +23,32 @@ export default function LoginPage() {
     setError(null)
 
     const formData = new FormData(event.currentTarget)
-    const email = formData.get("email") as string
+    const emailOrUsername = formData.get("emailOrUsername") as string
     const password = formData.get("password") as string
 
     try {
       // Connect to the database
-      const db = await dbConnect()
-      const usersCollection = db.connection.collection("users")
+      const client = await clientPromise
+      const db = client.db("your-database-name")
+      const usersCollection = db.collection("users")
 
-      // Find the user by email
-      const user = await usersCollection.findOne({ email })
+      // Find the user by email or username
+      const user = await usersCollection.findOne({
+        $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+      })
 
       if (!user) {
-        throw new Error("Invalid email or password")
+        throw new Error("Invalid email/username or password")
       }
 
       // Compare the plaintext password with the hashed password
       const isPasswordValid = await bcrypt.compare(password, user.password)
       if (!isPasswordValid) {
-        throw new Error("Invalid email or password")
+        throw new Error("Invalid email/username or password")
       }
 
       // If credentials are valid, redirect to the dashboard
-      if (email === "vikrantkrd@gmail.com") {
+      if (emailOrUsername === "vikrantkrd@gmail.com") {
         router.push("/admin/dashboard")
       } else {
         router.push(callbackUrl)
@@ -71,12 +74,12 @@ export default function LoginPage() {
         <CardContent className="mt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="emailOrUsername">Email or Username</Label>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="youremail@example.com"
+                id="emailOrUsername"
+                name="emailOrUsername"
+                type="text"
+                placeholder="youremail@example.com or yourusername"
                 required
               />
             </div>
