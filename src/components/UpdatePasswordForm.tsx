@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function UpdatePasswordForm({ userId }: { userId: string }) {
+export function UpdatePasswordForm({ userEmail }: { userEmail: string }) {
   const [passwords, setPasswords] = useState({
     currentPassword: "",
     newPassword: "",
@@ -26,7 +26,7 @@ export function UpdatePasswordForm({ userId }: { userId: string }) {
       const res = await fetch("/api/update-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, ...passwords }),
+        body: JSON.stringify({ userEmail, ...passwords }),
       })
       if (res.ok) {
         alert("Password updated successfully")

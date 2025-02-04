@@ -12,19 +12,14 @@ import { UpdatePasswordForm } from "@/components/UpdatePasswordForm"
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)
 
-  if (!session || !session.user) {
+  if (!session || !session.user?.email) {
     redirect("/auth/login")
   }
 
-  const identifier = session.user.id || session.user.email
-  if (!identifier) {
-    return <div>Error: Unable to identify user</div>
-  }
-
-  const userDetails = await getUserDetails(identifier)
+  const userDetails = await getUserDetails(session.user.email)
 
   if (!userDetails) {
-    return <div>Error loading user details</div>
+    return <div>Error loading user details. Please try again later.</div>
   }
 
   const isOAuthUser = userDetails.provider === "google"
@@ -65,7 +60,7 @@ export default async function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <UpdatePasswordForm userId={userDetails.id} />
+            <UpdatePasswordForm userEmail={userDetails.email} />
           </CardContent>
         </Card>
       )}

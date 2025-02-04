@@ -2,29 +2,25 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import clientPromise from "@/lib/mongodb"
-import { ObjectId } from "mongodb"
 import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session?.user) {
+  if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
-    const { userId, currentPassword, newPassword } = await request.json()
+    const { userEmail, currentPassword, newPassword } = await request.json()
+
+    if (userEmail !== session.user.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
     const client = await clientPromise
     const db = client.db("test")
 
-    let query
-    if (ObjectId.isValid(userId)) {
-      query = { _id: new ObjectId(userId) }
-    } else {
-      query = { email: userId }
-    }
-
-    const user = await db.collection("users").findOne(query)
+    const user = await db.collection("users").findOne({ email: userEmail })
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -38,7 +34,9 @@ export async function POST(request: NextRequest) {
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10)
 
-    const result = await db.collection("users").updateOne(query, { $set: { password: hashedNewPassword } })
+    const result = await db
+      .collection("users")
+      .updateOne({ email: userEmail }, { $set: { password: hashedNewPassword } })
 
     if (result.modifiedCount === 1) {
       return NextResponse.json({ message: "Password updated successfully" })
