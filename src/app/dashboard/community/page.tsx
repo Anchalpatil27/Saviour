@@ -7,15 +7,42 @@ import { CommunityForm } from "@/components/CommunityForm"
 import { Button } from "@/components/ui/button"
 import { CommunityChat } from "@/components/CommunityChat"
 import { getUserCity } from "@/lib/getUserCity"
+import clientPromise from "@/lib/mongodb"
+
+async function getUserDetails(email: string) {
+  try {
+    const client = await clientPromise
+    const db = client.db("test")
+    const user = await db.collection("users").findOne({ email })
+    return user
+  } catch (error) {
+    console.error("Error fetching user details:", error)
+    return null
+  }
+}
 
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions)
 
-  if (!session || !session.user) {
+  if (!session?.user?.email) {
     redirect("/auth/login")
   }
 
-  const userCity = await getUserCity(session.user.id)
+  // Get full user details to ensure we have the correct data
+  const userDetails = await getUserDetails(session.user.email)
+  console.log("User details from DB:", userDetails)
+
+  let userCity = null
+
+  if (userDetails?._id) {
+    userCity = await getUserCity(userDetails._id.toString())
+  }
+
+  if (!userCity && userDetails?.city) {
+    userCity = userDetails.city
+  }
+
+  console.log("Final userCity:", userCity)
 
   const stats = [
     { name: "Active Volunteers", icon: Users, value: 127, change: 12 },

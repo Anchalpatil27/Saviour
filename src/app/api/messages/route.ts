@@ -13,9 +13,13 @@ export async function GET() {
     const client = await clientPromise
     const db = client.db("test")
 
-    const user = await db.collection("users").findOne({ email: session.user.email }, { projection: { city: 1 } })
+    // Get user details including city
+    const user = await db.collection("users").findOne({ email: session.user.email })
+
+    console.log("User found in messages API:", user)
 
     if (!user || !user.city) {
+      console.error("No city found for user:", session.user.email)
       return NextResponse.json({ error: "City not set in your profile" }, { status: 400 })
     }
 
@@ -25,6 +29,8 @@ export async function GET() {
       .sort({ createdAt: -1 })
       .limit(50)
       .toArray()
+
+    console.log(`Found ${messages.length} messages for city:`, user.city)
 
     return NextResponse.json(messages)
   } catch (error) {
@@ -49,23 +55,24 @@ export async function POST(request: NextRequest) {
     const client = await clientPromise
     const db = client.db("test")
 
-    const user = await db
-      .collection("users")
-      .findOne({ email: session.user.email }, { projection: { name: 1, city: 1 } })
+    const user = await db.collection("users").findOne({ email: session.user.email })
 
     if (!user || !user.city) {
+      console.error("No city found for user in POST:", session.user.email)
       return NextResponse.json({ error: "User not found or city not set in profile" }, { status: 400 })
     }
 
     const newMessage = {
       content,
       city: user.city,
-      userId: session.user.id,
+      userId: user._id.toString(),
       userName: user.name || session.user.name || "Anonymous",
       createdAt: new Date(),
     }
 
     const result = await db.collection("messages").insertOne(newMessage)
+
+    console.log("New message created:", { id: result.insertedId, ...newMessage })
 
     return NextResponse.json({
       id: result.insertedId,
