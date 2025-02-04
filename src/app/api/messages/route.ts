@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import clientPromise from "@/lib/mongodb"
+import { getUserCity } from "@/lib/getUserCity"
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,16 +10,24 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    if (!session.user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 })
+    }
 
-    const city = request.nextUrl.searchParams.get("city")
-    if (!city) {
-      return NextResponse.json({ error: "City is required" }, { status: 400 })
+    const userCity = await getUserCity(session.user?.id)
+    if (!userCity) {
+      return NextResponse.json({ error: "User city not found" }, { status: 400 })
     }
 
     const client = await clientPromise
     const db = client.db("test")
 
-    const messages = await db.collection("messages").find({ city }).sort({ createdAt: -1 }).limit(50).toArray()
+    const messages = await db
+      .collection("messages")
+      .find({ city: userCity })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .toArray()
 
     return NextResponse.json(messages.reverse())
   } catch (e) {
@@ -33,19 +42,27 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    if (!session.user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 })
+    }
+
+    const userCity = await getUserCity(session.user?.id)
+    if (!userCity) {
+      return NextResponse.json({ error: "User city not found" }, { status: 400 })
+    }
 
     const client = await clientPromise
     const db = client.db("test")
 
-    const { content, city } = await request.json()
-    if (!content || !city) {
-      return NextResponse.json({ error: "Content and city are required" }, { status: 400 })
+    const { content } = await request.json()
+    if (!content) {
+      return NextResponse.json({ error: "Content is required" }, { status: 400 })
     }
 
     const message = await db.collection("messages").insertOne({
       content,
       username: session.user?.name || "Anonymous",
-      city,
+      city: userCity,
       createdAt: new Date(),
     })
 

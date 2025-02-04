@@ -21,7 +21,7 @@ export function CitySelector() {
     try {
       setIsLoading(true)
       setError(null)
-      const response = await fetch("/api/cities")
+      const response = await fetch("/api/city")
       if (!response.ok) {
         throw new Error("Failed to fetch cities")
       }

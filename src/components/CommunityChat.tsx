@@ -14,34 +14,28 @@ type Message = {
   createdAt: string
 }
 
-export function CommunityChat() {
+type CommunityProps = {
+  userCity: string | null
+}
+
+export function CommunityChat({ userCity }: CommunityProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
-  const [selectedCity, setSelectedCity] = useState<string>("")
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const storedCity = localStorage.getItem("selectedCity")
-    if (storedCity) {
-      setSelectedCity(storedCity)
-      fetchMessages(storedCity)
+    if (userCity) {
+      fetchMessages(userCity)
+      const interval = setInterval(() => fetchMessages(userCity), 5000)
+      return () => clearInterval(interval)
     }
-
-    const interval = setInterval(() => {
-      const currentCity = localStorage.getItem("selectedCity")
-      if (currentCity) {
-        fetchMessages(currentCity)
-      }
-    }, 5000) // Fetch messages every 5 seconds
-
-    return () => clearInterval(interval)
-  }, [])
+  }, [userCity])
 
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
     }
-  }, [scrollAreaRef]) //Corrected dependency
+  }, [scrollAreaRef]) //Fixed unnecessary dependency
 
   const fetchMessages = async (city: string) => {
     try {
@@ -58,32 +52,32 @@ export function CommunityChat() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (input.trim() && selectedCity) {
+    if (input.trim() && userCity) {
       try {
         const res = await fetch("/api/messages", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: input, city: selectedCity }),
+          body: JSON.stringify({ content: input, city: userCity }),
         })
         if (!res.ok) {
           throw new Error("Failed to post message")
         }
         setInput("")
-        fetchMessages(selectedCity)
+        fetchMessages(userCity)
       } catch (error) {
         console.error("Error posting message:", error)
       }
     }
   }
 
-  if (!selectedCity) {
-    return <div>Please select a city to join the chat.</div>
+  if (!userCity) {
+    return <div>Unable to determine your city. Please contact support.</div>
   }
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>{selectedCity} Community Chat</CardTitle>
+        <CardTitle>{userCity} Community Chat</CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[300px] w-full pr-4" ref={scrollAreaRef}>
