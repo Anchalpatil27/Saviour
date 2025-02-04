@@ -49,10 +49,10 @@ export function UpdateProfileForm({ userDetails, isOAuthUser }: { userDetails: U
         </div>
       </div>
       <div>
-        <Label htmlFor="phone" className="text-sm sm:text-base">
+        <Label htmlFor="phoneNumber" className="text-sm sm:text-base">
           Phone
         </Label>
-        <Input id="phone" type="tel" value={formData.phoneNumber || ""} onChange={handleChange} className="mt-1" />
+        <Input id="phoneNumber" type="tel" value={formData.phoneNumber || ""} onChange={handleChange} className="mt-1" />
       </div>
       <div>
         <Label htmlFor="address" className="text-sm sm:text-base">
