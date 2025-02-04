@@ -1,24 +1,27 @@
-import { OpenAIStream, StreamingTextResponse } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { type NextRequest, NextResponse } from "next/server"
+import clientPromise from "@/lib/mongodb"
 
-export const runtime = "edge"
+export async function POST(req: NextRequest) {
+  try {
+    const { messages, city, username } = await req.json()
+    const client = await clientPromise
+    const db = client.db("test")
 
-export async function POST(req: Request) {
-  const { messages, city, username } = await req.json()
+    // Store the message
+    await db.collection("messages").insertOne({
+      content: messages[messages.length - 1].content,
+      username,
+      city,
+      createdAt: new Date(),
+    })
 
-  const response = await openai.createChatCompletion({
-    model: "gpt-3.5-turbo",
-    stream: true,
-    messages: [
-      {
-        role: "system",
-        content: `You are a helpful assistant in the ${city} community chat. The current user is ${username}.`,
-      },
-      ...messages,
-    ],
-  })
+    // Fetch all messages for the city
+    const allMessages = await db.collection("messages").find({ city }).sort({ createdAt: 1 }).toArray()
 
-  const stream = OpenAIStream(response)
-  return new StreamingTextResponse(stream)
+    return NextResponse.json(allMessages)
+  } catch (error) {
+    console.error("Error in chat route:", error)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+  }
 }
 

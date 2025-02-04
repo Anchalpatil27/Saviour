@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server"
-import dbConnect from "@/lib/mongodb"
-import City from "@/models/City"
+import clientPromise from "@/lib/mongodb"
 
 export async function GET() {
-  await dbConnect()
-  const cities = await City.find({}).sort("name")
-  return NextResponse.json(cities)
+  try {
+    const client = await clientPromise
+    const db = client.db("test")
+
+    const cities = await db.collection("cities").find({}).sort({ name: 1 }).toArray()
+    return NextResponse.json(cities)
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: "Failed to fetch cities" }, { status: 500 })
+  }
 }
 
