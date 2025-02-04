@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 type Message = {
   id: string
@@ -21,12 +22,13 @@ type CommunityProps = {
 export function CommunityChat({ userCity }: CommunityProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
+  const [error, setError] = useState<string | null>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (userCity) {
-      fetchMessages(userCity)
-      const interval = setInterval(() => fetchMessages(userCity), 5000)
+      fetchMessages()
+      const interval = setInterval(fetchMessages, 5000)
       return () => clearInterval(interval)
     }
   }, [userCity])
@@ -35,18 +37,21 @@ export function CommunityChat({ userCity }: CommunityProps) {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
     }
-  }, [scrollAreaRef]) //Fixed unnecessary dependency
+  }, [scrollAreaRef]) //Corrected dependency
 
-  const fetchMessages = async (city: string) => {
+  const fetchMessages = async () => {
     try {
-      const res = await fetch(`/api/messages?city=${city}`)
+      const res = await fetch("/api/messages")
       if (!res.ok) {
         throw new Error("Failed to fetch messages")
       }
       const data = await res.json()
-      setMessages(data)
+      if (Array.isArray(data)) {
+        setMessages(data)
+      }
     } catch (error) {
       console.error("Error fetching messages:", error)
+      setError("Failed to load messages")
     }
   }
 
@@ -57,21 +62,29 @@ export function CommunityChat({ userCity }: CommunityProps) {
         const res = await fetch("/api/messages", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: input, city: userCity }),
+          body: JSON.stringify({ content: input }),
         })
         if (!res.ok) {
           throw new Error("Failed to post message")
         }
         setInput("")
-        fetchMessages(userCity)
+        fetchMessages()
       } catch (error) {
         console.error("Error posting message:", error)
+        setError("Failed to send message")
       }
     }
   }
 
   if (!userCity) {
-    return <div>Unable to determine your city. Please contact support.</div>
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>
+          Unable to determine your city. Please ensure your profile has a city set and contact support if the issue
+          persists.
+        </AlertDescription>
+      </Alert>
+    )
   }
 
   return (
@@ -81,6 +94,11 @@ export function CommunityChat({ userCity }: CommunityProps) {
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[300px] w-full pr-4" ref={scrollAreaRef}>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           {messages.map((message) => (
             <div key={message.id} className="mb-4">
               <div className="font-semibold">{message.username}</div>

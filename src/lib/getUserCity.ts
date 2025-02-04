@@ -6,10 +6,22 @@ export async function getUserCity(userId: string | undefined): Promise<string | 
 
   try {
     const client = await clientPromise
-    const db = client.db("test")
+    const db = client.db("test") // specifically using "test" database
 
-    const user = await db.collection("users").findOne({ _id: new ObjectId(userId) })
-    return user?.city || null
+    // Convert string ID to ObjectId and find user in users collection
+    const user = await db.collection("users").findOne({
+      _id: new ObjectId(userId),
+    })
+
+    // Debug logging
+    console.log("Found user:", user)
+
+    if (!user || !user.city) {
+      console.log("No city found for user:", userId)
+      return null
+    }
+
+    return user.city
   } catch (error) {
     console.error("Error fetching user city:", error)
     return null
