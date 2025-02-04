@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { useSession } from "next-auth/react"
 import { Loader2 } from "lucide-react"
-import type React from "react" // Added import for React
+import type React from "react"
 
 interface Message {
   id: string
@@ -39,10 +39,14 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
 
       try {
         const response = await fetch(`/api/messages?city=${encodeURIComponent(userCity)}`)
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || "Failed to load messages")
+        }
         const data = await response.json()
         setMessages(data)
-      } catch (error) {
-        setError("Failed to load messages. Please try again later.")
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load messages. Please try again later.")
       } finally {
         setLoading(false)
       }
@@ -61,16 +65,19 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
       const response = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newMessage, city: userCity }),
+        body: JSON.stringify({ content: newMessage }),
       })
 
-      if (!response.ok) throw new Error("Failed to send message")
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to send message")
+      }
 
       const newMessageData = await response.json()
       setMessages((prev) => [...prev, newMessageData])
       setNewMessage("")
-    } catch (error) {
-      setError("Failed to send message. Please try again.")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send message. Please try again.")
     }
   }
 
