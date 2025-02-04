@@ -24,7 +24,7 @@ export async function getUserDetails(identifier: string): Promise<UserDetails | 
       id: user._id.toString(),
       name: user.name || "",
       email: user.email || "",
-      phone: user.phone || "",
+      phoneNumber: user.phone || "",
       address: user.address || "",
       city: user.city || "",
       image: user.image || "",

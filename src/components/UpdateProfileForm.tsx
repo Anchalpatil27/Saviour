@@ -52,7 +52,7 @@ export function UpdateProfileForm({ userDetails, isOAuthUser }: { userDetails: U
         <Label htmlFor="phone" className="text-sm sm:text-base">
           Phone
         </Label>
-        <Input id="phone" type="tel" value={formData.phone || ""} onChange={handleChange} className="mt-1" />
+        <Input id="phone" type="tel" value={formData.phoneNumber || ""} onChange={handleChange} className="mt-1" />
       </div>
       <div>
         <Label htmlFor="address" className="text-sm sm:text-base">

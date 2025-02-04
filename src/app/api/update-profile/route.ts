@@ -10,14 +10,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { name, phone, address, city } = await request.json()
+    const { name, phoneNumber, address, city } = await request.json()
 
     const client = await clientPromise
     const db = client.db("test")
 
     const result = await db
       .collection("users")
-      .updateOne({ email: session.user.email }, { $set: { name, phone, address, city } })
+      .updateOne({ email: session.user.email }, { $set: { name, phoneNumber, address, city } })
 
     if (result.modifiedCount === 1) {
       return NextResponse.json({ message: "Profile updated successfully" })
