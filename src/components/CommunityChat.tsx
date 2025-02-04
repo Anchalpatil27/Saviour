@@ -10,17 +10,30 @@ type Message = {
   id: string
   content: string
   username: string
+  city: string
   createdAt: string
 }
 
 export function CommunityChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
+  const [selectedCity, setSelectedCity] = useState<string>("")
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    fetchMessages()
-    const interval = setInterval(fetchMessages, 5000) // Fetch messages every 5 seconds
+    const storedCity = localStorage.getItem("selectedCity")
+    if (storedCity) {
+      setSelectedCity(storedCity)
+      fetchMessages(storedCity)
+    }
+
+    const interval = setInterval(() => {
+      const currentCity = localStorage.getItem("selectedCity")
+      if (currentCity) {
+        fetchMessages(currentCity)
+      }
+    }, 5000) // Fetch messages every 5 seconds
+
     return () => clearInterval(interval)
   }, [])
 
@@ -28,33 +41,49 @@ export function CommunityChat() {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
     }
-  }, [scrollAreaRef]) // Fixed dependency
+  }, [scrollAreaRef]) //Corrected dependency
 
-  const fetchMessages = async () => {
-    const res = await fetch("/api/messages")
-    const data = await res.json()
-    setMessages(data)
+  const fetchMessages = async (city: string) => {
+    try {
+      const res = await fetch(`/api/messages?city=${city}`)
+      if (!res.ok) {
+        throw new Error("Failed to fetch messages")
+      }
+      const data = await res.json()
+      setMessages(data)
+    } catch (error) {
+      console.error("Error fetching messages:", error)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (input.trim()) {
-      const res = await fetch("/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: input }),
-      })
-      if (res.ok) {
+    if (input.trim() && selectedCity) {
+      try {
+        const res = await fetch("/api/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: input, city: selectedCity }),
+        })
+        if (!res.ok) {
+          throw new Error("Failed to post message")
+        }
         setInput("")
-        fetchMessages()
+        fetchMessages(selectedCity)
+      } catch (error) {
+        console.error("Error posting message:", error)
       }
     }
+  }
+
+  if (!selectedCity) {
+    return <div>Please select a city to join the chat.</div>
   }
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Community Chat</CardTitle>
+        <CardTitle>{selectedCity} Community Chat</CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[300px] w-full pr-4" ref={scrollAreaRef}>

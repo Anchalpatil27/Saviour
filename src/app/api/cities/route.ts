@@ -6,7 +6,7 @@ export async function GET() {
     const client = await clientPromise
     const db = client.db("test")
 
-    const cities = await db.collection("cities").find({}).sort({ name: 1 }).toArray()
+    const cities = await db.collection("users").distinct("city")
     return NextResponse.json(cities)
   } catch (e) {
     console.error(e)
