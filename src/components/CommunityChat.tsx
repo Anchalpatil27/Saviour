@@ -1,80 +1,84 @@
-import { getServerSession } from "next-auth/next"
-import { redirect } from "next/navigation"
-import { authOptions } from "@/lib/auth"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, HandHelping, MessageSquare, TrendingUp } from "lucide-react"
-import { CommunityForm } from "@/components/CommunityForm"
+"use client"
+
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { CommunityChat } from "@/components/CommunityChat"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
-export default async function CommunityPage() {
-  const session = await getServerSession(authOptions)
+type Message = {
+  id: string
+  content: string
+  username: string
+  createdAt: string
+}
 
-  if (!session) {
-    redirect("/auth/login")
+export function CommunityChat() {
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState("")
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetchMessages()
+    const interval = setInterval(fetchMessages, 5000) // Fetch messages every 5 seconds
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+    }
+  }, [scrollAreaRef]) // Fixed dependency
+
+  const fetchMessages = async () => {
+    const res = await fetch("/api/messages")
+    const data = await res.json()
+    setMessages(data)
   }
 
-  const stats = [
-    { name: "Active Volunteers", icon: Users, value: 127, change: 12 },
-    { name: "Open Requests", icon: HandHelping, value: 15, change: -3 },
-    { name: "Community Messages", icon: MessageSquare, value: 89, change: 24 },
-  ]
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (input.trim()) {
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: input }),
+      })
+      if (res.ok) {
+        setInput("")
+        fetchMessages()
+      }
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-4">Community Support</h2>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {stats.map((stat) => (
-          <Card key={stat.name} className="flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground flex items-center mt-1">
-                <TrendingUp
-                  className={`h-3 w-3 mr-1 ${stat.change > 0 ? "text-green-500" : "text-red-500 transform rotate-180"}`}
-                />
-                {Math.abs(stat.change)} since last week
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Offer or Request Support</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CommunityForm />
-          </CardContent>
-        </Card>
-        <CommunityChat />
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Recent Community Activities</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-4">
-            <li className="flex justify-between items-center">
-              <span className="text-sm">Food distribution event organized</span>
-              <Button size="sm">View Details</Button>
-            </li>
-            <li className="flex justify-between items-center">
-              <span className="text-sm">Volunteer training session scheduled</span>
-              <Button size="sm">View Details</Button>
-            </li>
-            <li className="flex justify-between items-center">
-              <span className="text-sm">Community cleanup initiative started</span>
-              <Button size="sm">View Details</Button>
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Community Chat</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[300px] w-full pr-4" ref={scrollAreaRef}>
+          {messages.map((message) => (
+            <div key={message.id} className="mb-4">
+              <div className="font-semibold">{message.username}</div>
+              <div>{message.content}</div>
+              <div className="text-xs text-muted-foreground">{new Date(message.createdAt).toLocaleString()}</div>
+            </div>
+          ))}
+        </ScrollArea>
+      </CardContent>
+      <CardFooter>
+        <form onSubmit={handleSubmit} className="flex w-full space-x-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Type your message..."
+            className="flex-grow"
+          />
+          <Button type="submit">Send</Button>
+        </form>
+      </CardFooter>
+    </Card>
   )
 }
 

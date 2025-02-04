@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, HandHelping, MessageSquare, TrendingUp } from "lucide-react"
 import { CommunityForm } from "@/components/CommunityForm"
 import { Button } from "@/components/ui/button"
-import CommunityChat from "@/components/CommunityChat"
+import { CommunityChat } from "@/components/CommunityChat"
 
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions)
