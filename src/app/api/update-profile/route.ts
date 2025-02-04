@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { name, phone, address, city, email } = await request.json()
+    const { name, phone, address, city } = await request.json()
 
     const client = await clientPromise
     const db = client.db("test")
