@@ -16,7 +16,7 @@ export default async function CommunityPage() {
   const stats = [
     { name: 'Active Volunteers', icon: Users, value: 127, change: 12 },
     { name: 'Open Requests', icon: HandHelping, value: 15, change: -3 },
-    { name: 'Community Messages', icon: MessageSquare, value: 89, change: 24 },
+    { name: 'Community Messages', icon: MessageSquare, value: 89, change: 24, link: '/community-chat/page' },
   ]
 
   return (
