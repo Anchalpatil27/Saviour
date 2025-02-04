@@ -6,19 +6,24 @@ import { ObjectId } from "mongodb"
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id) {
+  if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
-    const { name, phone, address, city } = await request.json()
+    const { id, name, phone, address, city, email } = await request.json()
 
     const client = await clientPromise
     const db = client.db("test")
 
-    const result = await db
-      .collection("users")
-      .updateOne({ _id: new ObjectId(session.user.id) }, { $set: { name, phone, address, city } })
+    let query
+    if (ObjectId.isValid(id)) {
+      query = { _id: new ObjectId(id) }
+    } else {
+      query = { email }
+    }
+
+    const result = await db.collection("users").updateOne(query, { $set: { name, phone, address, city } })
 
     if (result.modifiedCount === 1) {
       return NextResponse.json({ message: "Profile updated successfully" })

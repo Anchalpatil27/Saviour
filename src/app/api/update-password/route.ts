@@ -7,17 +7,24 @@ import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id) {
+  if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
-    const { currentPassword, newPassword } = await request.json()
+    const { userId, currentPassword, newPassword } = await request.json()
 
     const client = await clientPromise
     const db = client.db("test")
 
-    const user = await db.collection("users").findOne({ _id: new ObjectId(session.user.id) })
+    let query
+    if (ObjectId.isValid(userId)) {
+      query = { _id: new ObjectId(userId) }
+    } else {
+      query = { email: userId }
+    }
+
+    const user = await db.collection("users").findOne(query)
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -31,9 +38,7 @@ export async function POST(request: NextRequest) {
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10)
 
-    const result = await db
-      .collection("users")
-      .updateOne({ _id: new ObjectId(session.user.id) }, { $set: { password: hashedNewPassword } })
+    const result = await db.collection("users").updateOne(query, { $set: { password: hashedNewPassword } })
 
     if (result.modifiedCount === 1) {
       return NextResponse.json({ message: "Password updated successfully" })

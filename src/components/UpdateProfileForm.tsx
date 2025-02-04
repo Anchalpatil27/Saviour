@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { UserDetails } from "@/types/user"
 
-export function UpdateProfileForm({ userDetails }: { userDetails: UserDetails }) {
+export function UpdateProfileForm({ userDetails, isOAuthUser }: { userDetails: UserDetails; isOAuthUser: boolean }) {
   const [formData, setFormData] = useState(userDetails)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,7 +39,7 @@ export function UpdateProfileForm({ userDetails }: { userDetails: UserDetails })
           <Label htmlFor="name" className="text-sm sm:text-base">
             Name
           </Label>
-          <Input id="name" value={formData.name} onChange={handleChange} className="mt-1" />
+          <Input id="name" value={formData.name} onChange={handleChange} className="mt-1" readOnly={isOAuthUser} />
         </div>
         <div>
           <Label htmlFor="email" className="text-sm sm:text-base">
@@ -69,6 +69,11 @@ export function UpdateProfileForm({ userDetails }: { userDetails: UserDetails })
       <Button type="submit" className="w-full sm:w-auto text-sm sm:text-base">
         Update Profile
       </Button>
+      {isOAuthUser && (
+        <p className="text-sm text-muted-foreground mt-4">
+          Some fields are managed by your Google account and cannot be changed here.
+        </p>
+      )}
     </form>
   )
 }

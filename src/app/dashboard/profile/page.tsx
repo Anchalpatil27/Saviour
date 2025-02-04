@@ -16,11 +16,18 @@ export default async function ProfilePage() {
     redirect("/auth/login")
   }
 
-  const userDetails = await getUserDetails(session.user.id)
+  const identifier = session.user.id || session.user.email
+  if (!identifier) {
+    return <div>Error: Unable to identify user</div>
+  }
+
+  const userDetails = await getUserDetails(identifier)
 
   if (!userDetails) {
     return <div>Error loading user details</div>
   }
+
+  const isOAuthUser = userDetails.provider === "google"
 
   return (
     <div className="space-y-6">
@@ -46,20 +53,22 @@ export default async function ProfilePage() {
               </Button>
             </div>
           </div>
-          <UpdateProfileForm userDetails={userDetails} />
+          <UpdateProfileForm userDetails={userDetails} isOAuthUser={isOAuthUser} />
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center">
-            <Shield className="mr-2 h-5 w-5" />
-            Security Settings
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <UpdatePasswordForm userId={session.user.id} />
-        </CardContent>
-      </Card>
+      {!isOAuthUser && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Shield className="mr-2 h-5 w-5" />
+              Security Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UpdatePasswordForm userId={userDetails.id} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
