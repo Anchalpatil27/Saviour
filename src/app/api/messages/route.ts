@@ -11,7 +11,7 @@ export async function GET() {
     }
 
     const client = await clientPromise
-    const db = client.db("your_database_name")
+    const db = client.db("test")
 
     const messages = await db.collection("messages").find({}).sort({ createdAt: -1 }).limit(50).toArray()
 
