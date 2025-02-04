@@ -1,124 +1,140 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { useSession } from "next-auth/react"
+import { Loader2 } from "lucide-react"
+import type React from "react" // Added import for React
 
-type Message = {
+interface Message {
   id: string
   content: string
-  username: string
+  userId: string
+  userName: string
   city: string
-  createdAt: string
+  createdAt: Date
 }
 
-type CommunityProps = {
+interface CommunityChatProps {
   userCity: string | null
 }
 
-export function CommunityChat({ userCity }: CommunityProps) {
+export function CommunityChat({ userCity }: CommunityChatProps) {
+  const { data: session } = useSession()
   const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState("")
+  const [newMessage, setNewMessage] = useState("")
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (userCity) {
-      fetchMessages()
-      const interval = setInterval(fetchMessages, 5000)
-      return () => clearInterval(interval)
-    }
-  }, [userCity])
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
-    }
-  }, [scrollAreaRef]) //Corrected dependency
-
-  const fetchMessages = async () => {
-    try {
-      const res = await fetch("/api/messages")
-      if (!res.ok) {
-        throw new Error("Failed to fetch messages")
+    async function fetchMessages() {
+      if (!userCity) {
+        setError("Unable to determine your city. Please set your city in your profile.")
+        setLoading(false)
+        return
       }
-      const data = await res.json()
-      if (Array.isArray(data)) {
-        setMessages(data)
-      }
-    } catch (error) {
-      console.error("Error fetching messages:", error)
-      setError("Failed to load messages")
-    }
-  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (input.trim() && userCity) {
       try {
-        const res = await fetch("/api/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: input }),
-        })
-        if (!res.ok) {
-          throw new Error("Failed to post message")
-        }
-        setInput("")
-        fetchMessages()
+        const response = await fetch(`/api/messages?city=${encodeURIComponent(userCity)}`)
+        const data = await response.json()
+        setMessages(data)
       } catch (error) {
-        console.error("Error posting message:", error)
-        setError("Failed to send message")
+        setError("Failed to load messages. Please try again later.")
+      } finally {
+        setLoading(false)
       }
+    }
+
+    if (session?.user) {
+      fetchMessages()
+    }
+  }, [session, userCity])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!userCity) return
+
+    try {
+      const response = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newMessage, city: userCity }),
+      })
+
+      if (!response.ok) throw new Error("Failed to send message")
+
+      const newMessageData = await response.json()
+      setMessages((prev) => [...prev, newMessageData])
+      setNewMessage("")
+    } catch (error) {
+      setError("Failed to send message. Please try again.")
     }
   }
 
-  if (!userCity) {
+  if (loading) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>
-          Unable to determine your city. Please ensure your profile has a city set and contact support if the issue
-          persists.
-        </AlertDescription>
-      </Alert>
+      <Card>
+        <CardContent className="flex justify-center items-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertDescription className="flex flex-col gap-2">
+              {error}
+              {error.includes("city") && (
+                <Button variant="outline" size="sm" onClick={() => (window.location.href = "/dashboard/profile")}>
+                  Go to Profile Settings
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
-        <CardTitle>{userCity} Community Chat</CardTitle>
+        <CardTitle className="text-lg">Community Chat - {userCity}</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[300px] w-full pr-4" ref={scrollAreaRef}>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+        <div className="space-y-4 h-[300px] overflow-y-auto mb-4 p-4 border rounded-lg">
           {messages.map((message) => (
-            <div key={message.id} className="mb-4">
-              <div className="font-semibold">{message.username}</div>
-              <div>{message.content}</div>
-              <div className="text-xs text-muted-foreground">{new Date(message.createdAt).toLocaleString()}</div>
+            <div
+              key={message.id}
+              className={`p-2 rounded-lg ${
+                message.userId === session?.user?.id ? "bg-primary/10 ml-auto" : "bg-muted"
+              } max-w-[80%]`}
+            >
+              <p className="font-semibold text-sm">{message.userName}</p>
+              <p className="mt-1">{message.content}</p>
+              <p className="text-xs text-muted-foreground mt-1">{new Date(message.createdAt).toLocaleString()}</p>
             </div>
           ))}
-        </ScrollArea>
-      </CardContent>
-      <CardFooter>
-        <form onSubmit={handleSubmit} className="flex w-full space-x-2">
+        </div>
+        <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message..."
-            className="flex-grow"
+            className="flex-1"
           />
-          <Button type="submit">Send</Button>
+          <Button type="submit" disabled={!newMessage.trim()}>
+            Send
+          </Button>
         </form>
-      </CardFooter>
+      </CardContent>
     </Card>
   )
 }

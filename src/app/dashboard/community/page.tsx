@@ -15,7 +15,7 @@ export default async function CommunityPage() {
     redirect("/auth/login")
   }
 
-  const userCity = await getUserCity(session.user?.id)
+  const userCity = await getUserCity(session.user.id)
 
   const stats = [
     { name: "Active Volunteers", icon: Users, value: 127, change: 12 },
