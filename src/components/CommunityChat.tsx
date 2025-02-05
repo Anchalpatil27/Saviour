@@ -28,6 +28,7 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
   const [newMessage, setNewMessage] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
     async function fetchMessages() {
@@ -38,13 +39,14 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
       }
 
       try {
-        const response = await fetch(`/api/messages?city=${encodeURIComponent(userCity)}`)
+        const response = await fetch("/api/messages")
         if (!response.ok) {
-          const data = await response.json()
-          throw new Error(data.error || "Failed to load messages")
+          const errorData = await response.json().catch(() => ({ error: "Failed to load messages" }))
+          throw new Error(errorData.error || "Failed to load messages")
         }
         const data = await response.json()
         setMessages(data)
+        setError(null)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load messages. Please try again later.")
       } finally {
@@ -59,25 +61,34 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!userCity) return
+    if (!userCity || !newMessage.trim() || sending) return
+
+    setSending(true)
+    setError(null)
 
     try {
       const response = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newMessage }),
+        body: JSON.stringify({ content: newMessage.trim() }),
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Failed to send message")
+        const errorData = await response.json().catch(() => ({ error: "Failed to send message" }))
+        throw new Error(errorData.error || "Failed to send message")
       }
 
-      const newMessageData = await response.json()
-      setMessages((prev) => [...prev, newMessageData])
+      const data = await response.json()
+      if (!data) {
+        throw new Error("No data received from server")
+      }
+
+      setMessages((prev) => [data, ...prev])
       setNewMessage("")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message. Please try again.")
+    } finally {
+      setSending(false)
     }
   }
 
@@ -110,24 +121,17 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
     )
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Community Chat - {userCity}</CardTitle>
       </CardHeader>
       <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <div className="space-y-4 h-[300px] overflow-y-auto mb-4 p-4 border rounded-lg">
           {messages.map((message) => (
             <div
@@ -148,9 +152,17 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message..."
             className="flex-1"
+            disabled={sending}
           />
-          <Button type="submit" disabled={!newMessage.trim()}>
-            Send
+          <Button type="submit" disabled={sending || !newMessage.trim()}>
+            {sending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              "Send"
+            )}
           </Button>
         </form>
       </CardContent>
