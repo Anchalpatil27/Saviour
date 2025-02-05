@@ -12,17 +12,18 @@ export async function getUserCity(userId: string): Promise<string | null> {
   try {
     const { db } = await connectToDatabase()
 
-    // First try to find by ObjectId
     let user = null
+
+    // Try to find by ObjectId
     if (ObjectId.isValid(userId)) {
       user = await db.collection("users").findOne({ _id: new ObjectId(userId) }, { projection: { city: 1, email: 1 } })
-      console.log("getUserCity: Found user by ID:", user)
+      console.log("getUserCity: Attempt to find by ObjectId result:", user)
     }
 
-    // If no user found by ID, try to find by email
+    // If not found, try to find by email
     if (!user && userId.includes("@")) {
       user = await db.collection("users").findOne({ email: userId }, { projection: { city: 1, email: 1 } })
-      console.log("getUserCity: Found user by email:", user)
+      console.log("getUserCity: Attempt to find by email result:", user)
     }
 
     if (!user) {

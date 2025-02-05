@@ -18,7 +18,14 @@ export default async function CommunityPage() {
 
   console.log("Session user:", session.user)
 
-  const userCity = await getUserCity(session.user.id || session.user.email)
+  let userCity = null
+  if (session.user.id) {
+    userCity = await getUserCity(session.user.id)
+  }
+  if (!userCity && session.user.email) {
+    userCity = await getUserCity(session.user.email)
+  }
+
   console.log("User city from getUserCity:", userCity)
 
   const messageCount = userCity ? await getMessageCount(userCity) : 0

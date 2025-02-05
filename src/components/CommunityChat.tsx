@@ -91,21 +91,31 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
     )
   }
 
-  if (error) {
+  if (!userCity) {
     return (
       <Card>
         <CardContent>
           <Alert variant="destructive">
             <AlertDescription className="flex flex-col gap-2">
-              {error}
-              {error.includes("city") && (
-                <Link href="/dashboard/profile">
-                  <Button variant="outline" size="sm">
-                    Go to Profile Settings
-                  </Button>
-                </Link>
-              )}
+              Unable to determine your city. Please set your city in your profile.
+              <Link href="/dashboard/profile">
+                <Button variant="outline" size="sm">
+                  Go to Profile Settings
+                </Button>
+              </Link>
             </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         </CardContent>
       </Card>
