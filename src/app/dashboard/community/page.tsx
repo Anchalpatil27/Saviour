@@ -1,57 +1,23 @@
-"use client"
-
-import { useEffect, useState } from "react"
+import { getServerSession } from "next-auth/next"
+import { redirect } from "next/navigation"
+import { authOptions } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, HandHelping, MessageSquare, TrendingUp } from "lucide-react"
 import { CommunityForm } from "@/components/CommunityForm"
 import { Button } from "@/components/ui/button"
 import { CommunityChat } from "@/components/CommunityChat"
-import clientPromise from "@/lib/mongodb"
+import { getUserCity } from "@/lib/getUserCity"
+import { getMessageCount } from "@/app/actions/getMessageCount"
 
-async function getUserDetails(email: string) {
-  try {
-    const client = await clientPromise
-    const db = client.db("test")
-    const user = await db.collection("users").findOne({ email })
-    return user
-  } catch (error) {
-    console.error("Error fetching user details:", error)
-    return null
+export default async function CommunityPage() {
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user?.email) {
+    redirect("/auth/login")
   }
-}
 
-export default function CommunityPage() {
-  const [messageCount, setMessageCount] = useState(0)
-  const [userCity, setUserCity] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function fetchUserCity() {
-      const response = await fetch("/api/get-user-city")
-      const data = await response.json()
-      setUserCity(data.city)
-    }
-    fetchUserCity()
-  }, [])
-
-  useEffect(() => {
-    if (!userCity) return
-
-    const eventSource = new EventSource("/api/sse")
-
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      setMessageCount(data.count)
-    }
-
-    eventSource.onerror = (error) => {
-      console.error("EventSource failed:", error)
-      eventSource.close()
-    }
-
-    return () => {
-      eventSource.close()
-    }
-  }, [userCity])
+  const userCity = await getUserCity(session.user.id)
+  const messageCount = userCity ? await getMessageCount(userCity) : 0
 
   const stats = [
     { name: "Active Volunteers", icon: Users, value: 127, change: 12 },
