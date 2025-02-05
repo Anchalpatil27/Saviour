@@ -1,12 +1,11 @@
-import { getServerSession } from "next-auth/next"
-import { redirect } from "next/navigation"
-import { authOptions } from "@/lib/auth"
+"use client"
+
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, HandHelping, MessageSquare, TrendingUp } from "lucide-react"
 import { CommunityForm } from "@/components/CommunityForm"
 import { Button } from "@/components/ui/button"
 import { CommunityChat } from "@/components/CommunityChat"
-import { getUserCity } from "@/lib/getUserCity"
 import clientPromise from "@/lib/mongodb"
 
 async function getUserDetails(email: string) {
@@ -21,42 +20,38 @@ async function getUserDetails(email: string) {
   }
 }
 
-async function getMessageCount(city: string) {
-  try {
-    const client = await clientPromise
-    const db = client.db("test")
-    const count = await db.collection("messages").countDocuments({ city })
-    return count
-  } catch (error) {
-    console.error("Error fetching message count:", error)
-    return 0
-  }
-}
+export default function CommunityPage() {
+  const [messageCount, setMessageCount] = useState(0)
+  const [userCity, setUserCity] = useState<string | null>(null)
 
-export default async function CommunityPage() {
-  const session = await getServerSession(authOptions)
+  useEffect(() => {
+    async function fetchUserCity() {
+      const response = await fetch("/api/get-user-city")
+      const data = await response.json()
+      setUserCity(data.city)
+    }
+    fetchUserCity()
+  }, [])
 
-  if (!session?.user?.email) {
-    redirect("/auth/login")
-  }
+  useEffect(() => {
+    if (!userCity) return
 
-  const userDetails = await getUserDetails(session.user.email)
-  console.log("User details from DB:", userDetails)
+    const eventSource = new EventSource("/api/sse")
 
-  let userCity = null
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      setMessageCount(data.count)
+    }
 
-  if (userDetails?._id) {
-    userCity = await getUserCity(userDetails._id.toString())
-  }
+    eventSource.onerror = (error) => {
+      console.error("EventSource failed:", error)
+      eventSource.close()
+    }
 
-  if (!userCity && userDetails?.city) {
-    userCity = userDetails.city
-  }
-
-  console.log("Final userCity:", userCity)
-
-  // Fetch the message count for the user's city
-  const messageCount = userCity ? await getMessageCount(userCity) : 0
+    return () => {
+      eventSource.close()
+    }
+  }, [userCity])
 
   const stats = [
     { name: "Active Volunteers", icon: Users, value: 127, change: 12 },
