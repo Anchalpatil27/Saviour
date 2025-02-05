@@ -22,7 +22,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const router = useRouter()
-  const { data: session, update } = useSession()
+  const { update } = useSession()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
