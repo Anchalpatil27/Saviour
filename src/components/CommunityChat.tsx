@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { useSession } from "next-auth/react"
 import { Loader2 } from "lucide-react"
-import type React from "react"
+import Link from "next/link"
 
 interface Message {
   id: string
@@ -99,9 +99,11 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
             <AlertDescription className="flex flex-col gap-2">
               {error}
               {error.includes("city") && (
-                <Button variant="outline" size="sm" onClick={() => (window.location.href = "/dashboard/profile")}>
-                  Go to Profile Settings
-                </Button>
+                <Link href="/dashboard/profile">
+                  <Button variant="outline" size="sm">
+                    Go to Profile Settings
+                  </Button>
+                </Link>
               )}
             </AlertDescription>
           </Alert>

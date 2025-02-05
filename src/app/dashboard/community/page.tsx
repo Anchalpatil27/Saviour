@@ -16,7 +16,11 @@ export default async function CommunityPage() {
     redirect("/auth/login")
   }
 
-  const userCity = await getUserCity(session.user.id)
+  console.log("Session user:", session.user)
+
+  const userCity = await getUserCity(session.user.id || session.user.email)
+  console.log("User city from getUserCity:", userCity)
+
   const messageCount = userCity ? await getMessageCount(userCity) : 0
 
   const stats = [

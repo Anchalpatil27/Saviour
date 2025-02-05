@@ -1,15 +1,16 @@
-import clientPromise from "./mongodb"
+import { connectToDatabase } from "./mongodb"
 import { ObjectId } from "mongodb"
 
 export async function getUserCity(userId: string): Promise<string | null> {
+  console.log("getUserCity called with userId:", userId)
+
   if (!userId) {
     console.error("getUserCity: No userId provided")
     return null
   }
 
   try {
-    const client = await clientPromise
-    const db = client.db("test")
+    const { db } = await connectToDatabase()
 
     // First try to find by ObjectId
     let user = null
@@ -19,7 +20,7 @@ export async function getUserCity(userId: string): Promise<string | null> {
     }
 
     // If no user found by ID, try to find by email
-    if (!user) {
+    if (!user && userId.includes("@")) {
       user = await db.collection("users").findOne({ email: userId }, { projection: { city: 1, email: 1 } })
       console.log("getUserCity: Found user by email:", user)
     }
@@ -34,6 +35,7 @@ export async function getUserCity(userId: string): Promise<string | null> {
       return null
     }
 
+    console.log("getUserCity: Returning city:", user.city)
     return user.city
   } catch (error) {
     console.error("Error in getUserCity:", error)
