@@ -21,6 +21,18 @@ async function getUserDetails(email: string) {
   }
 }
 
+async function getMessageCount(city: string) {
+  try {
+    const client = await clientPromise
+    const db = client.db("test")
+    const count = await db.collection("messages").countDocuments({ city })
+    return count
+  } catch (error) {
+    console.error("Error fetching message count:", error)
+    return 0
+  }
+}
+
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions)
 
@@ -28,7 +40,6 @@ export default async function CommunityPage() {
     redirect("/auth/login")
   }
 
-  // Get full user details to ensure we have the correct data
   const userDetails = await getUserDetails(session.user.email)
   console.log("User details from DB:", userDetails)
 
@@ -44,10 +55,13 @@ export default async function CommunityPage() {
 
   console.log("Final userCity:", userCity)
 
+  // Fetch the message count for the user's city
+  const messageCount = userCity ? await getMessageCount(userCity) : 0
+
   const stats = [
     { name: "Active Volunteers", icon: Users, value: 127, change: 12 },
     { name: "Open Requests", icon: HandHelping, value: 15, change: -3 },
-    { name: "Community Messages", icon: MessageSquare, value: 89, change: 24 },
+    { name: "Community Messages", icon: MessageSquare, value: messageCount, change: null },
   ]
 
   return (
@@ -62,12 +76,14 @@ export default async function CommunityPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground flex items-center mt-1">
-                <TrendingUp
-                  className={`h-3 w-3 mr-1 ${stat.change > 0 ? "text-green-500" : "text-red-500 transform rotate-180"}`}
-                />
-                {Math.abs(stat.change)} since last week
-              </p>
+              {stat.change !== null && (
+                <p className="text-xs text-muted-foreground flex items-center mt-1">
+                  <TrendingUp
+                    className={`h-3 w-3 mr-1 ${stat.change > 0 ? "text-green-500" : "text-red-500 transform rotate-180"}`}
+                  />
+                  {Math.abs(stat.change)} since last week
+                </p>
+              )}
             </CardContent>
           </Card>
         ))}
