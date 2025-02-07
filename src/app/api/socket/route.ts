@@ -107,23 +107,10 @@ export async function GET() {
   }
 }
 
-import { MongoClient, Db } from "mongodb"
-
-let cachedClient: MongoClient | null = null
-let cachedDb: Db | null = null
-
 async function connectToDatabase() {
-  if (cachedDb) {
-    return { db: cachedDb }
-  }
-
-  const client = new MongoClient(process.env.MONGODB_URI as string)
-  await client.connect()
-  const db = client.db(process.env.MONGODB_DB as string)
-
-  cachedClient = client
-  cachedDb = db
-
+  const mongodb = await import("@/lib/mongodb")
+  if (!mongodb || !mongodb.connectToDatabase) throw new Error("Failed to connect to database")
+  const { db } = await mongodb.connectToDatabase()
   return { db }
 }
 
