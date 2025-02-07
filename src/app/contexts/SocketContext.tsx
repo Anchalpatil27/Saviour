@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { io, type Socket } from "socket.io-client"
 import { useSession } from "next-auth/react"
 
@@ -9,12 +9,14 @@ interface SocketContextType {
   socket: Socket | null
   isConnected: boolean
   currentCity: string | null
+  reconnect: () => void
 }
 
 const SocketContext = createContext<SocketContextType>({
   socket: null,
   isConnected: false,
   currentCity: null,
+  reconnect: () => {},
 })
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
@@ -23,11 +25,19 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [currentCity, setCurrentCity] = useState<string | null>(null)
   const { data: session, status } = useSession()
 
-  useEffect(() => {
+  const initializeSocket = useCallback(() => {
+    if (socket) {
+      socket.close()
+    }
+
     console.log("Initializing socket connection...")
     const socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
       path: "/api/socket",
       addTrailingSlash: false,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      transports: ["websocket", "polling"],
     })
 
     socketInstance.on("connect", () => {
@@ -46,17 +56,28 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     })
 
     setSocket(socketInstance)
+  }, [socket])
+
+  // Initialize socket when component mounts
+  useEffect(() => {
+    initializeSocket()
 
     return () => {
-      console.log("Cleaning up socket connection...")
-      socketInstance.close()
+      if (socket) {
+        console.log("Cleaning up socket connection...")
+        socket.close()
+      }
     }
-  }, [])
+  }, [initializeSocket]) // Added initializeSocket to dependency array
 
   // Auto-join city room when session is available
   useEffect(() => {
     if (!socket || !session?.user?.email || status !== "authenticated") {
-      console.log("Waiting for socket connection and session...", { socket: !!socket, session: !!session, status })
+      console.log("Waiting for socket connection and session...", {
+        socket: !!socket,
+        session: !!session,
+        status,
+      })
       return
     }
 
@@ -88,7 +109,11 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     joinUserCity()
   }, [socket, session, status])
 
-  return <SocketContext.Provider value={{ socket, isConnected, currentCity }}>{children}</SocketContext.Provider>
+  return (
+    <SocketContext.Provider value={{ socket, isConnected, currentCity, reconnect: initializeSocket }}>
+      {children}
+    </SocketContext.Provider>
+  )
 }
 
 export const useSocket = () => useContext(SocketContext)

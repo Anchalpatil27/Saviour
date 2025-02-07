@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { useSession } from "next-auth/react"
-import { Loader2, WifiOff } from "lucide-react"
+import { Loader2, WifiOff, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { useSocket } from "@/app/contexts/SocketContext"
 
@@ -21,12 +21,13 @@ interface Message {
 
 export function CommunityChat() {
   const { data: session } = useSession()
-  const { socket, isConnected, currentCity } = useSocket()
+  const { socket, isConnected, currentCity, reconnect } = useSocket()
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     // Add debug logging
@@ -63,10 +64,6 @@ export function CommunityChat() {
       setLoading(false)
     })
 
-    // Request recent messages
-    console.log("CommunityChat - Requesting recent messages for city:", currentCity)
-    socket.emit("get-recent-messages", currentCity)
-
     return () => {
       console.log("CommunityChat - Cleaning up socket listeners")
       socket.off("new-message")
@@ -74,6 +71,19 @@ export function CommunityChat() {
       socket.off("error")
     }
   }, [socket, currentCity])
+
+  // Auto-retry connection if initialization fails
+  useEffect(() => {
+    if (!socket && !isConnected && retryCount < 3) {
+      const timer = setTimeout(() => {
+        console.log(`Retrying connection... Attempt ${retryCount + 1}`)
+        setRetryCount((prev) => prev + 1)
+        reconnect()
+      }, 2000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [socket, isConnected, retryCount, reconnect])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -98,14 +108,36 @@ export function CommunityChat() {
     }
   }
 
-  // Show loading state while waiting for socket connection and city
-  if (!socket || !isConnected || loading) {
+  // Show initialization error with retry button
+  if (!socket && retryCount >= 3) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center gap-4 p-8">
+          <div className="text-destructive">Failed to initialize chat</div>
+          <Button
+            onClick={() => {
+              setRetryCount(0)
+              reconnect()
+            }}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry Connection
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Show loading state while waiting for socket connection
+  if (!socket || !isConnected) {
     return (
       <Card>
         <CardContent className="flex justify-center items-center p-8">
           <Loader2 className="h-8 w-8 animate-spin" />
           <span className="ml-2">
-            {!socket ? "Initializing chat..." : !isConnected ? "Connecting to chat..." : "Loading messages..."}
+            {retryCount > 0 ? `Retrying connection (${retryCount}/3)...` : "Initializing chat..."}
           </span>
         </CardContent>
       </Card>
@@ -127,6 +159,17 @@ export function CommunityChat() {
               </Link>
             </AlertDescription>
           </Alert>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex justify-center items-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading messages...</span>
         </CardContent>
       </Card>
     )
