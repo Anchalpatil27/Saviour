@@ -21,7 +21,9 @@ interface Message {
 
 export function CommunityChat() {
   const { data: session } = useSession()
-  const { socket, isConnected, currentCity, isLoading, error } = useSocket()
+  const socketData = useSocket()
+  console.log("CommunityChat: useSocket data", socketData)
+  const { socket, isConnected, currentCity, isLoading, error } = socketData
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [sending, setSending] = useState(false)
@@ -29,8 +31,12 @@ export function CommunityChat() {
 
   useEffect(() => {
     console.log("CommunityChat useEffect", { socket, currentCity, isConnected })
-    if (!socket || !currentCity) return
+    if (!socket || !currentCity) {
+      console.log("Socket or currentCity not available, skipping effect")
+      return
+    }
 
+    console.log("Setting up socket event listeners")
     socket.on("new-message", (message: Message) => {
       console.log("New message received", message)
       setMessages((prev) => [message, ...prev])
@@ -46,10 +52,13 @@ export function CommunityChat() {
 
     return () => {
       console.log("CommunityChat cleanup")
-      socket.off("new-message")
-      socket.off("recent-messages")
+      if (socket) {
+        console.log("Removing socket event listeners")
+        socket.off("new-message")
+        socket.off("recent-messages")
+      }
     }
-  }, [socket, currentCity, isConnected]) // Added isConnected to dependencies
+  }, [socket, currentCity, isConnected])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
