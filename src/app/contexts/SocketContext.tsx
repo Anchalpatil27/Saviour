@@ -21,7 +21,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [currentCity, setCurrentCity] = useState<string | null>(null)
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
 
   useEffect(() => {
     const socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
@@ -48,25 +48,35 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
   // Auto-join city room when session is available
   useEffect(() => {
-    if (!socket || !session?.user?.email) return
+    if (!socket || !session?.user?.email || status !== "authenticated") return
 
     async function joinUserCity() {
       try {
+        console.log("Fetching user city...")
         const response = await fetch("/api/user/city")
+        if (!response.ok) {
+          throw new Error(`Failed to fetch city: ${response.status}`)
+        }
         const data = await response.json()
+
+        console.log("Received city data:", data)
 
         if (data.city && socket) {
           socket.emit("join-city", data.city)
           setCurrentCity(data.city)
           console.log("Joined city room:", data.city)
+        } else {
+          console.log("No city found in response:", data)
+          setCurrentCity(null)
         }
       } catch (error) {
         console.error("Failed to join city room:", error)
+        setCurrentCity(null)
       }
     }
 
     joinUserCity()
-  }, [socket, session])
+  }, [socket, session, status])
 
   return <SocketContext.Provider value={{ socket, isConnected, currentCity }}>{children}</SocketContext.Provider>
 }

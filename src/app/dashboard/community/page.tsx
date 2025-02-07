@@ -15,8 +15,8 @@ export default async function CommunityPage() {
   }
 
   const stats = [
-    { name: "Active Volunteers", icon: Users, value: 127, change: 12 },
-    { name: "Open Requests", icon: HandHelping, value: 15, change: -3 },
+    { name: "Active Volunteers", icon: Users, value: 0, change: null },
+    { name: "Open Requests", icon: HandHelping, value: 0, change: null },
     { name: "Community Messages", icon: MessageSquare, value: 0, change: null },
   ]
 

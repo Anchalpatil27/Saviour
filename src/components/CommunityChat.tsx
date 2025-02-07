@@ -29,21 +29,36 @@ export function CommunityChat() {
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
-    if (!socket || !currentCity) return
+    // Add debug logging
+    console.log("CommunityChat - Current city:", currentCity)
+    console.log("CommunityChat - Socket connected:", isConnected)
+  }, [currentCity, isConnected])
+
+  useEffect(() => {
+    if (!socket || !currentCity) {
+      console.log("CommunityChat - Waiting for socket or city...")
+      return
+    }
+
+    setLoading(true)
+    console.log("CommunityChat - Setting up socket listeners for city:", currentCity)
 
     // Listen for new messages
     socket.on("new-message", (message: Message) => {
+      console.log("CommunityChat - Received new message:", message)
       setMessages((prev) => [message, ...prev])
     })
 
     // Listen for recent messages when joining a room
     socket.on("recent-messages", (recentMessages: Message[]) => {
+      console.log("CommunityChat - Received recent messages:", recentMessages)
       setMessages(recentMessages)
       setLoading(false)
     })
 
     // Listen for errors
     socket.on("error", (errorMessage: string) => {
+      console.error("CommunityChat - Socket error:", errorMessage)
       setError(errorMessage)
       setLoading(false)
     })
@@ -78,6 +93,19 @@ export function CommunityChat() {
     }
   }
 
+  // Show loading state while waiting for socket connection and city
+  if (!socket || !isConnected) {
+    return (
+      <Card>
+        <CardContent className="flex justify-center items-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Connecting to chat...</span>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Show city not set message
   if (!currentCity) {
     return (
       <Card>
@@ -102,6 +130,7 @@ export function CommunityChat() {
       <Card>
         <CardContent className="flex justify-center items-center p-8">
           <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading messages...</span>
         </CardContent>
       </Card>
     )
