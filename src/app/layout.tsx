@@ -7,7 +7,7 @@ import { Analytics } from "@vercel/analytics/react"
 import { getServerSession } from "next-auth/next"
 import { SessionProvider } from "next-auth/react"
 import { SocketProvider } from "@/app/contexts/SocketContext"
-import type React from "react"
+import type React from "react" // Added import for React
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 const merriweather = Merriweather({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-merriweather" })
