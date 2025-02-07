@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,7 +31,15 @@ export function CommunityChat() {
   const [chatError, setChatError] = useState<string | null>(null)
 
   useEffect(() => {
-    console.log("CommunityChat useEffect", { socket, currentCity, isConnected })
+    console.log("CommunityChat useEffect", { socket, currentCity, isConnected, isLoading, error })
+    if (isLoading) {
+      console.log("Still loading, skipping effect")
+      return
+    }
+    if (error) {
+      console.log("Error in SocketContext:", error)
+      return
+    }
     if (!socket || !currentCity) {
       console.log("Socket or currentCity not available, skipping effect")
       return
@@ -58,7 +67,7 @@ export function CommunityChat() {
         socket.off("recent-messages")
       }
     }
-  }, [socket, currentCity, isConnected])
+  }, [socket, currentCity, isConnected, isLoading, error])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -99,15 +108,12 @@ export function CommunityChat() {
         <CardContent className="flex flex-col justify-center items-center p-8">
           <Loader2 className="h-8 w-8 animate-spin mb-2" />
           <span className="text-center">Loading chat...</span>
-          <span className="text-sm text-muted-foreground mt-2">
-            Current state: {JSON.stringify({ isConnected, currentCity, isLoading, error }, null, 2)}
-          </span>
         </CardContent>
       </Card>
     )
   }
 
-  if (error || !currentCity) {
+  if (error) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -115,12 +121,28 @@ export function CommunityChat() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error Loading Chat</AlertTitle>
             <AlertDescription>
-              <p className="mb-2">
-                {error || "Unable to load your city information. Please check your profile settings."}
-              </p>
-              <p className="mb-2">
-                Debug info: {JSON.stringify({ isConnected, currentCity, isLoading, error }, null, 2)}
-              </p>
+              <p className="mb-2">{error}</p>
+              <Link href="/dashboard/profile">
+                <Button variant="outline" size="sm">
+                  Go to Profile Settings
+                </Button>
+              </Link>
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!currentCity) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>City Not Set</AlertTitle>
+            <AlertDescription>
+              <p className="mb-2">Please set your city in your profile to use the chat.</p>
               <Link href="/dashboard/profile">
                 <Button variant="outline" size="sm">
                   Go to Profile Settings
