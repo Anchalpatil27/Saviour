@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { useSession } from "next-auth/react"
-import { Loader2, WifiOff } from "lucide-react"
+import { Loader2, WifiOff, MapPin } from "lucide-react"
 import Link from "next/link"
 import { useSocket } from "@/app/contexts/SocketContext"
 
@@ -76,10 +76,15 @@ export function CommunityChat() {
   if (!currentCity) {
     return (
       <Card>
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertDescription className="flex flex-col gap-2">
-              Unable to determine your city. Please set your city in your profile.
+        <CardContent className="pt-6">
+          <Alert variant="default">
+            <MapPin className="h-4 w-4" />
+            <AlertTitle>City Not Set</AlertTitle>
+            <AlertDescription>
+              <p className="mb-2">
+                We couldn't determine your city. To join the community chat, please set your city in your profile
+                settings.
+              </p>
               <Link href="/dashboard/profile">
                 <Button variant="outline" size="sm">
                   Go to Profile Settings
