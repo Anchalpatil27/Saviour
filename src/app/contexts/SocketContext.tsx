@@ -9,68 +9,101 @@ interface SocketContextType {
   socket: Socket | null
   isConnected: boolean
   currentCity: string | null
+  isLoading: boolean
+  error: string | null
 }
 
 const SocketContext = createContext<SocketContextType>({
   socket: null,
   isConnected: false,
   currentCity: null,
+  isLoading: true,
+  error: null,
 })
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [currentCity, setCurrentCity] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const { data: session, status } = useSession()
 
   useEffect(() => {
-    if (status !== "authenticated" || !session?.user?.email) return
+    if (status !== "authenticated" || !session?.user?.email) {
+      setIsLoading(false)
+      return
+    }
+
+    let socketInstance: Socket | null = null
 
     const fetchCityAndInitSocket = async () => {
       try {
+        setIsLoading(true)
+        setError(null)
+
         const response = await fetch("/api/user/city")
-        if (!response.ok) throw new Error("Failed to fetch city")
         const data = await response.json()
 
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch city")
+        }
+
         if (!data.city) {
-          console.warn("City not set in user profile")
-          setCurrentCity(null)
-        } else {
-          setCurrentCity(data.city)
-
-          const socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
-            path: "/api/socket",
-          })
-
-          socketInstance.on("connect", () => {
-            console.log("Socket connected")
-            setIsConnected(true)
-            socketInstance.emit("join-city", data.city)
-          })
-
-          socketInstance.on("disconnect", () => {
-            console.log("Socket disconnected")
-            setIsConnected(false)
-          })
-
-          setSocket(socketInstance)
+          throw new Error("City not found in user profile")
         }
 
-        return () => {
-          if (socket) {
-            socket.disconnect()
-          }
-        }
+        setCurrentCity(data.city)
+
+        // Initialize socket only after we have the city
+        socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
+          path: "/api/socket",
+        })
+
+        socketInstance.on("connect", () => {
+          console.log("Socket connected")
+          setIsConnected(true)
+          socketInstance?.emit("join-city", data.city)
+        })
+
+        socketInstance.on("disconnect", () => {
+          console.log("Socket disconnected")
+          setIsConnected(false)
+        })
+
+        setSocket(socketInstance)
       } catch (error) {
-        console.error("Error initializing socket:", error)
+        console.error("Error in fetchCityAndInitSocket:", error)
+        setError(error instanceof Error ? error.message : "Failed to initialize chat")
         setCurrentCity(null)
+      } finally {
+        setIsLoading(false)
       }
     }
 
     fetchCityAndInitSocket()
-  }, [session, status, socket]) // Added socket to dependencies
 
-  return <SocketContext.Provider value={{ socket, isConnected, currentCity }}>{children}</SocketContext.Provider>
+    return () => {
+      if (socketInstance) {
+        console.log("Cleaning up socket connection")
+        socketInstance.disconnect()
+      }
+    }
+  }, [session, status])
+
+  return (
+    <SocketContext.Provider
+      value={{
+        socket,
+        isConnected,
+        currentCity,
+        isLoading,
+        error,
+      }}
+    >
+      {children}
+    </SocketContext.Provider>
+  )
 }
 
 export const useSocket = () => useContext(SocketContext)

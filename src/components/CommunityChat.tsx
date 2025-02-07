@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { useSession } from "next-auth/react"
-import { Loader2, WifiOff, MapPin } from "lucide-react"
+import { Loader2, WifiOff, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { useSocket } from "@/app/contexts/SocketContext"
 
@@ -21,17 +21,14 @@ interface Message {
 
 export function CommunityChat() {
   const { data: session } = useSession()
-  const { socket, isConnected, currentCity } = useSocket()
+  const { socket, isConnected, currentCity, isLoading, error } = useSocket()
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
+  const [chatError, setChatError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!socket || !currentCity) return
-
-    setLoading(true)
 
     socket.on("new-message", (message: Message) => {
       setMessages((prev) => [message, ...prev])
@@ -39,7 +36,6 @@ export function CommunityChat() {
 
     socket.on("recent-messages", (recentMessages: Message[]) => {
       setMessages(recentMessages)
-      setLoading(false)
     })
 
     socket.emit("get-recent-messages", currentCity)
@@ -55,7 +51,7 @@ export function CommunityChat() {
     if (!currentCity || !newMessage.trim() || sending || !socket || !isConnected) return
 
     setSending(true)
-    setError(null)
+    setChatError(null)
 
     try {
       socket.emit("chat-message", {
@@ -67,41 +63,41 @@ export function CommunityChat() {
 
       setNewMessage("")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send message. Please try again.")
+      setChatError(err instanceof Error ? err.message : "Failed to send message. Please try again.")
     } finally {
       setSending(false)
     }
   }
 
-  if (!currentCity) {
+  if (isLoading) {
     return (
       <Card>
-        <CardContent className="pt-6">
-          <Alert className="bg-yellow-50 border-yellow-200">
-            <MapPin className="h-4 w-4 text-yellow-600" />
-            <AlertTitle className="text-yellow-800">Loading City Information</AlertTitle>
-            <AlertDescription className="text-yellow-700">
-              <p className="mb-2">
-                We&apos;re retrieving your city information. If this takes too long, please check your profile settings.
-              </p>
-              <Link href="/dashboard/profile">
-                <Button variant="outline" size="sm" className="border-yellow-300 text-yellow-700 hover:bg-yellow-100">
-                  Go to Profile Settings
-                </Button>
-              </Link>
-            </AlertDescription>
-          </Alert>
+        <CardContent className="flex justify-center items-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading chat...</span>
         </CardContent>
       </Card>
     )
   }
 
-  if (loading) {
+  if (error || !currentCity) {
     return (
       <Card>
-        <CardContent className="flex justify-center items-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading chat for {currentCity || "your city"}...</span>
+        <CardContent className="pt-6">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error Loading Chat</AlertTitle>
+            <AlertDescription>
+              <p className="mb-2">
+                {error || "Unable to load your city information. Please check your profile settings."}
+              </p>
+              <Link href="/dashboard/profile">
+                <Button variant="outline" size="sm">
+                  Go to Profile Settings
+                </Button>
+              </Link>
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     )
@@ -121,9 +117,9 @@ export function CommunityChat() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {error && (
+        {chatError && (
           <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{chatError}</AlertDescription>
           </Alert>
         )}
         <div className="space-y-4 h-[300px] overflow-y-auto mb-4 p-4 border rounded-lg">
