@@ -6,8 +6,6 @@ import { Users, HandHelping, MessageSquare, TrendingUp } from "lucide-react"
 import { CommunityForm } from "@/components/CommunityForm"
 import { Button } from "@/components/ui/button"
 import { CommunityChat } from "@/components/CommunityChat"
-import { getUserCity } from "@/lib/getUserCity"
-import { getMessageCount } from "@/app/actions/getMessageCount"
 
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions)
@@ -16,24 +14,10 @@ export default async function CommunityPage() {
     redirect("/auth/login")
   }
 
-  console.log("Session user:", session.user)
-
-  let userCity = null
-  if (session.user.id) {
-    userCity = await getUserCity(session.user.id)
-  }
-  if (!userCity && session.user.email) {
-    userCity = await getUserCity(session.user.email)
-  }
-
-  console.log("User city from getUserCity:", userCity)
-
-  const messageCount = userCity ? await getMessageCount(userCity) : 0
-
   const stats = [
     { name: "Active Volunteers", icon: Users, value: 127, change: 12 },
     { name: "Open Requests", icon: HandHelping, value: 15, change: -3 },
-    { name: "Community Messages", icon: MessageSquare, value: messageCount, change: null },
+    { name: "Community Messages", icon: MessageSquare, value: 0, change: null },
   ]
 
   return (
@@ -69,7 +53,7 @@ export default async function CommunityPage() {
             <CommunityForm />
           </CardContent>
         </Card>
-        <CommunityChat userCity={userCity} />
+        <CommunityChat />
       </div>
       <Card>
         <CardHeader>

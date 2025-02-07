@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { useSession } from "next-auth/react"
-import { Loader2 } from "lucide-react"
+import { Loader2, WifiOff } from "lucide-react"
 import Link from "next/link"
+import { useSocket } from "@/app/contexts/SocketContext"
 
 interface Message {
   id: string
@@ -18,12 +19,9 @@ interface Message {
   createdAt: Date
 }
 
-interface CommunityChatProps {
-  userCity: string | null
-}
-
-export function CommunityChat({ userCity }: CommunityChatProps) {
+export function CommunityChat() {
   const { data: session } = useSession()
+  const { socket, isConnected, currentCity } = useSocket()
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [loading, setLoading] = useState(true)
@@ -31,59 +29,47 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
-    async function fetchMessages() {
-      if (!userCity) {
-        setError("Unable to determine your city. Please set your city in your profile.")
-        setLoading(false)
-        return
-      }
+    if (!socket || !currentCity) return
 
-      try {
-        const response = await fetch("/api/messages")
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: "Failed to load messages" }))
-          throw new Error(errorData.error || "Failed to load messages")
-        }
-        const data = await response.json()
-        setMessages(data)
-        setError(null)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load messages. Please try again later.")
-      } finally {
-        setLoading(false)
-      }
-    }
+    // Listen for new messages
+    socket.on("new-message", (message: Message) => {
+      setMessages((prev) => [message, ...prev])
+    })
 
-    if (session?.user) {
-      fetchMessages()
+    // Listen for recent messages when joining a room
+    socket.on("recent-messages", (recentMessages: Message[]) => {
+      setMessages(recentMessages)
+      setLoading(false)
+    })
+
+    // Listen for errors
+    socket.on("error", (errorMessage: string) => {
+      setError(errorMessage)
+      setLoading(false)
+    })
+
+    return () => {
+      socket.off("new-message")
+      socket.off("recent-messages")
+      socket.off("error")
     }
-  }, [session, userCity])
+  }, [socket, currentCity])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!userCity || !newMessage.trim() || sending) return
+    if (!currentCity || !newMessage.trim() || sending || !socket || !isConnected) return
 
     setSending(true)
     setError(null)
 
     try {
-      const response = await fetch("/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newMessage.trim() }),
+      socket.emit("chat-message", {
+        content: newMessage.trim(),
+        city: currentCity,
+        userId: session?.user?.id || "",
+        userName: session?.user?.name || "Anonymous",
       })
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Failed to send message" }))
-        throw new Error(errorData.error || "Failed to send message")
-      }
-
-      const data = await response.json()
-      if (!data) {
-        throw new Error("No data received from server")
-      }
-
-      setMessages((prev) => [data, ...prev])
       setNewMessage("")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message. Please try again.")
@@ -92,17 +78,7 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
     }
   }
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="flex justify-center items-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (!userCity) {
+  if (!currentCity) {
     return (
       <Card>
         <CardContent>
@@ -121,10 +97,28 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
     )
   }
 
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex justify-center items-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Community Chat - {userCity}</CardTitle>
+        <CardTitle className="text-lg flex items-center justify-between">
+          <span>Community Chat - {currentCity}</span>
+          {!isConnected && (
+            <div className="flex items-center text-destructive text-sm">
+              <WifiOff className="h-4 w-4 mr-1" />
+              Offline
+            </div>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {error && (
@@ -150,11 +144,11 @@ export function CommunityChat({ userCity }: CommunityChatProps) {
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message..."
+            placeholder={isConnected ? "Type your message..." : "Reconnecting..."}
             className="flex-1"
-            disabled={sending}
+            disabled={sending || !isConnected}
           />
-          <Button type="submit" disabled={sending || !newMessage.trim()}>
+          <Button type="submit" disabled={sending || !isConnected || !newMessage.trim()}>
             {sending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

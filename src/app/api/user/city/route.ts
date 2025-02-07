@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import clientPromise from "@/lib/mongodb"
+import { connectToDatabase } from "@/lib/mongodb"
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -11,19 +11,17 @@ export async function GET() {
   }
 
   try {
-    const client = await clientPromise
-    const db = client.db("test")
-
+    const { db } = await connectToDatabase()
     const user = await db.collection("users").findOne({ email: session.user.email }, { projection: { city: 1 } })
 
-    if (!user || !user.city) {
-      return NextResponse.json({ error: "City not set in your profile" }, { status: 400 })
+    if (!user?.city) {
+      return NextResponse.json({ error: "City not set" }, { status: 404 })
     }
 
     return NextResponse.json({ city: user.city })
   } catch (error) {
     console.error("Error fetching user city:", error)
-    return NextResponse.json({ error: "Failed to fetch user city" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch city" }, { status: 500 })
   }
 }
 
