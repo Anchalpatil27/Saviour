@@ -69,12 +69,24 @@ export function CommunityChat() {
     }
   }
 
+  useEffect(() => {
+    console.log("CommunityChat component mounted/updated", {
+      isConnected,
+      currentCity,
+      isLoading,
+      error,
+    })
+  }, [isConnected, currentCity, isLoading, error])
+
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="flex justify-center items-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading chat...</span>
+        <CardContent className="flex flex-col justify-center items-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin mb-2" />
+          <span className="text-center">Loading chat...</span>
+          <span className="text-sm text-muted-foreground mt-2">
+            This may take a few moments. If it persists, please refresh the page.
+          </span>
         </CardContent>
       </Card>
     )

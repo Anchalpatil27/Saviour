@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { connectToDatabase } from "@/lib/mongodb"
 
 export async function GET() {
+  console.log("User city API - Request received")
   const session = await getServerSession(authOptions)
 
   if (!session?.user?.email) {
@@ -13,6 +14,7 @@ export async function GET() {
 
   try {
     const { db } = await connectToDatabase()
+    console.log("User city API - Connected to database")
 
     // Add logging for debugging
     console.log("User city API - Fetching city for email:", session.user.email)
@@ -28,6 +30,7 @@ export async function GET() {
       return NextResponse.json({ error: "City not set" }, { status: 404 })
     }
 
+    console.log("User city API - Sending response:", { city: user.city })
     console.log("User city API - Successfully found city:", user.city)
     return NextResponse.json({ city: user.city })
   } catch (error) {

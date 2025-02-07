@@ -38,12 +38,15 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     let socketInstance: Socket | null = null
 
     const fetchCityAndInitSocket = async () => {
+      console.log("Starting fetchCityAndInitSocket")
       try {
         setIsLoading(true)
         setError(null)
 
         const response = await fetch("/api/user/city")
         const data = await response.json()
+
+        console.log("City data fetched:", data)
 
         if (!response.ok) {
           throw new Error(data.error || "Failed to fetch city")
@@ -55,12 +58,14 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
         setCurrentCity(data.city)
 
+        console.log("Initializing socket with city:", data.city)
         // Initialize socket only after we have the city
         socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
           path: "/api/socket",
         })
 
         socketInstance.on("connect", () => {
+          console.log("Socket connected, joining city:", data.city)
           console.log("Socket connected")
           setIsConnected(true)
           socketInstance?.emit("join-city", data.city)
@@ -72,6 +77,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         })
 
         setSocket(socketInstance)
+        console.log("fetchCityAndInitSocket completed successfully")
       } catch (error) {
         console.error("Error in fetchCityAndInitSocket:", error)
         setError(error instanceof Error ? error.message : "Failed to initialize chat")
