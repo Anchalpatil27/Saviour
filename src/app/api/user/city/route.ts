@@ -5,16 +5,16 @@ import { connectToDatabase } from "@/lib/mongodb"
 
 export async function GET() {
   console.log("User city API - Request received")
-  const session = await getServerSession(authOptions)
-
-  console.log("User city API - Session:", session)
-
-  if (!session?.user?.email) {
-    console.error("User city API - No authenticated session found")
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
 
   try {
+    const session = await getServerSession(authOptions)
+    console.log("User city API - Session:", JSON.stringify(session, null, 2))
+
+    if (!session?.user?.email) {
+      console.error("User city API - No authenticated session found")
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     console.log("User city API - Connecting to database")
     const { db } = await connectToDatabase()
     console.log("User city API - Connected to database")
@@ -39,8 +39,8 @@ export async function GET() {
     console.log("User city API - Successfully found city:", user.city)
     return NextResponse.json({ city: user.city })
   } catch (error) {
-    console.error("Error fetching user city:", error)
-    return NextResponse.json({ error: "Failed to fetch city" }, { status: 500 })
+    console.error("Error in User city API:", error)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }
 

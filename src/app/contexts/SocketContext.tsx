@@ -43,17 +43,22 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(true)
         setError(null)
 
+        if (!session?.user?.email) {
+          throw new Error("No user email found in session")
+        }
+
         console.log("Fetching city data...")
         const response = await fetch("/api/user/city")
-        console.log("City fetch response:", response)
-        const data = await response.json()
-        console.log("City data received:", data)
-
-        console.log("City data fetched:", data)
+        console.log("City fetch response status:", response.status)
 
         if (!response.ok) {
-          throw new Error(data.error || "Failed to fetch city")
+          const errorText = await response.text()
+          console.error("Error response:", errorText)
+          throw new Error(`Failed to fetch city: ${response.status} ${errorText}`)
         }
+
+        const data = await response.json()
+        console.log("City data received:", data)
 
         if (!data.city) {
           throw new Error("City not found in user profile")
@@ -62,16 +67,19 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         setCurrentCity(data.city)
 
         console.log("Initializing socket with city:", data.city)
-        // Initialize socket only after we have the city
         socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
           path: "/api/socket",
         })
 
         socketInstance.on("connect", () => {
           console.log("Socket connected, joining city:", data.city)
-          console.log("Socket connected")
           setIsConnected(true)
           socketInstance?.emit("join-city", data.city)
+        })
+
+        socketInstance.on("connect_error", (error) => {
+          console.error("Socket connection error:", error)
+          setError(`Socket connection error: ${error.message}`)
         })
 
         socketInstance.on("disconnect", () => {

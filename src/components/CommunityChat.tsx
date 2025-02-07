@@ -85,7 +85,7 @@ export function CommunityChat() {
           <Loader2 className="h-8 w-8 animate-spin mb-2" />
           <span className="text-center">Loading chat...</span>
           <span className="text-sm text-muted-foreground mt-2">
-            Current state: {JSON.stringify({ isConnected, currentCity, isLoading, error })}
+            Current state: {JSON.stringify({ isConnected, currentCity, isLoading, error }, null, 2)}
           </span>
         </CardContent>
       </Card>
@@ -102,6 +102,9 @@ export function CommunityChat() {
             <AlertDescription>
               <p className="mb-2">
                 {error || "Unable to load your city information. Please check your profile settings."}
+              </p>
+              <p className="mb-2">
+                Debug info: {JSON.stringify({ isConnected, currentCity, isLoading, error }, null, 2)}
               </p>
               <Link href="/dashboard/profile">
                 <Button variant="outline" size="sm">
