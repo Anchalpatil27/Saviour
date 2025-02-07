@@ -8,6 +8,10 @@ import CommunityChat from "@/components/CommunityChat"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { connectToDatabase } from "@/lib/mongodb"
 
+// Add route segment config
+export const dynamic = "force-dynamic"
+export const fetchCache = "force-no-store"
+
 export default async function CommunityPage() {
   try {
     const session = await getServerSession(authOptions)
