@@ -80,6 +80,20 @@ export async function GET() {
         },
       )
 
+      socket.on("get-recent-messages", async (city: string) => {
+        try {
+          console.log(`Fetching recent messages for city: ${city}`)
+          const { db } = await connectToDatabase()
+          const messages = await db.collection("messages").find({ city }).sort({ createdAt: -1 }).limit(50).toArray()
+
+          console.log(`Found ${messages.length} recent messages for city: ${city}`)
+          socket.emit("recent-messages", messages)
+        } catch (error) {
+          console.error("Error fetching recent messages:", error)
+          socket.emit("error", "Failed to fetch recent messages")
+        }
+      })
+
       // Handle disconnections
       socket.on("disconnect", () => {
         console.log("Client disconnected:", socket.id)
@@ -91,5 +105,25 @@ export async function GET() {
     console.error("Socket initialization error:", error)
     return NextResponse.json({ error: "Failed to initialize socket server" }, { status: 500 })
   }
+}
+
+import { MongoClient, Db } from "mongodb"
+
+let cachedClient: MongoClient | null = null
+let cachedDb: Db | null = null
+
+async function connectToDatabase() {
+  if (cachedDb) {
+    return { db: cachedDb }
+  }
+
+  const client = new MongoClient(process.env.MONGODB_URI as string)
+  await client.connect()
+  const db = client.db(process.env.MONGODB_DB as string)
+
+  cachedClient = client
+  cachedDb = db
+
+  return { db }
 }
 

@@ -36,7 +36,7 @@ export function CommunityChat() {
 
   useEffect(() => {
     if (!socket || !currentCity) {
-      console.log("CommunityChat - Waiting for socket or city...")
+      console.log("CommunityChat - Waiting for socket or city...", { socket: !!socket, currentCity })
       return
     }
 
@@ -63,7 +63,12 @@ export function CommunityChat() {
       setLoading(false)
     })
 
+    // Request recent messages
+    console.log("CommunityChat - Requesting recent messages for city:", currentCity)
+    socket.emit("get-recent-messages", currentCity)
+
     return () => {
+      console.log("CommunityChat - Cleaning up socket listeners")
       socket.off("new-message")
       socket.off("recent-messages")
       socket.off("error")
@@ -94,12 +99,14 @@ export function CommunityChat() {
   }
 
   // Show loading state while waiting for socket connection and city
-  if (!socket || !isConnected) {
+  if (!socket || !isConnected || loading) {
     return (
       <Card>
         <CardContent className="flex justify-center items-center p-8">
           <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Connecting to chat...</span>
+          <span className="ml-2">
+            {!socket ? "Initializing chat..." : !isConnected ? "Connecting to chat..." : "Loading messages..."}
+          </span>
         </CardContent>
       </Card>
     )
@@ -120,17 +127,6 @@ export function CommunityChat() {
               </Link>
             </AlertDescription>
           </Alert>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="flex justify-center items-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading messages...</span>
         </CardContent>
       </Card>
     )

@@ -24,31 +24,41 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
 
   useEffect(() => {
+    console.log("Initializing socket connection...")
     const socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
       path: "/api/socket",
       addTrailingSlash: false,
     })
 
     socketInstance.on("connect", () => {
-      console.log("Socket connected")
+      console.log("Socket connected successfully")
       setIsConnected(true)
     })
 
-    socketInstance.on("disconnect", () => {
-      console.log("Socket disconnected")
+    socketInstance.on("connect_error", (error) => {
+      console.error("Socket connection error:", error)
+      setIsConnected(false)
+    })
+
+    socketInstance.on("disconnect", (reason) => {
+      console.log("Socket disconnected. Reason:", reason)
       setIsConnected(false)
     })
 
     setSocket(socketInstance)
 
     return () => {
+      console.log("Cleaning up socket connection...")
       socketInstance.close()
     }
   }, [])
 
   // Auto-join city room when session is available
   useEffect(() => {
-    if (!socket || !session?.user?.email || status !== "authenticated") return
+    if (!socket || !session?.user?.email || status !== "authenticated") {
+      console.log("Waiting for socket connection and session...", { socket: !!socket, session: !!session, status })
+      return
+    }
 
     async function joinUserCity() {
       try {
