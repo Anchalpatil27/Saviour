@@ -32,37 +32,43 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         if (!response.ok) throw new Error("Failed to fetch city")
         const data = await response.json()
 
-        if (!data.city) throw new Error("City not set in user profile")
+        if (!data.city) {
+          console.warn("City not set in user profile")
+          setCurrentCity(null)
+        } else {
+          setCurrentCity(data.city)
 
-        setCurrentCity(data.city)
+          const socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
+            path: "/api/socket",
+          })
 
-        const socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
-          path: "/api/socket",
-        })
+          socketInstance.on("connect", () => {
+            console.log("Socket connected")
+            setIsConnected(true)
+            socketInstance.emit("join-city", data.city)
+          })
 
-        socketInstance.on("connect", () => {
-          console.log("Socket connected")
-          setIsConnected(true)
-          socketInstance.emit("join-city", data.city)
-        })
+          socketInstance.on("disconnect", () => {
+            console.log("Socket disconnected")
+            setIsConnected(false)
+          })
 
-        socketInstance.on("disconnect", () => {
-          console.log("Socket disconnected")
-          setIsConnected(false)
-        })
-
-        setSocket(socketInstance)
+          setSocket(socketInstance)
+        }
 
         return () => {
-          socketInstance.disconnect()
+          if (socket) {
+            socket.disconnect()
+          }
         }
       } catch (error) {
         console.error("Error initializing socket:", error)
+        setCurrentCity(null)
       }
     }
 
     fetchCityAndInitSocket()
-  }, [session, status])
+  }, [session, status, socket]) // Added socket to dependencies
 
   return <SocketContext.Provider value={{ socket, isConnected, currentCity }}>{children}</SocketContext.Provider>
 }

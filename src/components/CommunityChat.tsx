@@ -77,16 +77,15 @@ export function CommunityChat() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <Alert variant="default">
-            <MapPin className="h-4 w-4" />
-            <AlertTitle>City Not Set</AlertTitle>
-            <AlertDescription>
+          <Alert className="bg-yellow-50 border-yellow-200">
+            <MapPin className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-800">Loading City Information</AlertTitle>
+            <AlertDescription className="text-yellow-700">
               <p className="mb-2">
-                We couldn't determine your city. To join the community chat, please set your city in your profile
-                settings.
+                We're retrieving your city information. If this takes too long, please check your profile settings.
               </p>
               <Link href="/dashboard/profile">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="border-yellow-300 text-yellow-700 hover:bg-yellow-100">
                   Go to Profile Settings
                 </Button>
               </Link>
@@ -102,7 +101,7 @@ export function CommunityChat() {
       <Card>
         <CardContent className="flex justify-center items-center p-8">
           <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading messages...</span>
+          <span className="ml-2">Loading chat for {currentCity || "your city"}...</span>
         </CardContent>
       </Card>
     )
