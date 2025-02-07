@@ -28,26 +28,32 @@ export function CommunityChat() {
   const [chatError, setChatError] = useState<string | null>(null)
 
   useEffect(() => {
+    console.log("CommunityChat useEffect", { socket, currentCity, isConnected })
     if (!socket || !currentCity) return
 
     socket.on("new-message", (message: Message) => {
+      console.log("New message received", message)
       setMessages((prev) => [message, ...prev])
     })
 
     socket.on("recent-messages", (recentMessages: Message[]) => {
+      console.log("Recent messages received", recentMessages)
       setMessages(recentMessages)
     })
 
+    console.log("Emitting get-recent-messages", currentCity)
     socket.emit("get-recent-messages", currentCity)
 
     return () => {
+      console.log("CommunityChat cleanup")
       socket.off("new-message")
       socket.off("recent-messages")
     }
-  }, [socket, currentCity])
+  }, [socket, currentCity, isConnected]) // Added isConnected to dependencies
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    console.log("Submitting message", { currentCity, newMessage, isConnected })
     if (!currentCity || !newMessage.trim() || sending || !socket || !isConnected) return
 
     setSending(true)

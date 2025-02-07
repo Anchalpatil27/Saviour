@@ -30,6 +30,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
 
   useEffect(() => {
+    console.log("SocketContext useEffect triggered", { status, session })
     if (status !== "authenticated" || !session?.user?.email) {
       setIsLoading(false)
       return
@@ -38,71 +39,75 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     let socketInstance: Socket | null = null
 
     const fetchCityAndInitSocket = async () => {
-      console.log("fetchCityAndInitSocket started", { status, session })
+      console.log("1. fetchCityAndInitSocket started", { status, session })
       try {
         setIsLoading(true)
         setError(null)
 
         if (!session?.user?.email) {
+          console.log("2. No user email found in session")
           throw new Error("No user email found in session")
         }
 
-        console.log("Fetching city data...")
+        console.log("3. Fetching city data...")
         const response = await fetch("/api/user/city")
-        console.log("City fetch response status:", response.status)
+        console.log("4. City fetch response status:", response.status)
 
         const responseText = await response.text()
-        console.log("Raw response:", responseText)
+        console.log("5. Raw response:", responseText)
 
         let data
         try {
           data = JSON.parse(responseText)
+          console.log("6. Parsed city data:", data)
         } catch (e) {
-          console.error("Error parsing JSON:", e)
+          console.error("7. Error parsing JSON:", e)
           throw new Error("Invalid JSON response from server")
         }
 
-        console.log("City data received:", data)
-
         if (!response.ok) {
+          console.log("8. Response not OK")
           throw new Error(`Failed to fetch city: ${response.status} ${data.error || responseText}`)
         }
 
         if (!data.city) {
+          console.log("9. No city found in response data")
           throw new Error("City not found in user profile")
         }
 
+        console.log("10. Setting current city:", data.city)
         setCurrentCity(data.city)
 
-        console.log("Initializing socket with city:", data.city)
+        console.log("11. Initializing socket with city:", data.city)
         socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
           path: "/api/socket",
         })
 
         socketInstance.on("connect", () => {
-          console.log("Socket connected, joining city:", data.city)
+          console.log("12. Socket connected, joining city:", data.city)
           setIsConnected(true)
           socketInstance?.emit("join-city", data.city)
         })
 
         socketInstance.on("connect_error", (error) => {
-          console.error("Socket connection error:", error)
+          console.error("13. Socket connection error:", error)
           setError(`Socket connection error: ${error.message}`)
         })
 
         socketInstance.on("disconnect", () => {
-          console.log("Socket disconnected")
+          console.log("14. Socket disconnected")
           setIsConnected(false)
         })
 
         setSocket(socketInstance)
-        console.log("fetchCityAndInitSocket completed successfully")
+        console.log("15. fetchCityAndInitSocket completed successfully")
       } catch (error) {
-        console.error("Error in fetchCityAndInitSocket:", error)
+        console.error("16. Error in fetchCityAndInitSocket:", error)
         setError(error instanceof Error ? error.message : "Failed to initialize chat")
         setCurrentCity(null)
       } finally {
         setIsLoading(false)
+        console.log("17. Final state:", { currentCity, isConnected, isLoading, error })
       }
     }
 
@@ -115,7 +120,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         socketInstance.disconnect()
       }
     }
-  }, [session, status])
+  }, [session, status, currentCity]) // Added currentCity to dependencies
 
   return (
     <SocketContext.Provider
