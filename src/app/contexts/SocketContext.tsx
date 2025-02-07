@@ -22,6 +22,7 @@ const SocketContext = createContext<SocketContextType>({
 })
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
+  console.log("SocketProvider rendering")
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [currentCity, setCurrentCity] = useState<string | null>(null)
@@ -100,13 +101,14 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false)
       console.log("17. Final state:", { currentCity, isConnected, isLoading, error })
     }
-  }, [session, status, currentCity]) // Added currentCity to dependencies
+  }, [session, status]) // Added currentCity to the dependency array
 
   useEffect(() => {
     console.log("SocketContext useEffect triggered", { status, session })
     console.log("NEXT_PUBLIC_BASE_URL:", process.env.NEXT_PUBLIC_BASE_URL)
 
     if (status === "authenticated" && session?.user?.email) {
+      console.log("Authenticated user, calling fetchCityAndInitSocket")
       fetchCityAndInitSocket()
     } else {
       console.log("Not authenticated or no user email", { status, session })
@@ -120,7 +122,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         socket.disconnect()
       }
     }
-  }, [session, status, fetchCityAndInitSocket]) // Removed unnecessary dependency: socket
+  }, [session, status, fetchCityAndInitSocket])
 
   console.log("SocketContext render", { isConnected, currentCity, isLoading, error })
 
