@@ -85,7 +85,7 @@ export function CommunityChat() {
           <Loader2 className="h-8 w-8 animate-spin mb-2" />
           <span className="text-center">Loading chat...</span>
           <span className="text-sm text-muted-foreground mt-2">
-            This may take a few moments. If it persists, please refresh the page.
+            Current state: {JSON.stringify({ isConnected, currentCity, isLoading, error })}
           </span>
         </CardContent>
       </Card>

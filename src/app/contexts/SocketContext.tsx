@@ -38,13 +38,16 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     let socketInstance: Socket | null = null
 
     const fetchCityAndInitSocket = async () => {
-      console.log("Starting fetchCityAndInitSocket")
+      console.log("fetchCityAndInitSocket started", { status, session })
       try {
         setIsLoading(true)
         setError(null)
 
+        console.log("Fetching city data...")
         const response = await fetch("/api/user/city")
+        console.log("City fetch response:", response)
         const data = await response.json()
+        console.log("City data received:", data)
 
         console.log("City data fetched:", data)
 
@@ -90,8 +93,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     fetchCityAndInitSocket()
 
     return () => {
+      console.log("SocketContext cleanup", { socketInstance })
       if (socketInstance) {
-        console.log("Cleaning up socket connection")
+        console.log("Disconnecting socket")
         socketInstance.disconnect()
       }
     }
