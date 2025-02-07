@@ -1,24 +1,18 @@
 import type { Server as NetServer } from "http"
-import { Server as ServerIO } from "socket.io"
+import { Server as SocketIOServer } from "socket.io"
 import { NextResponse } from "next/server"
-import type { Socket } from "socket.io"
 import { connectToDatabase } from "@/lib/mongodb"
-import { createServer } from "http"
-
-interface ServerInstance extends NetServer {
-  io?: ServerIO
-}
-
-interface GlobalWithIO {
-  io?: ServerIO
-  httpServer?: ServerInstance
-}
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-if (!process.env.NEXT_PUBLIC_BASE_URL) {
-  throw new Error("NEXT_PUBLIC_BASE_URL is not defined")
+interface ServerInstance extends NetServer {
+  io?: SocketIOServer
+}
+
+interface GlobalWithIO {
+  io?: SocketIOServer
+  httpServer?: ServerInstance
 }
 
 export async function GET() {
@@ -30,100 +24,54 @@ export async function GET() {
 
     console.log("Starting Socket.IO server...")
 
-    // Create HTTP server if it doesn't exist
-    if (!(global as GlobalWithIO).httpServer) {
-      ;(global as GlobalWithIO).httpServer = createServer()
-    }
-
-    const httpServer: ServerInstance = (global as GlobalWithIO).httpServer!
-    const io = new ServerIO(httpServer, {
+    const httpServer: ServerInstance = (global as GlobalWithIO).httpServer || ({} as ServerInstance)
+    const io = new SocketIOServer(httpServer, {
       path: "/api/socket",
-      addTrailingSlash: false,
-      cors: {
-        origin: process.env.NEXT_PUBLIC_BASE_URL,
-        methods: ["GET", "POST"],
-        credentials: true,
-      },
-      transports: ["websocket", "polling"],
     })
 
-    // Store the io instance globally
-    ;(global as GlobalWithIO).io = io
+    io.on("connection", (socket) => {
+      console.log("New client connected")
 
-    // Handle socket connections
-    io.on("connection", async (socket: Socket) => {
-      console.log("Client connected:", socket.id)
+      socket.on("join-city", (city) => {
+        socket.join(city)
+        console.log(`Client joined city: ${city}`)
+      })
 
-      // Handle joining city-specific rooms
-      socket.on("join-city", async (city: string) => {
+      socket.on("chat-message", async (message) => {
         try {
-          // Leave all previous rooms
-          socket.rooms.forEach((room) => {
-            if (room !== socket.id) {
-              socket.leave(room)
-            }
-          })
-
-          // Join new city room
-          socket.join(city)
-          console.log(`Client ${socket.id} joined city: ${city}`)
-
-          // Fetch and send recent messages
           const { db } = await connectToDatabase()
-          const messages = await db.collection("messages").find({ city }).sort({ createdAt: -1 }).limit(50).toArray()
-
-          socket.emit("recent-messages", messages)
+          const result = await db.collection("messages").insertOne({
+            ...message,
+            createdAt: new Date(),
+          })
+          const newMessage = { ...message, id: result.insertedId, createdAt: new Date() }
+          io.to(message.city).emit("new-message", newMessage)
         } catch (error) {
-          console.error("Error joining city:", error)
-          socket.emit("error", "Failed to join city chat")
+          console.error("Error saving message:", error)
         }
       })
 
-      // Handle chat messages
-      socket.on(
-        "chat-message",
-        async (data: {
-          content: string
-          city: string
-          userId: string
-          userName: string
-        }) => {
-          try {
-            const { db } = await connectToDatabase()
-            const newMessage = {
-              ...data,
-              createdAt: new Date(),
-            }
+      socket.on("get-recent-messages", async (city) => {
+        try {
+          const { db } = await connectToDatabase()
+          const messages = await db.collection("messages").find({ city }).sort({ createdAt: -1 }).limit(50).toArray()
+          socket.emit("recent-messages", messages)
+        } catch (error) {
+          console.error("Error fetching recent messages:", error)
+        }
+      })
 
-            const result = await db.collection("messages").insertOne(newMessage)
-
-            // Broadcast to everyone in the same city
-            io.to(data.city).emit("new-message", {
-              id: result.insertedId.toString(),
-              ...newMessage,
-            })
-          } catch (error) {
-            console.error("Error handling chat message:", error)
-            socket.emit("error", "Failed to process message")
-          }
-        },
-      )
-
-      // Handle disconnections
       socket.on("disconnect", () => {
-        console.log("Client disconnected:", socket.id)
+        console.log("Client disconnected")
       })
     })
-
-    // Start listening on the HTTP server
-    const port = process.env.SOCKET_PORT || 3001
-    httpServer.listen(port)
-    console.log(`Socket.IO server listening on port ${port}`)
+    ;(global as GlobalWithIO).io = io
+    console.log("Socket.IO server started successfully")
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Socket initialization error:", error)
-    return NextResponse.json({ error: "Failed to initialize socket server" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to start socket server" }, { status: 500 })
   }
 }
 

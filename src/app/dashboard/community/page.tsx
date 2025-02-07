@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, HandHelping, MessageSquare, TrendingUp } from "lucide-react"
 import { CommunityForm } from "@/components/CommunityForm"
 import { Button } from "@/components/ui/button"
-import { CommunityChat } from "@/components/CommunityChat"
+import CommunityChat from "@/components/CommunityChat"
 
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions)
@@ -15,8 +15,8 @@ export default async function CommunityPage() {
   }
 
   const stats = [
-    { name: "Active Volunteers", icon: Users, value: 0, change: null },
-    { name: "Open Requests", icon: HandHelping, value: 0, change: null },
+    { name: "Active Volunteers", icon: Users, value: 127, change: 12 },
+    { name: "Open Requests", icon: HandHelping, value: 15, change: -3 },
     { name: "Community Messages", icon: MessageSquare, value: 0, change: null },
   ]
 
