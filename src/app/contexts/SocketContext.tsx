@@ -51,14 +51,22 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         const response = await fetch("/api/user/city")
         console.log("City fetch response status:", response.status)
 
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error("Error response:", errorText)
-          throw new Error(`Failed to fetch city: ${response.status} ${errorText}`)
+        const responseText = await response.text()
+        console.log("Raw response:", responseText)
+
+        let data
+        try {
+          data = JSON.parse(responseText)
+        } catch (e) {
+          console.error("Error parsing JSON:", e)
+          throw new Error("Invalid JSON response from server")
         }
 
-        const data = await response.json()
         console.log("City data received:", data)
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch city: ${response.status} ${data.error || responseText}`)
+        }
 
         if (!data.city) {
           throw new Error("City not found in user profile")

@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { connectToDatabase } from "@/lib/mongodb"
 
+console.log("Environment variables:")
+console.log("MONGODB_URI:", process.env.MONGODB_URI)
+console.log("NEXTAUTH_SECRET:", process.env.NEXTAUTH_SECRET ? "Set" : "Not set")
+console.log("NEXTAUTH_URL:", process.env.NEXTAUTH_URL)
+
 export async function GET() {
   console.log("User city API - Request received")
 
