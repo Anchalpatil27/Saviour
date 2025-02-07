@@ -31,7 +31,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     console.log("SocketContext useEffect triggered", { status, session })
+    console.log("NEXT_PUBLIC_BASE_URL:", process.env.NEXT_PUBLIC_BASE_URL)
     if (status !== "authenticated" || !session?.user?.email) {
+      console.log("Not authenticated or no user email", { status, session })
       setIsLoading(false)
       return
     }
@@ -83,24 +85,29 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
           path: "/api/socket",
         })
 
-        socketInstance.on("connect", () => {
-          console.log("12. Socket connected, joining city:", data.city)
-          setIsConnected(true)
-          socketInstance?.emit("join-city", data.city)
-        })
+        if (socketInstance) {
+          socketInstance.on("connect", () => {
+            console.log("12. Socket connected, joining city:", data.city)
+            setIsConnected(true)
+            socketInstance?.emit("join-city", data.city)
+          })
 
-        socketInstance.on("connect_error", (error) => {
-          console.error("13. Socket connection error:", error)
-          setError(`Socket connection error: ${error.message}`)
-        })
+          socketInstance.on("connect_error", (error) => {
+            console.error("13. Socket connection error:", error)
+            setError(`Socket connection error: ${error.message}`)
+          })
 
-        socketInstance.on("disconnect", () => {
-          console.log("14. Socket disconnected")
-          setIsConnected(false)
-        })
+          socketInstance.on("disconnect", () => {
+            console.log("14. Socket disconnected")
+            setIsConnected(false)
+          })
 
-        setSocket(socketInstance)
-        console.log("15. fetchCityAndInitSocket completed successfully")
+          setSocket(socketInstance)
+          console.log("15. fetchCityAndInitSocket completed successfully")
+        } else {
+          console.error("Socket instance is null")
+          setError("Failed to initialize socket")
+        }
       } catch (error) {
         console.error("16. Error in fetchCityAndInitSocket:", error)
         setError(error instanceof Error ? error.message : "Failed to initialize chat")
@@ -120,7 +127,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         socketInstance.disconnect()
       }
     }
-  }, [session, status, currentCity]) // Added currentCity to dependencies
+  }, [session, status, currentCity, error, isConnected]) // Added isConnected to dependencies
 
   return (
     <SocketContext.Provider
