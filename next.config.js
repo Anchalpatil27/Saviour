@@ -6,14 +6,9 @@ const nextConfig = {
     if (!isServer) {
       config.externals = [...config.externals, "bufferutil", "utf-8-validate"]
     }
-
     return config
   },
-  // Enable experimental features for app directory
-  experimental: {
-    appDir: true,
-  },
-  // Ensure NEXT_PUBLIC_BASE_URL is available at build time
+  // Remove deprecated appDir option as it's now default in Next.js 13+
   env: {
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
   },
