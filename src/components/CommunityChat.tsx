@@ -82,7 +82,7 @@ export function CommunityChat() {
             <AlertTitle className="text-yellow-800">Loading City Information</AlertTitle>
             <AlertDescription className="text-yellow-700">
               <p className="mb-2">
-                We're retrieving your city information. If this takes too long, please check your profile settings.
+                We&apos;re retrieving your city information. If this takes too long, please check your profile settings.
               </p>
               <Link href="/dashboard/profile">
                 <Button variant="outline" size="sm" className="border-yellow-300 text-yellow-700 hover:bg-yellow-100">
