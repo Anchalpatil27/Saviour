@@ -45,63 +45,54 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch("/api/user/city")
       console.log("4. City fetch response status:", response.status)
 
-      const responseText = await response.text()
-      console.log("5. Raw response:", responseText)
-
-      let data
-      try {
-        data = JSON.parse(responseText)
-        console.log("6. Parsed city data:", data)
-      } catch (e) {
-        console.error("7. Error parsing JSON:", e)
-        throw new Error("Invalid JSON response from server")
-      }
+      const data = await response.json()
+      console.log("5. Parsed city data:", data)
 
       if (!response.ok) {
-        console.log("8. Response not OK")
-        throw new Error(`Failed to fetch city: ${response.status} ${data.error || responseText}`)
+        console.log("6. Response not OK")
+        throw new Error(data.error || "Failed to fetch city")
       }
 
       if (!data.city) {
-        console.log("9. No city found in response data")
+        console.log("7. No city found in response data")
         throw new Error("City not found in user profile")
       }
 
-      console.log("10. Setting current city:", data.city)
+      console.log("8. Setting current city:", data.city)
       setCurrentCity(data.city)
 
-      console.log("11. Initializing socket with city:", data.city)
+      console.log("9. Initializing socket with city:", data.city)
       const socketInstance = io(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000", {
         path: "/api/socket",
       })
 
       socketInstance.on("connect", () => {
-        console.log("12. Socket connected, joining city:", data.city)
+        console.log("10. Socket connected, joining city:", data.city)
         setIsConnected(true)
         socketInstance.emit("join-city", data.city)
       })
 
       socketInstance.on("connect_error", (error) => {
-        console.error("13. Socket connection error:", error)
+        console.error("11. Socket connection error:", error)
         setError(`Socket connection error: ${error.message}`)
       })
 
       socketInstance.on("disconnect", () => {
-        console.log("14. Socket disconnected")
+        console.log("12. Socket disconnected")
         setIsConnected(false)
       })
 
       setSocket(socketInstance)
-      console.log("15. fetchCityAndInitSocket completed successfully")
+      console.log("13. fetchCityAndInitSocket completed successfully")
     } catch (error) {
-      console.error("16. Error in fetchCityAndInitSocket:", error)
+      console.error("14. Error in fetchCityAndInitSocket:", error)
       setError(error instanceof Error ? error.message : "Failed to initialize chat")
       setCurrentCity(null)
     } finally {
       setIsLoading(false)
-      console.log("17. Final state:", { currentCity, isConnected, isLoading, error })
+      console.log("15. Final state:", { currentCity, isConnected, isLoading, error })
     }
-  }, [session, status]) // Added currentCity to the dependency array
+  }, [session, status, currentCity]) // Added currentCity to dependencies
 
   useEffect(() => {
     console.log("SocketContext useEffect triggered", { status, session })
@@ -113,6 +104,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     } else {
       console.log("Not authenticated or no user email", { status, session })
       setIsLoading(false)
+      setError("User not authenticated")
     }
 
     return () => {
@@ -122,7 +114,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         socket.disconnect()
       }
     }
-  }, [session, status, fetchCityAndInitSocket])
+  }, [session, status, fetchCityAndInitSocket, socket])
 
   console.log("SocketContext render", { isConnected, currentCity, isLoading, error })
 
