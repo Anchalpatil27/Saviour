@@ -1,20 +1,17 @@
-import "./globals.css"
-import { Inter, Merriweather } from "next/font/google"
-import { Providers } from "./providers"
-import Header from "@/components/Header"
-import Footer from "@/components/Footer"
+import './globals.css'
+import { Inter, Merriweather } from 'next/font/google'
+import { Providers } from './providers'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 import { Analytics } from "@vercel/analytics/react"
 import { getServerSession } from "next-auth/next"
-import { SessionProvider } from "next-auth/react"
-import { SocketProvider } from "@/app/contexts/SocketContext"
-import type React from "react" // Added import for React
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
-const merriweather = Merriweather({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-merriweather" })
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const merriweather = Merriweather({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-merriweather' })
 
 export const metadata = {
-  title: "SAVIOUR - Disaster Management Platform",
-  description: "A comprehensive platform for disaster preparedness and response",
+  title: 'SAVIOUR - Disaster Management Platform',
+  description: 'A comprehensive platform for disaster preparedness and response',
 }
 
 export default async function RootLayout({
@@ -27,16 +24,14 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${merriweather.variable} font-sans flex flex-col min-h-screen`}>
-        <SessionProvider session={session}>
-          <SocketProvider>
-            <Providers session={session}>
-              <Header />
-              <main className="flex-grow">{children}</main>
-              <Footer />
-              <Analytics />
-            </Providers>
-          </SocketProvider>
-        </SessionProvider>
+        <Providers session={session}>
+          <Header />
+          <main className="flex-grow">
+            {children}
+          </main>
+          <Footer />
+          <Analytics />
+        </Providers>
       </body>
     </html>
   )

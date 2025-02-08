@@ -4,99 +4,95 @@ import { authOptions } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, HandHelping, MessageSquare, TrendingUp } from "lucide-react"
 import { CommunityForm } from "@/components/CommunityForm"
-import CommunityChat from "@/components/CommunityChat"
-import { ErrorBoundary } from "@/components/ErrorBoundary"
-import { connectToDatabase } from "@/lib/mongodb"
-
-// Add route segment config
-export const dynamic = "force-dynamic"
-export const fetchCache = "force-no-store"
+import { Button } from "@/components/ui/button"
+import { CommunityChat } from "@/components/CommunityChat"
+import { getUserCity } from "@/lib/getUserCity"
+import { getMessageCount } from "@/app/actions/getMessageCount"
 
 export default async function CommunityPage() {
-  try {
-    const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions)
 
-    if (!session?.user?.email) {
-      redirect("/auth/login")
-    }
-
-    // Verify database connection before proceeding
-    const { db } = await connectToDatabase()
-    const stats = (await db.collection("stats").findOne({ type: "community" })) || {
-      activeVolunteers: 0,
-      openRequests: 0,
-      messages: 0,
-      volunteersChange: 0,
-      requestsChange: 0,
-    }
-
-    const communityStats = [
-      {
-        name: "Active Volunteers",
-        icon: Users,
-        value: stats.activeVolunteers || 0,
-        change: stats.volunteersChange || 0,
-      },
-      {
-        name: "Open Requests",
-        icon: HandHelping,
-        value: stats.openRequests || 0,
-        change: stats.requestsChange || 0,
-      },
-      {
-        name: "Community Messages",
-        icon: MessageSquare,
-        value: stats.messages || 0,
-        change: null,
-      },
-    ]
-
-    return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold mb-4">Community Support</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {communityStats.map((stat) => (
-            <Card key={stat.name} className="flex flex-col">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                {stat.change !== null && (
-                  <p className="text-xs text-muted-foreground flex items-center mt-1">
-                    <TrendingUp
-                      className={`h-3 w-3 mr-1 ${
-                        stat.change > 0 ? "text-green-500" : "text-red-500 transform rotate-180"
-                      }`}
-                    />
-                    {Math.abs(stat.change)} since last week
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <ErrorBoundary fallback={<div>Error loading community form</div>}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Offer or Request Support</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CommunityForm />
-              </CardContent>
-            </Card>
-          </ErrorBoundary>
-          <ErrorBoundary fallback={<div>Error loading community chat</div>}>
-            <CommunityChat />
-          </ErrorBoundary>
-        </div>
-      </div>
-    )
-  } catch (error) {
-    console.error("Error in CommunityPage:", error)
-    throw new Error("Failed to load community page")
+  if (!session?.user?.email) {
+    redirect("/auth/login")
   }
+
+  console.log("Session user:", session.user)
+
+  let userCity = null
+  if (session.user.id) {
+    userCity = await getUserCity(session.user.id)
+  }
+  if (!userCity && session.user.email) {
+    userCity = await getUserCity(session.user.email)
+  }
+
+  console.log("User city from getUserCity:", userCity)
+
+  const messageCount = userCity ? await getMessageCount(userCity) : 0
+
+  const stats = [
+    { name: "Active Volunteers", icon: Users, value: 127, change: 12 },
+    { name: "Open Requests", icon: HandHelping, value: 15, change: -3 },
+    { name: "Community Messages", icon: MessageSquare, value: messageCount, change: null },
+  ]
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold mb-4">Community Support</h2>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {stats.map((stat) => (
+          <Card key={stat.name} className="flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
+              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              {stat.change !== null && (
+                <p className="text-xs text-muted-foreground flex items-center mt-1">
+                  <TrendingUp
+                    className={`h-3 w-3 mr-1 ${stat.change > 0 ? "text-green-500" : "text-red-500 transform rotate-180"}`}
+                  />
+                  {Math.abs(stat.change)} since last week
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Offer or Request Support</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CommunityForm />
+          </CardContent>
+        </Card>
+        <CommunityChat userCity={userCity} />
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Recent Community Activities</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-4">
+            <li className="flex justify-between items-center">
+              <span className="text-sm">Food distribution event organized</span>
+              <Button size="sm">View Details</Button>
+            </li>
+            <li className="flex justify-between items-center">
+              <span className="text-sm">Volunteer training session scheduled</span>
+              <Button size="sm">View Details</Button>
+            </li>
+            <li className="flex justify-between items-center">
+              <span className="text-sm">Community cleanup initiative started</span>
+              <Button size="sm">View Details</Button>
+            </li>
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
 

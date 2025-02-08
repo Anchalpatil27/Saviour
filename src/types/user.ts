@@ -9,4 +9,3 @@ export interface UserDetails {
     provider: string
   }
   
-  
