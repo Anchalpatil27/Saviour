@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -45,10 +46,6 @@ interface WeatherData {
       icon: string
       description: string
     }>
-    coord: {
-      lat: number
-      lon: number
-    }
   }
   forecast: Array<{
     dt: number
@@ -107,7 +104,7 @@ async function getWeatherData(city: string): Promise<WeatherData> {
 }
 
 export default function WeatherPage() {
-  const { status } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -122,25 +119,31 @@ export default function WeatherPage() {
 
   const fetchUserCity = async () => {
     try {
-      const response = await fetch("/api/user/city")
+      setLoading(true)
+      const response = await fetch("/api/cities")
       if (!response.ok) {
         throw new Error("Failed to fetch user city")
       }
       const data = await response.json()
       if (data.city) {
         setLocation(data.city)
-        fetchWeatherData(data.city)
+        await fetchWeatherData(data.city)
+      } else {
+        setError("City not set in your profile. Please enter a location manually.")
       }
     } catch (err) {
       console.error("Error fetching user city:", err)
       setError("Failed to fetch your city. Please enter a location manually.")
+    } finally {
+      setLoading(false)
     }
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/login")
-    return null
-  }
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login")
+    }
+  }, [status, router])
 
   const fetchWeatherData = async (city: string) => {
     setLoading(true)
@@ -200,6 +203,10 @@ export default function WeatherPage() {
     if (pop < 0.5) return "bg-yellow-500"
     if (pop < 0.8) return "bg-orange-500"
     return "bg-red-500"
+  }
+
+  if (status === "loading") {
+    return <div>Loading...</div>
   }
 
   return (
