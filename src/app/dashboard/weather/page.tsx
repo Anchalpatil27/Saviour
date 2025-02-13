@@ -1,69 +1,82 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Sun, Cloud, CloudRain, Wind, Thermometer, Droplets, Compass, AlertTriangle, MapPin, Loader2, Search, Umbrella } from 'lucide-react'
+import {
+  Sun,
+  Cloud,
+  CloudRain,
+  Wind,
+  Thermometer,
+  Droplets,
+  Compass,
+  AlertTriangle,
+  MapPin,
+  Loader2,
+  Search,
+  Umbrella,
+} from "lucide-react"
 
-const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY || ''
+const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY || ""
 if (!API_KEY) {
-  console.error('OpenWeatherMap API key is missing. Please check your .env.local file.')
+  console.error("OpenWeatherMap API key is missing. Please check your .env.local file.")
 }
 
-const BASE_URL = 'https://api.openweathermap.org/data/2.5'
+const BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 interface WeatherData {
   current: {
-    name: string;
+    name: string
     main: {
-      temp: number;
-      humidity: number;
-    };
+      temp: number
+      humidity: number
+    }
     wind: {
-      speed: number;
-      deg: number;
-    };
+      speed: number
+      deg: number
+    }
     weather: Array<{
-      icon: string;
-      description: string;
-    }>;
-  };
+      icon: string
+      description: string
+    }>
+    coord: {
+      lat: number
+      lon: number
+    }
+  }
   forecast: Array<{
-    dt: number;
+    dt: number
     main: {
-      temp: number;
-    };
+      temp: number
+    }
     weather: Array<{
-      icon: string;
-      description: string;
-    }>;
-    pop: number;
-  }>;
+      icon: string
+      description: string
+    }>
+    pop: number
+  }>
   alerts: Array<{
-    event: string;
-    start: number;
-    end: number;
-  }>;
+    event: string
+    start: number
+    end: number
+  }>
 }
 
 async function getWeatherData(city: string): Promise<WeatherData> {
   try {
-    const currentWeatherResponse = await fetch(
-      `${BASE_URL}/weather?q=${city}&units=metric&appid=${API_KEY}`
-    )
+    const currentWeatherResponse = await fetch(`${BASE_URL}/weather?q=${city}&units=metric&appid=${API_KEY}`)
     if (!currentWeatherResponse.ok) {
       throw new Error(`Weather API error: ${currentWeatherResponse.status} ${currentWeatherResponse.statusText}`)
     }
     const currentWeatherData = await currentWeatherResponse.json()
 
-    const forecastResponse = await fetch(
-      `${BASE_URL}/forecast?q=${city}&units=metric&appid=${API_KEY}`
-    )
+    const forecastResponse = await fetch(`${BASE_URL}/forecast?q=${city}&units=metric&appid=${API_KEY}`)
     if (!forecastResponse.ok) {
       throw new Error(`Forecast API error: ${forecastResponse.status} ${forecastResponse.statusText}`)
     }
@@ -74,7 +87,7 @@ async function getWeatherData(city: string): Promise<WeatherData> {
 
     // Fetch alerts (Note: This API endpoint might not be available in all regions or API plans)
     const alertsResponse = await fetch(
-      `${BASE_URL}/onecall?lat=${currentWeatherData.coord.lat}&lon=${currentWeatherData.coord.lon}&exclude=current,minutely,hourly,daily&appid=${API_KEY}`
+      `${BASE_URL}/onecall?lat=${currentWeatherData.coord.lat}&lon=${currentWeatherData.coord.lon}&exclude=current,minutely,hourly,daily&appid=${API_KEY}`,
     )
     if (!alertsResponse.ok) {
       console.warn(`Alerts API error: ${alertsResponse.status} ${alertsResponse.statusText}`)
@@ -85,10 +98,10 @@ async function getWeatherData(city: string): Promise<WeatherData> {
     return {
       current: currentWeatherData,
       forecast: dailyForecasts,
-      alerts: alertsData.alerts || []
+      alerts: alertsData.alerts || [],
     }
   } catch (error) {
-    console.error('Error fetching weather data:', error)
+    console.error("Error fetching weather data:", error)
     throw error
   }
 }
@@ -99,10 +112,33 @@ export default function WeatherPage() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [location, setLocation] = useState<string>('')
+  const [location, setLocation] = useState<string>("")
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchUserCity()
+    }
+  }, [status])
+
+  const fetchUserCity = async () => {
+    try {
+      const response = await fetch("/api/user/city")
+      if (!response.ok) {
+        throw new Error("Failed to fetch user city")
+      }
+      const data = await response.json()
+      if (data.city) {
+        setLocation(data.city)
+        fetchWeatherData(data.city)
+      }
+    } catch (err) {
+      console.error("Error fetching user city:", err)
+      setError("Failed to fetch your city. Please enter a location manually.")
+    }
+  }
 
   if (status === "unauthenticated") {
-    router.push('/auth/login')
+    router.push("/auth/login")
     return null
   }
 
@@ -113,8 +149,8 @@ export default function WeatherPage() {
       const data = await getWeatherData(city)
       setWeatherData(data)
     } catch (err) {
-      console.error('Error:', err)
-      setError('Failed to fetch weather data. Please check the city name and try again.')
+      console.error("Error:", err)
+      setError("Failed to fetch weather data. Please check the city name and try again.")
     } finally {
       setLoading(false)
     }
@@ -129,11 +165,26 @@ export default function WeatherPage() {
 
   const getWeatherIcon = (iconCode: string) => {
     switch (iconCode) {
-      case '01d': case '01n': return Sun
-      case '02d': case '02n': case '03d': case '03n': case '04d': case '04n': return Cloud
-      case '09d': case '09n': case '10d': case '10n': return CloudRain
-      case '11d': case '11n': return AlertTriangle
-      default: return Cloud
+      case "01d":
+      case "01n":
+        return Sun
+      case "02d":
+      case "02n":
+      case "03d":
+      case "03n":
+      case "04d":
+      case "04n":
+        return Cloud
+      case "09d":
+      case "09n":
+      case "10d":
+      case "10n":
+        return CloudRain
+      case "11d":
+      case "11n":
+        return AlertTriangle
+      default:
+        return Cloud
     }
   }
 
@@ -169,11 +220,7 @@ export default function WeatherPage() {
               className="flex-grow"
             />
             <Button type="submit" disabled={loading}>
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="h-4 w-4" />
-              )}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               Search
             </Button>
           </form>
@@ -241,7 +288,9 @@ export default function WeatherPage() {
                   return (
                     <div key={index} className="text-center">
                       <Icon className="mx-auto mb-2 h-8 w-8 text-blue-500" />
-                      <h3 className="font-semibold">{new Date(day.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' })}</h3>
+                      <h3 className="font-semibold">
+                        {new Date(day.dt * 1000).toLocaleDateString("en-US", { weekday: "short" })}
+                      </h3>
                       <p className="text-2xl font-bold">{Math.round(day.main.temp)}°C</p>
                       <p className="text-sm text-gray-500">{day.weather[0].description}</p>
                     </div>
@@ -263,7 +312,9 @@ export default function WeatherPage() {
                 {weatherData.forecast.map((day, index) => (
                   <div key={index} className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">{new Date(day.dt * 1000).toLocaleDateString('en-US', { weekday: 'long' })}</span>
+                      <span className="font-medium">
+                        {new Date(day.dt * 1000).toLocaleDateString("en-US", { weekday: "long" })}
+                      </span>
                       <Badge variant="outline">{Math.round(day.pop * 100)}%</Badge>
                     </div>
                     <Progress value={day.pop * 100} className={`h-2 ${getPrecipitationColor(day.pop)}`} />
@@ -287,7 +338,10 @@ export default function WeatherPage() {
                         <AlertTriangle className="mr-2 h-4 w-4 text-yellow-500" />
                         <span className="text-sm">{alert.event}</span>
                       </div>
-                      <Badge>{new Date(alert.start * 1000).toLocaleTimeString()} - {new Date(alert.end * 1000).toLocaleTimeString()}</Badge>
+                      <Badge>
+                        {new Date(alert.start * 1000).toLocaleTimeString()} -{" "}
+                        {new Date(alert.end * 1000).toLocaleTimeString()}
+                      </Badge>
                     </li>
                   ))}
                 </ul>
