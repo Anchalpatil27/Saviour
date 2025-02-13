@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -104,20 +104,14 @@ async function getWeatherData(city: string): Promise<WeatherData> {
 }
 
 export default function WeatherPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [location, setLocation] = useState<string>("")
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetchUserCity()
-    }
-  }, [status])
-
-  const fetchUserCity = async () => {
+  const fetchUserCity = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch("/api/cities")
@@ -137,7 +131,13 @@ export default function WeatherPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchUserCity()
+    }
+  }, [status, fetchUserCity])
 
   useEffect(() => {
     if (status === "unauthenticated") {
