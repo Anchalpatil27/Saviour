@@ -1,51 +1,83 @@
-import { MongoClient } from "mongodb"
+import mongoose from "mongoose"
+import { MongoClient, type Db } from "mongodb"
 
+const MONGODB_URI = process.env.MONGODB_URI
+
+if (!MONGODB_URI) {
+  throw new Error("Please define the MONGODB_URI environment variable")
+}
+
+// Define types for global cache
+interface MongooseCache {
+  conn: typeof mongoose | null
+  promise: Promise<typeof mongoose> | null
+}
+
+interface MongoClientCache {
+  conn: MongoClient | null
+  promise: Promise<{ client: MongoClient; db: Db }> | null
+}
+
+// Declare global variables
 declare global {
-  // eslint-disable-next-line no-var
-  var _mongoClientPromise: Promise<MongoClient> | undefined
+  var mongooseCache: MongooseCache
+  var mongoClientCache: MongoClientCache
+  var mongoDb: Db | null
 }
 
-if (!process.env.MONGODB_URI) {
-  throw new Error("Please add your Mongo URI to .env.local")
-}
+// Initialize cache variables - use non-null assertion to tell TypeScript these will be defined
+global.mongooseCache = global.mongooseCache || { conn: null, promise: null }
+global.mongoClientCache = global.mongoClientCache || { conn: null, promise: null }
+global.mongoDb = global.mongoDb || null
 
-const uri = process.env.MONGODB_URI
-const options = {
-  // Add these options to handle MongoDB connection in Next.js environment
-  maxPoolSize: 10,
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
-}
-
-// Export a module-scoped MongoClient promise
-let clientPromise: Promise<MongoClient>
-
-if (process.env.NODE_ENV === "development") {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  if (!global._mongoClientPromise) {
-    const client = new MongoClient(uri, options)
-    global._mongoClientPromise = client.connect()
-  }
-  clientPromise = global._mongoClientPromise
-} else {
-  // In production mode, it's best to not use a global variable.
-  const client = new MongoClient(uri, options)
-  clientPromise = client.connect()
-}
-
-// Export a wrapped function to handle MongoDB operations
+// Connect to MongoDB using Mongoose (for models)
 export async function connectToDatabase() {
-  try {
-    const client = await clientPromise
-    const db = client.db("test")
-    return { client, db }
-  } catch (error) {
-    console.error("Error connecting to database:", error)
-    throw new Error("Unable to connect to database")
+  if (global.mongooseCache.conn) {
+    return global.mongooseCache.conn
   }
+
+  if (!global.mongooseCache.promise) {
+    const opts = {
+      bufferCommands: false,
+    }
+
+    global.mongooseCache.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+      return mongoose
+    })
+  }
+
+  try {
+    global.mongooseCache.conn = await global.mongooseCache.promise
+  } catch (e) {
+    global.mongooseCache.promise = null
+    throw e
+  }
+
+  return global.mongooseCache.conn
 }
 
-// Export the promisified connection for direct usage
-export default clientPromise
+// Connect to MongoDB using native driver (for direct collection access)
+export async function connectToMongoDB() {
+  if (global.mongoClientCache.conn && global.mongoDb) {
+    return { client: global.mongoClientCache.conn, db: global.mongoDb }
+  }
+
+  if (!global.mongoClientCache.promise) {
+    const client = new MongoClient(MONGODB_URI!)
+    global.mongoClientCache.promise = client.connect().then((client) => {
+      const db = client.db()
+      return { client, db }
+    })
+  }
+
+  try {
+    const { client, db } = await global.mongoClientCache.promise
+    global.mongoClientCache.conn = client
+    global.mongoDb = db
+    return { client, db }
+  } catch (e) {
+    global.mongoClientCache.promise = null
+    throw e
+  }
+}
 

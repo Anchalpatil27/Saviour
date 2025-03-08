@@ -1,84 +1,107 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { updateProfile } from "@/lib/actions/profile-actions"
 
 interface ProfileFormProps {
   initialData: {
-    name?: string | null
-    email?: string | null
-    city?: string | null
+    name: string | null
+    email: string | null
+    city: string | null
   } | null
 }
 
 export function ProfileForm({ initialData }: ProfileFormProps) {
-  const [name, setName] = useState(initialData?.name || "")
-  const [city, setCity] = useState(initialData?.city || "")
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
   const router = useRouter()
-  const { update } = useSession()
+  const [isLoading, setIsLoading] = useState(false)
+  const [name, setName] = useState(initialData?.name || "")
+  const [email, setEmail] = useState(initialData?.email || "")
+  const [city, setCity] = useState(initialData?.city || "")
+  const [error, setError] = useState("")
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    setError(null)
-    setSuccess(null)
+    setIsLoading(true)
+    setError("")
 
     try {
-      const response = await fetch("/api/update-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, city }),
+      const result = await updateProfile({
+        name: name || "",
+        email: email || "",
+        city: city || null,
       })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Failed to update profile")
+      if (result.success) {
+        // Show success message
+        alert("Profile updated successfully")
+        router.refresh() // Refresh the page to show updated data
+      } else {
+        setError(result.error || "Something went wrong. Please try again.")
       }
-
-      setSuccess("Profile updated successfully")
-
-      // Update the session
-      await update({ name, city })
-
-      // Refresh the page to reflect changes
-      router.refresh()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred while updating your profile")
+    } catch (error) {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
-      </div>
-      <div>
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" value={initialData?.email || ""} disabled placeholder="Your email" />
-      </div>
-      <div>
-        <Label htmlFor="city">City</Label>
-        <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Your city" />
-      </div>
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      {success && (
-        <Alert variant="default">
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-      <Button type="submit">Update Profile</Button>
-    </form>
+    <Card>
+      <CardHeader>
+        <CardTitle>Profile Information</CardTitle>
+        <CardDescription>Update your personal information</CardDescription>
+      </CardHeader>
+      <form onSubmit={onSubmit}>
+        <CardContent className="space-y-4">
+          <div className="space-y-1">
+            <label htmlFor="name" className="text-sm font-medium">
+              Name
+            </label>
+            <Input
+              id="name"
+              value={name || ""}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name"
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="email" className="text-sm font-medium">
+              Email
+            </label>
+            <Input
+              id="email"
+              value={email || ""}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Your email"
+              disabled
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="city" className="text-sm font-medium">
+              City
+            </label>
+            <Input id="city" value={city || ""} onChange={(e) => setCity(e.target.value)} placeholder="Your city" />
+            <p className="text-xs text-muted-foreground">
+              Enter your city to join community chats with people in your area
+            </p>
+          </div>
+
+          {error && <div className="text-red-500 text-sm">{error}</div>}
+        </CardContent>
+        <CardFooter>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving..." : "Save Changes"}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
   )
 }
 

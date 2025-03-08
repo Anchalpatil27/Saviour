@@ -1,13 +1,13 @@
-import { getServerSession } from "next-auth/next"
+import { Suspense } from "react"
+import { CommunityChat } from "@/components/community-chat"
 import { redirect } from "next/navigation"
-import { authOptions } from "@/lib/auth"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, HandHelping, MessageSquare, TrendingUp } from "lucide-react"
-import { CommunityForm } from "@/components/CommunityForm"
 import { Button } from "@/components/ui/button"
-import { CommunityChat } from "@/components/CommunityChat"
-import { getUserCity } from "@/lib/getUserCity"
-import { getMessageCount } from "@/app/actions/getMessageCount"
+import Link from "next/link"
+import { MapPin } from "lucide-react"
+
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+import { connectToMongoDB } from "@/lib/mongodb"
 
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions)
@@ -16,82 +16,57 @@ export default async function CommunityPage() {
     redirect("/auth/login")
   }
 
-  console.log("Session user:", session.user)
+  // Get user from database to get the city
+  const { db } = await connectToMongoDB()
+  const user = await db.collection("users").findOne({ email: session.user.email })
 
-  let userCity = null
-  if (session.user.id) {
-    userCity = await getUserCity(session.user.id)
-  }
-  if (!userCity && session.user.email) {
-    userCity = await getUserCity(session.user.email)
+  if (!user) {
+    redirect("/auth/login")
   }
 
-  console.log("User city from getUserCity:", userCity)
-
-  const messageCount = userCity ? await getMessageCount(userCity) : 0
-
-  const stats = [
-    { name: "Active Volunteers", icon: Users, value: 127, change: 12 },
-    { name: "Open Requests", icon: HandHelping, value: 15, change: -3 },
-    { name: "Community Messages", icon: MessageSquare, value: messageCount, change: null },
-  ]
+  // Generate userId from _id or use existing id
+  const userId = user._id ? user._id.toString() : user.id
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-4">Community Support</h2>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {stats.map((stat) => (
-          <Card key={stat.name} className="flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              {stat.change !== null && (
-                <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  <TrendingUp
-                    className={`h-3 w-3 mr-1 ${stat.change > 0 ? "text-green-500" : "text-red-500 transform rotate-180"}`}
-                  />
-                  {Math.abs(stat.change)} since last week
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+    <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold">Community Chat</h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          {user.city ? `Chatting with people from ${user.city}` : "Connect with people in your area"}
+        </p>
       </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Offer or Request Support</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CommunityForm />
-          </CardContent>
-        </Card>
-        <CommunityChat userCity={userCity} />
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Recent Community Activities</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-4">
-            <li className="flex justify-between items-center">
-              <span className="text-sm">Food distribution event organized</span>
-              <Button size="sm">View Details</Button>
-            </li>
-            <li className="flex justify-between items-center">
-              <span className="text-sm">Volunteer training session scheduled</span>
-              <Button size="sm">View Details</Button>
-            </li>
-            <li className="flex justify-between items-center">
-              <span className="text-sm">Community cleanup initiative started</span>
-              <Button size="sm">View Details</Button>
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
+
+      {!user.city ? (
+        <div className="bg-card border rounded-xl p-8 text-center max-w-md mx-auto">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MapPin className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Set Your City to Join the Chat</h2>
+          <p className="text-muted-foreground mb-6">
+            You need to set your city in your profile to join community chats with people in your area.
+          </p>
+          <Button asChild>
+            <Link href="/dashboard/profile">Update Profile</Link>
+          </Button>
+        </div>
+      ) : (
+        <Suspense
+          fallback={
+            <div className="h-[400px] w-full flex items-center justify-center bg-card rounded-xl border">
+              <div className="flex flex-col items-center">
+                <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-3"></div>
+                <p className="text-sm text-muted-foreground">Loading chat messages...</p>
+              </div>
+            </div>
+          }
+        >
+          <CommunityChat
+            userId={userId}
+            userCity={user.city}
+            userName={user.name}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
-import { connectToDatabase } from "@/lib/mongodb"
+import { connectToMongoDB } from "@/lib/mongodb"
 import { ProfileForm } from "@/components/ProfileForm"
 
 export default async function ProfilePage() {
@@ -11,10 +11,8 @@ export default async function ProfilePage() {
     redirect("/auth/login")
   }
 
-  const { db } = await connectToDatabase()
+  const { db } = await connectToMongoDB()
   const user = await db.collection("users").findOne({ email: session.user.email })
-
-  console.log("Profile page - User from database:", user)
 
   return (
     <div className="max-w-4xl mx-auto py-8">

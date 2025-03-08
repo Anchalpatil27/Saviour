@@ -42,9 +42,6 @@ export function Sidebar({ onLinkClick, isMobile = false }: SidebarProps) {
       "flex flex-col bg-white border-r transition-all duration-300",
       isMobile ? "w-full" : "w-64"
     )}>
-      <div className="flex items-center justify-between p-4">
-        <h2 className="text-2xl font-bold">SAVIOUR</h2>
-      </div>
       <ScrollArea className="flex-1">
         <nav className="space-y-1 px-2">
           {sidebarItems.map((item) => (
