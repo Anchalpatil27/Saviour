@@ -48,7 +48,7 @@ export async function sendMessage({ content, userId, city }: SendMessageProps) {
       user = await db.collection("users").findOne({
         _id: new ObjectId(userId),
       })
-    } catch (e) {
+    } catch (_) {
       // If that fails, try to find by string id
       user = await db.collection("users").findOne({
         id: userId,

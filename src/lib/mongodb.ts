@@ -18,17 +18,28 @@ interface MongoClientCache {
   promise: Promise<{ client: MongoClient; db: Db }> | null
 }
 
-// Declare global variables
+// Properly augment the NodeJS global namespace
 declare global {
+  // eslint-disable-next-line no-var
   var mongooseCache: MongooseCache
+  // eslint-disable-next-line no-var
   var mongoClientCache: MongoClientCache
+  // eslint-disable-next-line no-var
   var mongoDb: Db | null
 }
 
-// Initialize cache variables - use non-null assertion to tell TypeScript these will be defined
-global.mongooseCache = global.mongooseCache || { conn: null, promise: null }
-global.mongoClientCache = global.mongoClientCache || { conn: null, promise: null }
-global.mongoDb = global.mongoDb || null
+// Initialize cache variables
+if (!global.mongooseCache) {
+  global.mongooseCache = { conn: null, promise: null }
+}
+
+if (!global.mongoClientCache) {
+  global.mongoClientCache = { conn: null, promise: null }
+}
+
+if (global.mongoDb === undefined) {
+  global.mongoDb = null
+}
 
 // Connect to MongoDB using Mongoose (for models)
 export async function connectToDatabase() {
