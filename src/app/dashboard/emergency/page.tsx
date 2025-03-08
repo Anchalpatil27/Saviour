@@ -1,24 +1,57 @@
 import { getServerSession } from "next-auth/next"
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Phone, Ambulance, Truck, Shield, Plus } from 'lucide-react'
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Phone, Ambulance, Truck, Shield } from "lucide-react"
+import { EmergencyContactForm } from "@/components/emergency-contact-form"
+import { EmergencyContactList } from "@/components/emergency-contact-list"
+import { connectToMongoDB } from "@/lib/mongodb"
+import type { EmergencyContactDTO } from "@/lib/models/emergency-contact"
+
+// Move the server function logic directly into the page component
+async function getContacts(userId: string): Promise<EmergencyContactDTO[]> {
+  try {
+    const { db } = await connectToMongoDB()
+
+    // Get emergency contacts for the user
+    const contacts = await db.collection("emergencyContacts").find({ userId }).sort({ createdAt: -1 }).toArray()
+
+    // Map to DTO
+    return contacts.map((contact) => ({
+      id: contact._id.toString(),
+      name: contact.name,
+      relation: contact.relation,
+      phoneNumber: contact.phoneNumber,
+    }))
+  } catch (error) {
+    console.error("Error fetching emergency contacts:", error)
+    return []
+  }
+}
 
 export default async function EmergencyPage() {
   const session = await getServerSession(authOptions)
 
-  if (!session) {
-    redirect('/auth/login')
+  if (!session || !session.user || !session.user.email) {
+    redirect("/auth/login")
   }
 
+  // This ensures TypeScript knows that session.user and session.user.email are defined
+
+  // Get user ID
+  const { db } = await connectToMongoDB()
+  const user = await db.collection("users").findOne({ email: session.user.email })
+  const userId = user ? user._id.toString() : ""
+
+  // Fetch user's emergency contacts directly
+  const userContacts = await getContacts(userId)
+
   const emergencyContacts = [
-    { name: 'Emergency Services', number: '112', icon: Phone },
-    { name: 'Local Police', number: '100', icon: Shield },
-    { name: 'Fire Department', number: '101', icon: Truck },
-    { name: 'Ambulance', number: '102', icon: Ambulance },
+    { name: "Emergency Services", number: "112", icon: Phone },
+    { name: "Local Police", number: "100", icon: Shield },
+    { name: "Fire Department", number: "101", icon: Truck },
+    { name: "Ambulance", number: "102", icon: Ambulance },
   ]
 
   return (
@@ -35,7 +68,9 @@ export default async function EmergencyPage() {
             </CardHeader>
             <CardContent className="flex-grow flex flex-col justify-between">
               <p className="text-2xl font-bold mb-4">{contact.number}</p>
-              <Button className="w-full">Call Now</Button>
+              <Button className="w-full" asChild>
+                <a href={`tel:${contact.number}`}>Call Now</a>
+              </Button>
             </CardContent>
           </Card>
         ))}
@@ -45,39 +80,8 @@ export default async function EmergencyPage() {
           <CardTitle className="text-lg">Personal Emergency Contacts</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-4 mb-4">
-            <li className="flex justify-between items-center">
-              <span className="text-sm">Dad</span>
-              <Button variant="outline" size="sm">Call</Button>
-            </li>
-            <li className="flex justify-between items-center">
-              <span className="text-sm">Mom</span>
-              <Button variant="outline" size="sm">Call</Button>
-            </li>
-            <li className="flex justify-between items-center">
-              <span className="text-sm">Brother</span>
-              <Button variant="outline" size="sm">Call</Button>
-            </li>
-          </ul>
-          <form className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" placeholder="Contact Name" />
-              </div>
-              <div>
-                <Label htmlFor="relation">Relation</Label>
-                <Input id="relation" placeholder="Relation" />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" placeholder="Phone Number" type="tel" />
-            </div>
-            <Button className="w-full">
-              <Plus className="mr-2 h-4 w-4" /> Add New Contact
-            </Button>
-          </form>
+          <EmergencyContactList contacts={userContacts} />
+          <EmergencyContactForm userId={userId} />
         </CardContent>
       </Card>
     </div>

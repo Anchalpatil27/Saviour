@@ -1,50 +1,57 @@
 import mongoose from "mongoose"
 
-if (!process.env.MONGODB_URI) {
-  throw new Error("Please define the MONGODB_URI environment variable inside .env.local")
+// Check for the environment variable, but don't throw an error immediately
+const MONGODB_URI: string = process.env.MONGODB_URI || ""
+
+// Define types for global cache
+interface MongooseCache {
+  conn: mongoose.Connection | null
+  promise: Promise<mongoose.Mongoose> | null
 }
 
-const MONGODB_URI: string = process.env.MONGODB_URI
-
+// Properly augment the NodeJS global namespace
 declare global {
   // eslint-disable-next-line no-var
-  var mongoose: {
-    conn: mongoose.Mongoose | null
-    promise: Promise<mongoose.Mongoose> | null
-  }
+  var mongooseCache: MongooseCache
 }
 
-let cached = global.mongoose
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null }
+// Initialize cache variables
+if (!global.mongooseCache) {
+  global.mongooseCache = { conn: null, promise: null }
 }
 
 async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn
+  if (global.mongooseCache.conn) {
+    return global.mongooseCache.conn
   }
 
-  if (!cached.promise) {
+  // Check for MONGODB_URI here, after the cached connection check
+  if (!MONGODB_URI) {
+    throw new Error("Please define the MONGODB_URI environment variable inside .env.local")
+  }
+
+  if (!global.mongooseCache.promise) {
     const opts = {
       bufferCommands: false,
     }
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    global.mongooseCache.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
       console.log("Connected to MongoDB")
-      return mongoose
+      return mongooseInstance
     })
   }
 
   try {
-    cached.conn = await cached.promise
+    const instance = await global.mongooseCache.promise
+    global.mongooseCache.conn = instance.connection
   } catch (e) {
-    cached.promise = null
+    global.mongooseCache.promise = null
     console.error("Error connecting to MongoDB:", e)
     throw e
   }
 
-  return cached.conn
+  return global.mongooseCache.conn
 }
 
 export default dbConnect
+
