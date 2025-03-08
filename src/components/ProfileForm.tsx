@@ -21,12 +21,12 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
   const [name, setName] = useState(initialData?.name || "")
   const [email, setEmail] = useState(initialData?.email || "")
   const [city, setCity] = useState(initialData?.city || "")
-  const [errorMessage, setError] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setIsLoading(true)
-    setError("")
+    setErrorMessage("")
 
     try {
       const result = await updateProfile({
@@ -40,11 +40,11 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
         alert("Profile updated successfully")
         router.refresh() // Refresh the page to show updated data
       } else {
-        setError(result.error || "Something went wrong. Please try again.")
+        setErrorMessage(result.error || "Something went wrong. Please try again.")
       }
-    } catch (err) {
-      // Changed 'error' to 'err' to avoid the unused variable error
-      setError("Something went wrong. Please try again.")
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      setErrorMessage("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -105,4 +105,3 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
     </Card>
   )
 }
-
