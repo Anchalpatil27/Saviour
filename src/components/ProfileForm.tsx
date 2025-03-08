@@ -21,7 +21,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
   const [name, setName] = useState(initialData?.name || "")
   const [email, setEmail] = useState(initialData?.email || "")
   const [city, setCity] = useState(initialData?.city || "")
-  const [error, setError] = useState("")
+  const [errorMessage, setError] = useState("")
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -93,7 +93,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
             </p>
           </div>
 
-          {error && <div className="text-red-500 text-sm">{error}</div>}
+          {errorMessage && <div className="text-red-500 text-sm">{errorMessage}</div>}
         </CardContent>
         <CardFooter>
           <Button type="submit" disabled={isLoading}>
