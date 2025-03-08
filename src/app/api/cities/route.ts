@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import clientPromise from "@/lib/mongodb"
+import { connectToMongoDB } from "@/lib/mongodb"
 
 export async function GET() {
   try {
@@ -11,8 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const client = await clientPromise
-    const db = client.db("test")
+    const { db } = await connectToMongoDB()
 
     const user = await db.collection("users").findOne({ email: session.user.email }, { projection: { city: 1 } })
 
