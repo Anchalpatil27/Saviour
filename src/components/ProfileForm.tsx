@@ -42,7 +42,8 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
       } else {
         setError(result.error || "Something went wrong. Please try again.")
       }
-    } catch (error) {
+    } catch (err) {
+      // Changed 'error' to 'err' to avoid the unused variable error
       setError("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
