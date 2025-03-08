@@ -1,53 +1,21 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { MapPin, Locate } from "lucide-react"
+import { useState, useEffect } from "react"
+import { MapPin, Navigation, ExternalLink, Map } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import dynamic from "next/dynamic"
-
-// Dynamically import Leaflet components with no SSR to avoid hydration issues
-const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false })
-const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false })
-const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false })
-const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false })
-import { useMap } from "react-leaflet"
-
-// Component to handle recenter functionality
-function RecenterAutomatically({ position }: { position: [number, number] }) {
-  const map = useMap()
-
-  useEffect(() => {
-    map.setView(position, map.getZoom())
-  }, [position, map])
-
-  return null
-}
-
-// Component to handle location button
-function LocationButton({ onClick }: { onClick: () => void }) {
-  return (
-    <Button
-      onClick={onClick}
-      size="sm"
-      className="absolute bottom-4 right-4 z-[1000] bg-white text-black hover:bg-gray-100 shadow-md"
-    >
-      <Locate className="h-4 w-4 mr-1" />
-      Recenter
-    </Button>
-  )
-}
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export function UserLocationMap() {
-  const [position, setPosition] = useState<[number, number] | null>(null)
-  const [locationName, setLocationName] = useState<string>("Loading location...")
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locationName, setLocationName] = useState<string>("Determining your location...")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [highAccuracy, setHighAccuracy] = useState(true)
-  const mapRef = useRef(null)
 
-  const getLocation = () => {
+  const getLocation = (highAccuracy = true) => {
     setLoading(true)
+    setError(null)
 
     if (typeof window !== "undefined" && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -55,7 +23,7 @@ export function UserLocationMap() {
           const { latitude, longitude, accuracy } = position.coords
           console.log(`Location accuracy: ${accuracy} meters`)
 
-          setPosition([latitude, longitude])
+          setLocation({ lat: latitude, lng: longitude })
 
           // Try to get location name using reverse geocoding
           try {
@@ -79,8 +47,7 @@ export function UserLocationMap() {
 
           // If high accuracy fails, try again with low accuracy
           if (highAccuracy) {
-            setHighAccuracy(false)
-            getLocation()
+            getLocation(false)
             return
           }
 
@@ -99,20 +66,40 @@ export function UserLocationMap() {
     }
   }
 
+  // Open in Google Maps
+  const openInGoogleMaps = () => {
+    if (!location) return
+
+    const url = `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`
+    window.open(url, "_blank")
+  }
+
+  // Open in device's native maps app
+  const openInNativeMaps = () => {
+    if (!location) return
+
+    // This will open the native maps app on both iOS and Android
+    const url = `geo:${location.lat},${location.lng}?q=${location.lat},${location.lng}`
+
+    // For iOS, we need a different format
+    const iosUrl = `maps:?q=${location.lat},${location.lng}`
+
+    // Try to detect iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+
+    window.location.href = isIOS ? iosUrl : url
+  }
+
+  // Open in Waze
+  const openInWaze = () => {
+    if (!location) return
+
+    const url = `https://waze.com/ul?ll=${location.lat},${location.lng}&navigate=yes`
+    window.open(url, "_blank")
+  }
+
   useEffect(() => {
-    // Add Leaflet CSS
-    const link = document.createElement("link")
-    link.rel = "stylesheet"
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    link.crossOrigin = ""
-    document.head.appendChild(link)
-
     getLocation()
-
-    return () => {
-      document.head.removeChild(link)
-    }
   }, [])
 
   if (loading) {
@@ -135,7 +122,7 @@ export function UserLocationMap() {
         <div className="flex flex-col items-center text-center px-4">
           <MapPin className="h-8 w-8 text-gray-400 mb-2" />
           <p className="text-sm text-muted-foreground">{error}</p>
-          <Button onClick={getLocation} size="sm" className="mt-2">
+          <Button onClick={() => getLocation(true)} size="sm" className="mt-2">
             Try Again
           </Button>
         </div>
@@ -143,7 +130,7 @@ export function UserLocationMap() {
     )
   }
 
-  if (!position) {
+  if (!location) {
     return (
       <div className="h-48 md:h-64 rounded-lg flex items-center justify-center bg-gray-100">
         <MapPin className="h-8 w-8 text-gray-400" />
@@ -152,29 +139,88 @@ export function UserLocationMap() {
     )
   }
 
+  // Create a static map image URL from OpenStreetMap
+  const staticMapUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${location.lat},${location.lng}&zoom=15&size=600x400&markers=${location.lat},${location.lng},red`
+
   return (
-    <div className="relative h-48 md:h-64 rounded-lg overflow-hidden">
-      {typeof window !== "undefined" && (
-        <>
-          <MapContainer center={position} zoom={15} style={{ height: "100%", width: "100%" }} ref={mapRef}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <Marker position={position}>
-              <Popup>
-                Your location
-                <br />
-                {locationName}
-              </Popup>
-            </Marker>
-            <RecenterAutomatically position={position} />
-          </MapContainer>
-          <LocationButton onClick={getLocation} />
-        </>
-      )}
-      <p className="text-xs text-muted-foreground mt-1 px-2">{locationName}</p>
-    </div>
+    <Card className="border shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center">
+          <MapPin className="h-4 w-4 mr-2" />
+          Your Location
+        </CardTitle>
+        <CardDescription className="text-xs truncate">{locationName}</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="relative h-40 md:h-48 overflow-hidden">
+          <img src={staticMapUrl || "/placeholder.svg"} alt="Your location" className="w-full h-full object-cover" />
+          <div className="absolute bottom-2 right-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                    onClick={() => getLocation(true)}
+                  >
+                    <Navigation className="h-4 w-4 text-primary" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Refresh location</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-between pt-2 pb-2">
+        <div className="text-xs text-muted-foreground">
+          Coordinates: {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+        </div>
+        <div className="flex gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={openInGoogleMaps}>
+                  <Map className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Open in Google Maps</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={openInNativeMaps}>
+                  <Navigation className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Open in Maps App</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={openInWaze}>
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Open in Waze</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </CardFooter>
+    </Card>
   )
 }
 

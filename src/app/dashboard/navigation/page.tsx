@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Mountain } from "lucide-react"
+import { Mountain } from "lucide-react"
 import { UserLocationMap } from "@/components/UserLocationMap"
 
 export default async function NavigationPage() {
@@ -31,18 +31,9 @@ export default async function NavigationPage() {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold mb-4">Navigation & Evacuation</h2>
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <MapPin className="mr-2 h-5 w-5" />
-              Current Location
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <UserLocationMap />
-            <p className="text-sm mt-2">Your current location</p>
-          </CardContent>
-        </Card>
+        <div>
+          <UserLocationMap />
+        </div>
         <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="text-lg flex items-center">
