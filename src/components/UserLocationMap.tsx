@@ -83,6 +83,7 @@ export function UserLocationMap() {
   return (
     <div className="h-48 md:h-64 rounded-lg overflow-hidden">
       <iframe src={mapUrl} width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy"></iframe>
+      <p className="text-sm mt-2">{locationName}</p>
     </div>
   )
 }
