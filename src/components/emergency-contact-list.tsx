@@ -48,6 +48,8 @@ export function EmergencyContactList({ contacts, userId }: EmergencyContactListP
         })
       }
     } catch (error) {
+      // Use the error variable to avoid ESLint warning
+      console.error("Delete error:", error)
       toast({
         title: "Error",
         description: "An unexpected error occurred",
