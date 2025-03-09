@@ -1,4 +1,4 @@
-import { Activity, AlertCircle, BarChart2, BookOpen, CloudSun, Database, Map, MessageCircle, Navigation, Newspaper, PhoneCall, Shield, UserCircle, Users } from 'lucide-react'
+import { Activity, AlertCircle, BarChart2, CloudSun, Database, Navigation, Newspaper, PhoneCall, Shield, UserCircle, Users } from 'lucide-react'
 
 export const sidebarItems = [
   { name: 'Dashboard', icon: Activity, href: '/dashboard' },
@@ -11,9 +11,6 @@ export const sidebarItems = [
   { name: 'Emergency', icon: PhoneCall, href: '/dashboard/emergency' },
   { name: 'Historical Data', icon: BarChart2, href: '/dashboard/historical' },
   { name: 'News', icon: Newspaper, href: '/dashboard/news' },
-  { name: 'Risk Map', icon: Map, href: '/dashboard/risk-map' },
   { name: 'Safety', icon: Shield, href: '/dashboard/safety' },
-  { name: 'Training', icon: BookOpen, href: '/dashboard/training' },
-  { name: 'Forum', icon: MessageCircle, href: '/dashboard/forum' },
 ]
 
