@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { BarChart, Calendar, TrendingUp, AlertTriangle, MapPin, Info } from "lucide-react"
+import { BarChart, Calendar, TrendingUp, AlertTriangle, MapPin, Info, RefreshCw } from "lucide-react"
 import {
   fetchHistoricalData,
   type HistoricalData,
@@ -33,6 +33,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
   const [isSampleData, setIsSampleData] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     async function loadHistoricalData() {
@@ -73,8 +74,13 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
     loadHistoricalData()
   }, [coordinates, retryCount])
 
-  const handleRetry = () => {
+  const handleRefresh = () => {
+    setRefreshing(true)
     setRetryCount((prev) => prev + 1)
+    // The refresh state will be reset when the data loading completes in the useEffect
+    setTimeout(() => {
+      if (refreshing) setRefreshing(false) // Safety timeout in case loading takes too long
+    }, 10000)
   }
 
   if (loading) {
@@ -84,13 +90,27 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
   if (error && !data) {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold mb-4">Historical Data & Analytics</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Historical Data & Analytics</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </Button>
+        </div>
         <Card className="p-6">
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">Unable to Load Historical Data</h3>
             <p className="text-muted-foreground mb-4">{error || "No data available"}</p>
-            <Button onClick={handleRetry}>Try Again</Button>
+            <Button onClick={handleRefresh} disabled={refreshing}>
+              {refreshing ? "Refreshing..." : "Try Again"}
+            </Button>
           </div>
         </Card>
       </div>
@@ -114,7 +134,19 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-4">Historical Data & Analytics</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Historical Data & Analytics</h2>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-1"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "Refreshing..." : "Refresh"}
+        </Button>
+      </div>
 
       {/* Show sample data warning if applicable */}
       {isSampleData && (
@@ -269,12 +301,6 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
           </div>
         </CardContent>
       </Card>
-
-      <div className="flex justify-end">
-        <Button onClick={handleRetry} variant="outline">
-          Refresh Data
-        </Button>
-      </div>
     </div>
   )
 }
@@ -282,7 +308,11 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
 function HistoricalDataSkeleton() {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-4">Historical Data & Analytics</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Historical Data & Analytics</h2>
+        <Skeleton className="h-9 w-24" />
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2">
         {[1, 2].map((i) => (
           <Card key={i} className="flex flex-col">
