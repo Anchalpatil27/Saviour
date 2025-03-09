@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AlertTriangle, Shield, Stethoscope } from "lucide-react"
+import { AlertTriangle, Shield, Stethoscope, Info } from 'lucide-react'
 import type { DisasterSafetyData } from "@/lib/actions/safety-actions"
 
 interface SafetyDialogProps {
@@ -14,19 +14,32 @@ interface SafetyDialogProps {
 export function SafetyDialog({ open, onOpenChange, safetyData }: SafetyDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6 md:p-8">
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center">
             <Shield className="mr-2 h-6 w-6" />
             {safetyData.disasterType} Safety Guidelines
           </DialogTitle>
+          <p className="text-muted-foreground mt-2">
+            This comprehensive guide provides detailed safety information for {safetyData.disasterType} situations.
+            Follow these guidelines to protect yourself and others before, during, and after the event.
+          </p>
         </DialogHeader>
 
-        <Tabs defaultValue="before" className="mt-4">
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="before">Before</TabsTrigger>
-            <TabsTrigger value="during">During</TabsTrigger>
-            <TabsTrigger value="after">After</TabsTrigger>
+        <Tabs defaultValue="before" className="mt-6">
+          <TabsList className="grid grid-cols-3 mb-6 w-full max-w-md mx-auto">
+            <TabsTrigger value="before" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              <span>Before</span>
+            </TabsTrigger>
+            <TabsTrigger value="during" className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              <span>During</span>
+            </TabsTrigger>
+            <TabsTrigger value="after" className="flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              <span>After</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="before" className="space-y-4">
@@ -112,4 +125,3 @@ export function SafetyDialog({ open, onOpenChange, safetyData }: SafetyDialogPro
     </Dialog>
   )
 }
-

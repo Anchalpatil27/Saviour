@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Shield, Stethoscope, AlertTriangle, RefreshCw, Info } from "lucide-react"
+import { Shield, Stethoscope, AlertTriangle, RefreshCw, Info } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -158,22 +158,46 @@ export function SafetyGuidelines() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center">
               <Stethoscope className="mr-2 h-5 w-5" />
-              First Aid Basics
+              Complete First Aid Guide
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-grow">
             <p className="text-sm text-muted-foreground mb-4">
-              Essential first aid knowledge specific to {safetyData?.disasterType || "disaster"} situations. Keep this
-              information readily available and consider taking a certified first aid course.
+              Comprehensive first aid information for {safetyData?.disasterType || "disaster"} emergencies. 
+              These guidelines can help save lives during critical situations.
             </p>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {safetyData?.firstAidTips.map((tip, index) => (
-                <div key={index} className="border-b pb-4 last:border-0">
-                  <div className="flex items-start mb-2">
-                    <AlertTriangle className="mr-2 h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
-                    <h4 className="font-medium text-sm">{tip.title}</h4>
+                <div key={index} className="border-b pb-5 last:border-0">
+                  <div className="flex items-start mb-3">
+                    <div className="bg-red-100 dark:bg-red-900/30 p-1.5 rounded-full mr-3">
+                      <Stethoscope className="h-4 w-4 text-red-600 dark:text-red-400" />
+                    </div>
+                    <h4 className="font-medium text-base">{tip.title}</h4>
                   </div>
-                  <p className="text-sm ml-6">{tip.description}</p>
+                  <div className="ml-9 space-y-2">
+                    <p className="text-sm">{tip.description}</p>
+                    
+                    {/* Additional detailed steps - this would ideally come from the API but we're adding it for demonstration */}
+                    <div className="mt-2 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
+                      <h5 className="text-xs font-medium uppercase text-muted-foreground mb-2">Step-by-step guide:</h5>
+                      <ol className="list-decimal list-inside text-xs space-y-1.5">
+                        {[1, 2, 3].map((step) => (
+                          <li key={step} className="text-muted-foreground">
+                            {tip.title.includes("CPR") ? 
+                              [`Check responsiveness and call for help`, `Begin chest compressions at 100-120 per minute`, `Continue until help arrives`][step-1] :
+                            tip.title.includes("bleeding") || tip.title.includes("wound") ? 
+                              [`Apply direct pressure with clean cloth`, `Elevate the injured area if possible`, `Apply bandage when bleeding slows`][step-1] :
+                            tip.title.includes("burn") ? 
+                              [`Cool the burn with cool running water`, `Cover with clean, dry bandage`, `Do not apply creams or ointments initially`][step-1] :
+                            tip.title.includes("fracture") || tip.title.includes("broken") ? 
+                              [`Immobilize the injured area`, `Apply cold pack to reduce swelling`, `Seek medical attention immediately`][step-1] :
+                              [`Assess the situation and ensure safety`, `Provide appropriate care based on symptoms`, `Monitor and seek medical help if needed`][step-1]}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -223,4 +247,3 @@ function SafetyDataSkeleton() {
     </div>
   )
 }
-
