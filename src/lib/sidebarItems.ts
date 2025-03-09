@@ -9,7 +9,6 @@ export const sidebarItems = [
   { name: 'Weather', icon: CloudSun, href: '/dashboard/weather' },
   { name: 'Community', icon: Users, href: '/dashboard/community' },
   { name: 'Emergency', icon: PhoneCall, href: '/dashboard/emergency' },
-  { name: 'Notifications', icon: Bell, href: '/dashboard/notifications' },
   { name: 'Historical Data', icon: BarChart2, href: '/dashboard/historical' },
   { name: 'Supply Chain', icon: Package, href: '/dashboard/supply-chain' },
   { name: 'News', icon: Newspaper, href: '/dashboard/news' },
