@@ -1,4 +1,4 @@
-import { Activity, AlertCircle, BarChart2, BookOpen, CloudSun, Database, Map, MessageCircle, Navigation, Newspaper, Package, PhoneCall, Shield, UserCircle, Users } from 'lucide-react'
+import { Activity, AlertCircle, BarChart2, BookOpen, CloudSun, Database, Map, MessageCircle, Navigation, Newspaper, PhoneCall, Shield, UserCircle, Users } from 'lucide-react'
 
 export const sidebarItems = [
   { name: 'Dashboard', icon: Activity, href: '/dashboard' },
