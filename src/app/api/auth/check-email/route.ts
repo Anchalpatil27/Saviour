@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const { email } = await request.json()
 
     const db = await dbConnect()
-    const usersCollection = db.connection.collection("users")
+    const usersCollection = db.collection("users")
 
     const existingUser = await usersCollection.findOne({ email })
     if (existingUser) {
