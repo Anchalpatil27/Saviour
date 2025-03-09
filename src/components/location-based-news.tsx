@@ -109,7 +109,15 @@ export function LocationBasedNews() {
 
   // Check if there are any active emergency broadcasts
   const hasActiveEmergencies =
-    newsData?.broadcasts && newsData.broadcasts.length > 0 && newsData.broadcasts.some((broadcast) => broadcast.isLive)
+    newsData?.broadcasts &&
+    newsData.broadcasts.length > 0 &&
+    newsData.broadcasts.some((broadcast) => {
+      const broadcastDate = new Date(broadcast.timestamp)
+      const now = new Date()
+      const timeDifference = now.getTime() - broadcastDate.getTime()
+      const hoursDifference = timeDifference / (1000 * 60 * 60)
+      return broadcast.isLive && hoursDifference >= 0 && hoursDifference <= 24
+    })
 
   return (
     <div className="space-y-6">
@@ -161,27 +169,60 @@ export function LocationBasedNews() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {newsData?.broadcasts
-              .filter((broadcast) => broadcast.isLive)
-              .map((broadcast) => (
-                <div
-                  key={broadcast.id}
-                  className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg mb-4 border border-red-200 dark:border-red-800"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Radio className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 animate-pulse mr-2" />
-                      <p className="text-xs sm:text-sm font-semibold">LIVE: {broadcast.title}</p>
+            {newsData?.broadcasts && newsData.broadcasts.length > 0 ? (
+              <>
+                {newsData.broadcasts
+                  .filter((broadcast) => {
+                    const broadcastDate = new Date(broadcast.timestamp)
+                    const now = new Date()
+                    const timeDifference = now.getTime() - broadcastDate.getTime()
+                    const hoursDifference = timeDifference / (1000 * 60 * 60)
+                    // Only show broadcasts from the past 24 hours
+                    return hoursDifference >= 0 && hoursDifference <= 24
+                  })
+                  .map((broadcast) => (
+                    <div key={broadcast.id} className="bg-gray-100 dark:bg-gray-800 p-3 sm:p-4 rounded-lg mb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          {broadcast.isLive ? (
+                            <Radio className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 animate-pulse mr-2" />
+                          ) : (
+                            <Bell className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                          )}
+                          <p className="text-xs sm:text-sm font-semibold">
+                            {broadcast.isLive ? "LIVE: " : ""}
+                            {broadcast.title}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={
+                            broadcast.urgency === "High"
+                              ? "destructive"
+                              : broadcast.urgency === "Medium"
+                                ? "default"
+                                : "secondary"
+                          }
+                        >
+                          {broadcast.urgency}
+                        </Badge>
+                      </div>
+                      <p className="text-xs sm:text-sm mt-2">{broadcast.message}</p>
+                      <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+                        <span>Source: {broadcast.source}</span>
+                        <span>{new Date(broadcast.timestamp).toLocaleString()}</span>
+                      </div>
                     </div>
-                    <Badge variant="destructive">{broadcast.urgency}</Badge>
-                  </div>
-                  <p className="text-xs sm:text-sm mt-2">{broadcast.message}</p>
-                  <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-                    <span>Source: {broadcast.source}</span>
-                    <span>{new Date(broadcast.timestamp).toLocaleString()}</span>
-                  </div>
-                </div>
-              ))}
+                  ))}
+              </>
+            ) : (
+              <div className="text-center py-6">
+                <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-muted-foreground">No active emergency broadcasts at this time.</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  The area is currently clear of emergency situations.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -241,39 +282,48 @@ export function LocationBasedNews() {
         <CardContent>
           {newsData?.broadcasts && newsData.broadcasts.length > 0 ? (
             <>
-              {newsData.broadcasts.map((broadcast) => (
-                <div key={broadcast.id} className="bg-gray-100 dark:bg-gray-800 p-3 sm:p-4 rounded-lg mb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      {broadcast.isLive ? (
-                        <Radio className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 animate-pulse mr-2" />
-                      ) : (
-                        <Bell className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                      )}
-                      <p className="text-xs sm:text-sm font-semibold">
-                        {broadcast.isLive ? "LIVE: " : ""}
-                        {broadcast.title}
-                      </p>
+              {newsData.broadcasts
+                .filter((broadcast) => {
+                  const broadcastDate = new Date(broadcast.timestamp)
+                  const now = new Date()
+                  const timeDifference = now.getTime() - broadcastDate.getTime()
+                  const hoursDifference = timeDifference / (1000 * 60 * 60)
+                  // Only show broadcasts from the past 24 hours
+                  return hoursDifference >= 0 && hoursDifference <= 24
+                })
+                .map((broadcast) => (
+                  <div key={broadcast.id} className="bg-gray-100 dark:bg-gray-800 p-3 sm:p-4 rounded-lg mb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {broadcast.isLive ? (
+                          <Radio className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 animate-pulse mr-2" />
+                        ) : (
+                          <Bell className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                        )}
+                        <p className="text-xs sm:text-sm font-semibold">
+                          {broadcast.isLive ? "LIVE: " : ""}
+                          {broadcast.title}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={
+                          broadcast.urgency === "High"
+                            ? "destructive"
+                            : broadcast.urgency === "Medium"
+                              ? "default"
+                              : "secondary"
+                        }
+                      >
+                        {broadcast.urgency}
+                      </Badge>
                     </div>
-                    <Badge
-                      variant={
-                        broadcast.urgency === "High"
-                          ? "destructive"
-                          : broadcast.urgency === "Medium"
-                            ? "default"
-                            : "secondary"
-                      }
-                    >
-                      {broadcast.urgency}
-                    </Badge>
+                    <p className="text-xs sm:text-sm mt-2">{broadcast.message}</p>
+                    <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+                      <span>Source: {broadcast.source}</span>
+                      <span>{new Date(broadcast.timestamp).toLocaleString()}</span>
+                    </div>
                   </div>
-                  <p className="text-xs sm:text-sm mt-2">{broadcast.message}</p>
-                  <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-                    <span>Source: {broadcast.source}</span>
-                    <span>{new Date(broadcast.timestamp).toLocaleString()}</span>
-                  </div>
-                </div>
-              ))}
+                ))}
             </>
           ) : (
             <div className="text-center py-6">
@@ -282,12 +332,6 @@ export function LocationBasedNews() {
               <p className="text-xs text-muted-foreground mt-1">The area is currently clear of emergency situations.</p>
             </div>
           )}
-          <div className="flex flex-col sm:flex-row gap-2 mt-4">
-            <Button className="flex-1 text-sm sm:text-base">
-              <Bell className="mr-2 h-4 w-4" />
-              Enable Notifications
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>
