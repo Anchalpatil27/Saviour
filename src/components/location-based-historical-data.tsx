@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button"
 export function LocationBasedHistoricalData() {
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true) // Renamed from 'loading' to 'isLoading'
 
   const getLocation = () => {
-    setLoading(true)
+    setIsLoading(true) // Updated to use the renamed state variable
     setError(null)
 
     if (typeof window !== "undefined" && "geolocation" in navigator) {
@@ -20,18 +20,18 @@ export function LocationBasedHistoricalData() {
         (position) => {
           const { latitude, longitude } = position.coords
           setCoordinates({ lat: latitude, lng: longitude })
-          setLoading(false)
+          setIsLoading(false) // Updated to use the renamed state variable
         },
         (error) => {
           console.error("Error getting location:", error)
           setError(`Unable to access your location: ${error.message}. Please check your device settings.`)
-          setLoading(false)
+          setIsLoading(false) // Updated to use the renamed state variable
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
       )
     } else {
       setError("Geolocation is not supported by your browser.")
-      setLoading(false)
+      setIsLoading(false) // Updated to use the renamed state variable
     }
   }
 
@@ -49,6 +49,11 @@ export function LocationBasedHistoricalData() {
         <Button onClick={getLocation}>Try Again</Button>
       </div>
     )
+  }
+
+  // Use isLoading in a conditional if needed
+  if (isLoading) {
+    return <div>Loading location data...</div>
   }
 
   return <HistoricalDataDisplay coordinates={coordinates} />
