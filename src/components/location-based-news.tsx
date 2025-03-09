@@ -217,7 +217,7 @@ export function LocationBasedNews() {
             ) : (
               <div className="text-center py-6">
                 <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-muted-foreground">No active emergency broadcasts at this time.</p>
+                <p className="text-muted-foreground">No emergency broadcasts in the last 24 hours</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   The area is currently clear of emergency situations.
                 </p>
@@ -328,7 +328,7 @@ export function LocationBasedNews() {
           ) : (
             <div className="text-center py-6">
               <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-muted-foreground">No active emergency broadcasts at this time.</p>
+              <p className="text-muted-foreground">No emergency broadcasts in the last 24 hours</p>
               <p className="text-xs text-muted-foreground mt-1">The area is currently clear of emergency situations.</p>
             </div>
           )}
