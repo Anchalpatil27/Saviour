@@ -4,11 +4,27 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { BarChart, Calendar, FileText, TrendingUp, AlertTriangle, Download } from "lucide-react"
-import { fetchHistoricalData, type HistoricalData } from "@/lib/actions/historical-actions"
+import {
+  fetchHistoricalData,
+  type HistoricalData,
+  type DisasterTrend,
+  type DisasterEvent,
+  type DisasterReport,
+} from "@/lib/actions/historical-actions"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface HistoricalDataDisplayProps {
   coordinates: { lat: number; lng: number } | null
+}
+
+interface FrequencyDataItem {
+  type: string
+  count: number
+}
+
+interface SeverityDataItem {
+  severity: string
+  count: number
 }
 
 export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProps) {
@@ -111,7 +127,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                   </tr>
                 </thead>
                 <tbody>
-                  {data.trends.map((trend, index) => (
+                  {data.trends.map((trend: DisasterTrend, index: number) => (
                     <tr key={index} className={index % 2 === 0 ? "bg-muted/50" : ""}>
                       <td className="py-1">{trend.year}</td>
                       <td className="py-1">{trend.count}</td>
@@ -133,7 +149,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
           </CardHeader>
           <CardContent className="flex-grow">
             <ul className="space-y-2 mb-4 h-48 overflow-y-auto">
-              {data.events.map((event) => (
+              {data.events.map((event: DisasterEvent) => (
                 <li key={event.id} className="text-sm border-b pb-2">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">{event.type}</span>
@@ -161,7 +177,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
           </CardHeader>
           <CardContent className="flex-grow">
             <ul className="space-y-2 mb-4 h-48 overflow-y-auto">
-              {data.reports.map((report) => (
+              {data.reports.map((report: DisasterReport) => (
                 <li key={report.id} className="text-sm border-b pb-2">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">{report.title}</span>
@@ -193,7 +209,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                 Disaster Frequency by Type
               </h3>
               <div className="space-y-2">
-                {data.frequencyData.map((item, index) => (
+                {data.frequencyData.map((item: FrequencyDataItem, index: number) => (
                   <div key={index}>
                     <div className="flex justify-between text-sm mb-1">
                       <span>{item.type}</span>
@@ -203,7 +219,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                       <div
                         className="bg-primary h-2 rounded-full"
                         style={{
-                          width: `${(item.count / Math.max(...data.frequencyData.map((d) => d.count))) * 100}%`,
+                          width: `${(item.count / Math.max(...data.frequencyData.map((d: FrequencyDataItem) => d.count))) * 100}%`,
                         }}
                       ></div>
                     </div>
@@ -217,7 +233,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                 Severity Distribution
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                {data.severityData.map((item, index) => (
+                {data.severityData.map((item: SeverityDataItem, index: number) => (
                   <div key={index} className="bg-background p-3 rounded-md text-center">
                     <div className="text-2xl font-bold">{item.count}</div>
                     <div

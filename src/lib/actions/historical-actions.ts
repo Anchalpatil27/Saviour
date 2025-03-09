@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 
+// Make sure all interfaces are exported
 export interface DisasterEvent {
   id: string
   date: string
@@ -35,11 +36,54 @@ export interface HistoricalData {
   severityData: { severity: string; count: number }[]
 }
 
+// Sample data for testing purposes
+const getSampleHistoricalData = (latitude: number, longitude: number): HistoricalData => {
+  return {
+    events: [
+      {
+        id: "1",
+        date: "2023-05-15",
+        type: "Flood",
+        severity: "Moderate",
+        affected: 500,
+        description: "Heavy rainfall caused flooding in low-lying areas.",
+        location: "Townsville",
+      },
+      {
+        id: "2",
+        date: "2022-11-01",
+        type: "Wildfire",
+        severity: "Severe",
+        affected: 200,
+        description: "Dry conditions led to a large wildfire.",
+        location: "Forestville",
+      },
+    ],
+    trends: [
+      { year: "2023", count: 5, primaryType: "Flood" },
+      { year: "2022", count: 3, primaryType: "Wildfire" },
+    ],
+    reports: [
+      {
+        id: "1",
+        title: "Flood Analysis Report",
+        date: "2023-06-01",
+        type: "Analysis",
+        summary: "Detailed analysis of the recent flooding event.",
+        fileSize: "1.2 MB",
+      },
+    ],
+    frequencyData: [{ type: "Flood", count: 2 }],
+    severityData: [{ severity: "Moderate", count: 1 }],
+  }
+}
+
 export async function fetchHistoricalData(
   latitude: number,
   longitude: number,
 ): Promise<{ success: boolean; data: HistoricalData; error?: string }> {
   try {
+    // Check if API key exists
     if (!process.env.GEMINI_API_KEY) {
       console.log("No Gemini API key found, using sample data")
       return {
@@ -47,6 +91,13 @@ export async function fetchHistoricalData(
         data: getSampleHistoricalData(latitude, longitude),
       }
     }
+
+    // For debugging - log a safe version of the key
+    const keyPreview =
+      process.env.GEMINI_API_KEY.substring(0, 4) +
+      "..." +
+      process.env.GEMINI_API_KEY.substring(process.env.GEMINI_API_KEY.length - 4)
+    console.log(`Using Gemini API key starting with: ${keyPreview}`)
 
     const prompt = `
       I need historical disaster data for the area around these coordinates:
@@ -93,51 +144,74 @@ export async function fetchHistoricalData(
     `
 
     try {
-      // Direct fetch to Gemini API
-      const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": process.env.GEMINI_API_KEY,
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: prompt,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.1, // Lower temperature for more deterministic output
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 2048,
-            },
-          }),
+      // Direct fetch to Gemini API with proper error handling
+      console.log(`Fetching historical data for coordinates: ${latitude}, ${longitude}`)
+
+      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+      console.log(`Using API URL: ${apiUrl}`)
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": process.env.GEMINI_API_KEY,
         },
-      )
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.1,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 2048,
+          },
+        }),
+      })
+
+      console.log(`Gemini API response status: ${response.status}`)
 
       if (!response.ok) {
-        console.error(`API error: ${response.status} ${response.statusText}`)
+        let errorText = ""
+        try {
+          const errorData = await response.json()
+          errorText = JSON.stringify(errorData)
+        } catch {
+          errorText = await response.text().catch(() => "Could not read error response")
+        }
+
+        console.error(`API error: ${response.status} ${response.statusText}. Response: ${errorText}`)
+
         return {
           success: false,
           data: getSampleHistoricalData(latitude, longitude),
-          error: `API error: ${response.status} ${response.statusText}`,
+          error: `API error: ${response.status} ${response.statusText}. Please check your API key and network.`,
         }
       }
 
       const data = await response.json()
 
+      // Check if the response has the expected structure
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
+        console.error("Unexpected API response structure:", JSON.stringify(data).substring(0, 200) + "...")
+        return {
+          success: false,
+          data: getSampleHistoricalData(latitude, longitude),
+          error: "Unexpected API response structure",
+        }
+      }
+
       // Extract text from Gemini response
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+      const text = data.candidates[0].content.parts[0].text || ""
 
       if (!text) {
-        console.error("Empty response from Gemini API")
+        console.error("Empty text in Gemini API response")
         return {
           success: false,
           data: getSampleHistoricalData(latitude, longitude),
@@ -145,7 +219,8 @@ export async function fetchHistoricalData(
         }
       }
 
-      console.log("Raw Gemini response:", text.substring(0, 200) + "...") // Log the beginning of the response for debugging
+      console.log("Raw Gemini response length:", text.length)
+      console.log("Response preview:", text.substring(0, 100) + "...")
 
       // Try multiple approaches to extract JSON
       let jsonData: HistoricalData | null = null
@@ -155,7 +230,6 @@ export async function fetchHistoricalData(
         jsonData = JSON.parse(text) as HistoricalData
         console.log("Successfully parsed entire response as JSON")
       } catch {
-        // Don't use the error parameter at all
         console.log("Could not parse entire response as JSON, trying to extract JSON object")
       }
 
@@ -222,7 +296,7 @@ export async function fetchHistoricalData(
       return {
         success: false,
         data: getSampleHistoricalData(latitude, longitude),
-        error: "Unknown API error",
+        error: "Unknown API error. Please check your Gemini API key and network connection.",
       }
     }
   } catch {
@@ -232,137 +306,6 @@ export async function fetchHistoricalData(
       data: getSampleHistoricalData(latitude, longitude),
       error: "Unknown error",
     }
-  }
-}
-
-// Helper function to get sample historical data
-function getSampleHistoricalData(latitude: number, longitude: number): HistoricalData {
-  // Determine region type based on coordinates (very simplified)
-  const isCoastal = Math.abs(longitude) > 120 || Math.abs(latitude) < 30
-  const isMountainous = Math.abs(latitude) > 35 && Math.abs(longitude) < 100
-  const isNearFaultLine =
-    (Math.abs(latitude) > 30 && Math.abs(latitude) < 40) || (Math.abs(longitude) > 115 && Math.abs(longitude) < 125)
-
-  return {
-    events: [
-      {
-        id: "evt-001",
-        date: "2023-05-15",
-        type: isCoastal ? "Flood" : isMountainous ? "Landslide" : "Wildfire",
-        severity: "Moderate",
-        affected: 5000,
-        description: `A ${isCoastal ? "significant flooding event" : isMountainous ? "major landslide" : "wildfire"} affected several communities in the region.`,
-        location: `${isCoastal ? "Coastal" : isMountainous ? "Mountain" : "Rural"} Communities`,
-      },
-      {
-        id: "evt-002",
-        date: "2023-03-22",
-        type: isNearFaultLine ? "Earthquake" : isCoastal ? "Hurricane" : "Wildfire",
-        severity: "Severe",
-        affected: 10000,
-        description: `A ${isNearFaultLine ? "magnitude 5.8 earthquake" : isCoastal ? "Category 3 hurricane" : "severe wildfire"} caused significant damage to infrastructure.`,
-        location: "Regional District",
-      },
-      {
-        id: "evt-003",
-        date: "2022-11-10",
-        type: isNearFaultLine ? "Earthquake" : isMountainous ? "Avalanche" : "Drought",
-        severity: "Minor",
-        affected: 2000,
-        description: `A ${isNearFaultLine ? "minor earthquake" : isMountainous ? "small avalanche" : "period of drought"} affected local resources and communities.`,
-        location: "Local Area",
-      },
-      {
-        id: "evt-004",
-        date: "2022-07-18",
-        type: isCoastal ? "Tsunami" : "Severe Storm",
-        severity: "Catastrophic",
-        affected: 15000,
-        description: `A ${isCoastal ? "tsunami following an offshore earthquake" : "severe storm with high winds"} caused widespread destruction.`,
-        location: "Regional Coast",
-      },
-      {
-        id: "evt-005",
-        date: "2021-09-03",
-        type: "Flood",
-        severity: "Moderate",
-        affected: 3500,
-        description: "Heavy rainfall led to flooding in low-lying areas.",
-        location: "River Basin",
-      },
-    ],
-    trends: [
-      { year: "2023", count: 4, primaryType: isCoastal ? "Flood" : isMountainous ? "Landslide" : "Wildfire" },
-      { year: "2022", count: 6, primaryType: isNearFaultLine ? "Earthquake" : "Severe Storm" },
-      { year: "2021", count: 5, primaryType: "Flood" },
-      { year: "2020", count: 3, primaryType: isCoastal ? "Hurricane" : "Wildfire" },
-      { year: "2019", count: 2, primaryType: "Drought" },
-      { year: "2018", count: 4, primaryType: isNearFaultLine ? "Earthquake" : "Flood" },
-      { year: "2017", count: 7, primaryType: isCoastal ? "Hurricane" : "Severe Storm" },
-      { year: "2016", count: 3, primaryType: "Wildfire" },
-      { year: "2015", count: 2, primaryType: "Drought" },
-      { year: "2014", count: 1, primaryType: isNearFaultLine ? "Earthquake" : "Flood" },
-    ],
-    reports: [
-      {
-        id: "rep-001",
-        title: `Annual Disaster Summary ${new Date().getFullYear() - 1}`,
-        date: `${new Date().getFullYear() - 1}-12-31`,
-        type: "Annual Report",
-        summary: `Comprehensive overview of all disasters in ${new Date().getFullYear() - 1} with impact assessments and response evaluations.`,
-        fileSize: "3.2 MB",
-      },
-      {
-        id: "rep-002",
-        title: isCoastal
-          ? "Flood Impact Analysis"
-          : isMountainous
-            ? "Landslide Risk Assessment"
-            : "Wildfire Damage Report",
-        date: "2023-06-30",
-        type: "Impact Analysis",
-        summary: `Detailed analysis of the ${isCoastal ? "flood" : isMountainous ? "landslide" : "wildfire"} impact on communities, infrastructure, and the environment.`,
-        fileSize: "2.4 MB",
-      },
-      {
-        id: "rep-003",
-        title: isNearFaultLine ? "Earthquake Preparedness Report" : "Disaster Resilience Framework",
-        date: "2022-09-15",
-        type: "Preparedness Guide",
-        summary: "Comprehensive guide for community preparedness and resilience building strategies.",
-        fileSize: "5.1 MB",
-      },
-      {
-        id: "rep-004",
-        title: "Climate Change and Disaster Trends",
-        date: "2022-03-22",
-        type: "Research Study",
-        summary: "Analysis of how climate change is affecting disaster frequency and severity in the region.",
-        fileSize: "4.7 MB",
-      },
-      {
-        id: "rep-005",
-        title: "Economic Impact of Recent Disasters",
-        date: "2021-11-10",
-        type: "Economic Analysis",
-        summary: "Assessment of the economic costs and long-term financial implications of recent disaster events.",
-        fileSize: "1.8 MB",
-      },
-    ],
-    frequencyData: [
-      { type: "Flood", count: isCoastal ? 12 : 8 },
-      { type: "Wildfire", count: isMountainous ? 5 : 10 },
-      { type: "Earthquake", count: isNearFaultLine ? 9 : 2 },
-      { type: "Severe Storm", count: 7 },
-      { type: "Drought", count: 4 },
-      { type: isCoastal ? "Hurricane" : "Landslide", count: isCoastal ? 6 : isMountainous ? 8 : 3 },
-    ],
-    severityData: [
-      { severity: "Minor", count: 12 },
-      { severity: "Moderate", count: 15 },
-      { severity: "Severe", count: 8 },
-      { severity: "Catastrophic", count: 3 },
-    ],
   }
 }
 
