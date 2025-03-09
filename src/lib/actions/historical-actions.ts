@@ -37,7 +37,9 @@ export interface HistoricalData {
 }
 
 // Sample data for testing purposes
-const getSampleHistoricalData = (latitude: number, longitude: number): HistoricalData => {
+// Using underscore prefix to indicate these parameters are intentionally unused
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const getSampleHistoricalData = (_latitude: number, _longitude: number): HistoricalData => {
   return {
     events: [
       {
