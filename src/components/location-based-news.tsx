@@ -52,7 +52,22 @@ export function LocationBasedNews() {
       const result = await fetchNewsData(coordinates.lat, coordinates.lng)
 
       if (result.success) {
-        setNewsData(result.data)
+        // Sort news by date (most recent first)
+        const sortedNews = [...result.data.news].sort((a, b) => {
+          if (!a.date) return 1
+          if (!b.date) return -1
+          return new Date(b.date).getTime() - new Date(a.date).getTime()
+        })
+
+        // Sort broadcasts by timestamp (most recent first)
+        const sortedBroadcasts = [...result.data.broadcasts].sort((a, b) => {
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        })
+
+        setNewsData({
+          news: sortedNews,
+          broadcasts: sortedBroadcasts,
+        })
         setIsSampleData(!!result.data.isSampleData)
         console.log("Successfully loaded news data")
 
@@ -91,6 +106,10 @@ export function LocationBasedNews() {
   if (loading) {
     return <NewsDataSkeleton />
   }
+
+  // Check if there are any active emergency broadcasts
+  const hasActiveEmergencies =
+    newsData?.broadcasts && newsData.broadcasts.length > 0 && newsData.broadcasts.some((broadcast) => broadcast.isLive)
 
   return (
     <div className="space-y-6">
@@ -132,6 +151,42 @@ export function LocationBasedNews() {
         </AlertDescription>
       </Alert>
 
+      {/* Emergency Broadcasts Section - Show at the top when there are active emergencies */}
+      {hasActiveEmergencies && (
+        <Card className="border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-800">
+          <CardHeader>
+            <CardTitle className="text-lg sm:text-xl flex items-center text-red-700 dark:text-red-400">
+              <Radio className="mr-2 h-5 w-5 text-red-500 animate-pulse" />
+              Active Emergency Broadcasts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {newsData?.broadcasts
+              .filter((broadcast) => broadcast.isLive)
+              .map((broadcast) => (
+                <div
+                  key={broadcast.id}
+                  className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg mb-4 border border-red-200 dark:border-red-800"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Radio className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 animate-pulse mr-2" />
+                      <p className="text-xs sm:text-sm font-semibold">LIVE: {broadcast.title}</p>
+                    </div>
+                    <Badge variant="destructive">{broadcast.urgency}</Badge>
+                  </div>
+                  <p className="text-xs sm:text-sm mt-2">{broadcast.message}</p>
+                  <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+                    <span>Source: {broadcast.source}</span>
+                    <span>{new Date(broadcast.timestamp).toLocaleString()}</span>
+                  </div>
+                </div>
+              ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* News Items Section */}
       <div className="grid gap-4 md:grid-cols-2">
         {newsData?.news.map((item) => (
           <Card key={item.id} className="flex flex-col">
@@ -165,7 +220,7 @@ export function LocationBasedNews() {
             </CardContent>
           </Card>
         ))}
-        {newsData?.news.length === 0 && (
+        {(!newsData?.news || newsData.news.length === 0) && (
           <div className="md:col-span-2">
             <Card className="p-6">
               <div className="text-center">
@@ -178,51 +233,56 @@ export function LocationBasedNews() {
         )}
       </div>
 
+      {/* All Emergency Broadcasts Section */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg sm:text-xl">Emergency Broadcasts</CardTitle>
         </CardHeader>
         <CardContent>
-          {newsData?.broadcasts.map((broadcast) => (
-            <div key={broadcast.id} className="bg-gray-100 p-3 sm:p-4 rounded-lg mb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  {broadcast.isLive ? (
-                    <Radio className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 animate-pulse mr-2" />
-                  ) : (
-                    <Bell className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  )}
-                  <p className="text-xs sm:text-sm font-semibold">
-                    {broadcast.isLive ? "LIVE: " : ""}
-                    {broadcast.title}
-                  </p>
+          {newsData?.broadcasts && newsData.broadcasts.length > 0 ? (
+            <>
+              {newsData.broadcasts.map((broadcast) => (
+                <div key={broadcast.id} className="bg-gray-100 dark:bg-gray-800 p-3 sm:p-4 rounded-lg mb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      {broadcast.isLive ? (
+                        <Radio className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 animate-pulse mr-2" />
+                      ) : (
+                        <Bell className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                      )}
+                      <p className="text-xs sm:text-sm font-semibold">
+                        {broadcast.isLive ? "LIVE: " : ""}
+                        {broadcast.title}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={
+                        broadcast.urgency === "High"
+                          ? "destructive"
+                          : broadcast.urgency === "Medium"
+                            ? "default"
+                            : "secondary"
+                      }
+                    >
+                      {broadcast.urgency}
+                    </Badge>
+                  </div>
+                  <p className="text-xs sm:text-sm mt-2">{broadcast.message}</p>
+                  <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+                    <span>Source: {broadcast.source}</span>
+                    <span>{new Date(broadcast.timestamp).toLocaleString()}</span>
+                  </div>
                 </div>
-                <Badge
-                  variant={
-                    broadcast.urgency === "High"
-                      ? "destructive"
-                      : broadcast.urgency === "Medium"
-                        ? "default"
-                        : "secondary"
-                  }
-                >
-                  {broadcast.urgency}
-                </Badge>
-              </div>
-              <p className="text-xs sm:text-sm mt-2">{broadcast.message}</p>
-              <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-                <span>Source: {broadcast.source}</span>
-                <span>{new Date(broadcast.timestamp).toLocaleString()}</span>
-              </div>
-            </div>
-          ))}
-          {newsData?.broadcasts.length === 0 && (
+              ))}
+            </>
+          ) : (
             <div className="text-center py-6">
               <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-muted-foreground">No active emergency broadcasts at this time.</p>
+              <p className="text-xs text-muted-foreground mt-1">The area is currently clear of emergency situations.</p>
             </div>
           )}
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 mt-4">
             <Button className="flex-1 text-sm sm:text-base">
               <Bell className="mr-2 h-4 w-4" />
               Enable Notifications

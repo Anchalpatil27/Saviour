@@ -40,6 +40,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
       if (!coordinates) {
         setError("Location coordinates are required to fetch historical data")
         setLoading(false)
+        setRefreshing(false) // Reset refreshing state
         return
       }
 
@@ -68,6 +69,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
         setError("An unexpected error occurred while fetching historical data")
       } finally {
         setLoading(false)
+        setRefreshing(false) // Reset refreshing state
       }
     }
 
@@ -77,10 +79,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
   const handleRefresh = () => {
     setRefreshing(true)
     setRetryCount((prev) => prev + 1)
-    // The refresh state will be reset when the data loading completes in the useEffect
-    setTimeout(() => {
-      if (refreshing) setRefreshing(false) // Safety timeout in case loading takes too long
-    }, 10000)
+    // The refreshing state will be reset in the useEffect
   }
 
   if (loading) {

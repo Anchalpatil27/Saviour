@@ -31,71 +31,45 @@ export interface NewsData {
   isSampleData?: boolean
 }
 
-// Sample data for testing purposes
+// Update the getSampleNewsData function to make it clearer these are sample data
+// and to not show fake emergency broadcasts by default
+
 function getSampleNewsData(latitude: number, longitude: number): NewsData {
   // Create more realistic sample data based on the coordinates
   const cityName = getCityNameFromCoordinates(latitude, longitude)
+  const currentDate = new Date().toISOString().split("T")[0] // Today's date in YYYY-MM-DD format
 
   return {
     news: [
       {
         id: "1",
-        title: `Local Flood Warning Issued for ${cityName}`,
-        source: "City Emergency Services",
-        category: "Alert",
-        summary: `Residents in ${cityName} are advised to prepare for potential flooding due to heavy rainfall expected in the next 24 hours.`,
-        date: "2023-05-15",
+        title: `[SAMPLE] Weather Update for ${cityName}`,
+        source: "City Weather Service",
+        category: "Update",
+        summary: `This is sample data. In a real application, you would see actual weather updates for ${cityName} here.`,
+        date: currentDate,
         distance: "12.3 km",
       },
       {
         id: "2",
-        title: `New Evacuation Routes Announced for ${cityName}`,
-        source: "Transportation Department",
+        title: `[SAMPLE] Community Notice for ${cityName}`,
+        source: "Local Government",
         category: "Update",
-        summary: "Updated evacuation routes have been established to improve emergency response times.",
-        date: "2023-05-10",
+        summary: "This is sample data. In a real application, you would see actual community notices here.",
+        date: currentDate,
         distance: "8.7 km",
       },
       {
         id: "3",
-        title: "Community Preparedness Workshop This Weekend",
+        title: "[SAMPLE] Community Preparedness Workshop",
         source: "SAVIOUR Organization",
         category: "Event",
-        summary:
-          "Learn essential survival skills and emergency preparedness techniques at this free community workshop.",
-        date: "2023-05-20",
+        summary: "This is sample data. In a real application, you would see actual community events here.",
+        date: currentDate,
         distance: "15.2 km",
       },
-      {
-        id: "4",
-        title: "Updated Safety Guidelines Released",
-        source: "National Safety Board",
-        category: "Update",
-        summary: "New safety protocols have been established for residential buildings in disaster-prone areas.",
-        date: "2023-05-05",
-        distance: "22.1 km",
-      },
     ],
-    broadcasts: [
-      {
-        id: "1",
-        title: "LIVE: Emergency Broadcast",
-        message: `Severe thunderstorm warning for ${cityName} and surrounding areas for the next 3 hours. Seek shelter immediately.`,
-        isLive: true,
-        urgency: "High",
-        source: "National Weather Service",
-        timestamp: new Date().toISOString(),
-      },
-      {
-        id: "2",
-        title: "Road Closure Alert",
-        message: `Main Street in ${cityName} is closed due to flooding. Use alternate routes.`,
-        isLive: false,
-        urgency: "Medium",
-        source: "Department of Transportation",
-        timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-      },
-    ],
+    broadcasts: [], // No emergency broadcasts by default in sample data
     isSampleData: true,
   }
 }
