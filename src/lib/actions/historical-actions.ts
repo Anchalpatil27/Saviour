@@ -154,8 +154,8 @@ export async function fetchHistoricalData(
       try {
         jsonData = JSON.parse(text) as HistoricalData
         console.log("Successfully parsed entire response as JSON")
-      } catch (_ignored) {
-        // Using _ignored prefix to indicate this variable is intentionally not used
+      } catch (error) {
+        // Don't use the error parameter at all
         console.log("Could not parse entire response as JSON, trying to extract JSON object")
       }
 
