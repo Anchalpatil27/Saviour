@@ -149,7 +149,7 @@ export async function fetchHistoricalData(
       // Direct fetch to Gemini API with proper error handling
       console.log(`Fetching historical data for coordinates: ${latitude}, ${longitude}`)
 
-      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+      const apiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent"
       console.log(`Using API URL: ${apiUrl}`)
 
       const response = await fetch(apiUrl, {
