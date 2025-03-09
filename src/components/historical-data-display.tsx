@@ -15,6 +15,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
   const [data, setData] = useState<HistoricalData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     async function loadHistoricalData() {
@@ -26,23 +27,32 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
 
       try {
         setLoading(true)
+        setError(null)
+
+        console.log(`Fetching historical data for coordinates: ${coordinates.lat}, ${coordinates.lng}`)
         const result = await fetchHistoricalData(coordinates.lat, coordinates.lng)
 
         if (result.success) {
           setData(result.data)
+          console.log("Successfully loaded historical data")
         } else {
+          console.error("Error from historical data action:", result.error)
           setError(result.error || "Failed to fetch historical data")
         }
       } catch (err) {
         console.error("Error loading historical data:", err)
-        setError("An unexpected error occurred")
+        setError("An unexpected error occurred while fetching historical data")
       } finally {
         setLoading(false)
       }
     }
 
     loadHistoricalData()
-  }, [coordinates])
+  }, [coordinates, retryCount])
+
+  const handleRetry = () => {
+    setRetryCount((prev) => prev + 1)
+  }
 
   if (loading) {
     return <HistoricalDataSkeleton />
@@ -57,7 +67,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
             <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">Unable to Load Historical Data</h3>
             <p className="text-muted-foreground mb-4">{error || "No data available"}</p>
-            <Button onClick={() => window.location.reload()}>Try Again</Button>
+            <Button onClick={handleRetry}>Try Again</Button>
           </div>
         </Card>
       </div>

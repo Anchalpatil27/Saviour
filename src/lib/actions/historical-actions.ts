@@ -89,7 +89,7 @@ export async function fetchHistoricalData(
       
       Make the data realistic and relevant to the geographic location of the coordinates. If the location is coastal, include hurricanes/tsunamis. If mountainous, include landslides. If near fault lines, include earthquakes, etc.
       
-      Only return the JSON object, nothing else.
+      IMPORTANT: Return ONLY a valid JSON object with no additional text, markdown formatting, or code blocks.
     `
 
     try {
@@ -113,7 +113,7 @@ export async function fetchHistoricalData(
               },
             ],
             generationConfig: {
-              temperature: 0.2,
+              temperature: 0.1, // Lower temperature for more deterministic output
               topK: 40,
               topP: 0.95,
               maxOutputTokens: 2048,
@@ -122,50 +122,111 @@ export async function fetchHistoricalData(
         },
       )
 
+      if (!response.ok) {
+        console.error(`API error: ${response.status} ${response.statusText}`)
+        return {
+          success: false,
+          data: getSampleHistoricalData(latitude, longitude),
+          error: `API error: ${response.status} ${response.statusText}`,
+        }
+      }
+
       const data = await response.json()
 
       // Extract text from Gemini response
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
 
-      // Extract JSON from the response
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
-      if (!jsonMatch) {
-        console.log("Failed to parse response from Gemini API")
+      if (!text) {
+        console.error("Empty response from Gemini API")
         return {
           success: false,
           data: getSampleHistoricalData(latitude, longitude),
-          error: "Failed to parse response from Gemini API",
+          error: "Empty response from Gemini API",
         }
       }
 
+      console.log("Raw Gemini response:", text.substring(0, 200) + "...") // Log the beginning of the response for debugging
+
+      // Try multiple approaches to extract JSON
+      let jsonData: HistoricalData | null = null
+
+      // Approach 1: Try to parse the entire response as JSON
       try {
-        const historicalData = JSON.parse(jsonMatch[0]) as HistoricalData
+        jsonData = JSON.parse(text) as HistoricalData
+      } catch (e) {
+        console.log("Could not parse entire response as JSON, trying to extract JSON object")
+      }
+
+      // Approach 2: Try to extract JSON using regex if approach 1 failed
+      if (!jsonData) {
+        const jsonMatch = text.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          try {
+            jsonData = JSON.parse(jsonMatch[0]) as HistoricalData
+          } catch (e) {
+            console.error("Error parsing extracted JSON:", e)
+          }
+        }
+      }
+
+      // Approach 3: Try to find JSON between markdown code blocks
+      if (!jsonData) {
+        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+        if (codeBlockMatch && codeBlockMatch[1]) {
+          try {
+            jsonData = JSON.parse(codeBlockMatch[1]) as HistoricalData
+          } catch (e) {
+            console.error("Error parsing JSON from code block:", e)
+          }
+        }
+      }
+
+      // If we have valid JSON data, return it
+      if (jsonData) {
+        // Validate the structure to ensure it has all required properties
+        if (
+          !jsonData.events ||
+          !jsonData.trends ||
+          !jsonData.reports ||
+          !jsonData.frequencyData ||
+          !jsonData.severityData
+        ) {
+          console.error("JSON data missing required properties")
+          return {
+            success: false,
+            data: getSampleHistoricalData(latitude, longitude),
+            error: "Invalid data structure from API",
+          }
+        }
 
         revalidatePath("/dashboard/historical")
+        return {
+          success: true,
+          data: jsonData,
+        }
+      }
 
-        return {
-          success: true,
-          data: historicalData,
-        }
-      } catch (parseError) {
-        console.error("Error parsing JSON:", parseError)
-        return {
-          success: true,
-          data: getSampleHistoricalData(latitude, longitude),
-        }
+      // If all parsing attempts failed, return sample data
+      console.error("Failed to parse JSON from Gemini API response")
+      return {
+        success: false,
+        data: getSampleHistoricalData(latitude, longitude),
+        error: "Failed to parse response from Gemini API",
       }
     } catch (apiError) {
       console.error("API error:", apiError)
       return {
-        success: true,
+        success: false,
         data: getSampleHistoricalData(latitude, longitude),
+        error: apiError instanceof Error ? apiError.message : "Unknown API error",
       }
     }
   } catch (error) {
     console.error("Error fetching historical data:", error)
     return {
-      success: true,
+      success: false,
       data: getSampleHistoricalData(latitude, longitude),
+      error: error instanceof Error ? error.message : "Unknown error",
     }
   }
 }
