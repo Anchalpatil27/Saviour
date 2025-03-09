@@ -56,7 +56,8 @@ export function EmergencyContactForm({ userId }: EmergencyContactFormProps) {
           variant: "destructive",
         })
       }
-    } catch (_error) {
+    } catch (error) {
+      console.error("Form submission error:", error)
       toast({
         title: "Error",
         description: "An unexpected error occurred",
