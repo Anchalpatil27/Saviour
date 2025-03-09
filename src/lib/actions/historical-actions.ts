@@ -154,7 +154,7 @@ export async function fetchHistoricalData(
       try {
         jsonData = JSON.parse(text) as HistoricalData
         console.log("Successfully parsed entire response as JSON")
-      } catch (error) {
+      } catch {
         // Don't use the error parameter at all
         console.log("Could not parse entire response as JSON, trying to extract JSON object")
       }
@@ -166,8 +166,8 @@ export async function fetchHistoricalData(
           try {
             jsonData = JSON.parse(jsonMatch[0]) as HistoricalData
             console.log("Successfully parsed JSON using regex extraction")
-          } catch (error) {
-            console.error("Error parsing extracted JSON:", error)
+          } catch {
+            console.error("Error parsing extracted JSON")
           }
         }
       }
@@ -179,8 +179,8 @@ export async function fetchHistoricalData(
           try {
             jsonData = JSON.parse(codeBlockMatch[1]) as HistoricalData
             console.log("Successfully parsed JSON from code block")
-          } catch (error) {
-            console.error("Error parsing JSON from code block:", error)
+          } catch {
+            console.error("Error parsing JSON from code block")
           }
         }
       }
@@ -217,20 +217,20 @@ export async function fetchHistoricalData(
         data: getSampleHistoricalData(latitude, longitude),
         error: "Failed to parse response from Gemini API",
       }
-    } catch (apiError) {
-      console.error("API error:", apiError)
+    } catch {
+      console.error("API error occurred")
       return {
         success: false,
         data: getSampleHistoricalData(latitude, longitude),
-        error: apiError instanceof Error ? apiError.message : "Unknown API error",
+        error: "Unknown API error",
       }
     }
-  } catch (error) {
-    console.error("Error fetching historical data:", error)
+  } catch {
+    console.error("Error fetching historical data")
     return {
       success: false,
       data: getSampleHistoricalData(latitude, longitude),
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: "Unknown error",
     }
   }
 }
