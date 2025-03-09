@@ -19,75 +19,76 @@ interface MongoClientCache {
 }
 
 // Properly augment the NodeJS global namespace
+// Use a different approach to avoid duplicate declarations
 declare global {
   // eslint-disable-next-line no-var
-  var mongooseCache: MongooseCache
+  var _mongooseCache: MongooseCache | undefined
   // eslint-disable-next-line no-var
-  var mongoClientCache: MongoClientCache
+  var _mongoClientCache: MongoClientCache | undefined
   // eslint-disable-next-line no-var
-  var mongoDb: Db | null
+  var _mongoDb: Db | null | undefined
 }
 
-// Initialize cache variables
-if (!global.mongooseCache) {
-  global.mongooseCache = { conn: null, promise: null }
+// Initialize cache variables with different names to avoid conflicts
+if (!global._mongooseCache) {
+  global._mongooseCache = { conn: null, promise: null }
 }
 
-if (!global.mongoClientCache) {
-  global.mongoClientCache = { conn: null, promise: null }
+if (!global._mongoClientCache) {
+  global._mongoClientCache = { conn: null, promise: null }
 }
 
-if (global.mongoDb === undefined) {
-  global.mongoDb = null
+if (global._mongoDb === undefined) {
+  global._mongoDb = null
 }
 
 // Connect to MongoDB using Mongoose (for models)
 export async function connectToDatabase() {
-  if (global.mongooseCache.conn) {
-    return global.mongooseCache.conn
+  if (global._mongooseCache?.conn) {
+    return global._mongooseCache.conn
   }
 
-  if (!global.mongooseCache.promise) {
+  if (!global._mongooseCache?.promise) {
     const opts = {
       bufferCommands: false,
     }
 
-    global.mongooseCache.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+    global._mongooseCache!.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
       return mongoose
     })
   }
 
   try {
-    global.mongooseCache.conn = await global.mongooseCache.promise
+    global._mongooseCache!.conn = await global._mongooseCache!.promise
   } catch (e) {
-    global.mongooseCache.promise = null
+    global._mongooseCache!.promise = null
     throw e
   }
 
-  return global.mongooseCache.conn
+  return global._mongooseCache!.conn
 }
 
 // Connect to MongoDB using native driver (for direct collection access)
 export async function connectToMongoDB() {
-  if (global.mongoClientCache.conn && global.mongoDb) {
-    return { client: global.mongoClientCache.conn, db: global.mongoDb }
+  if (global._mongoClientCache?.conn && global._mongoDb) {
+    return { client: global._mongoClientCache.conn, db: global._mongoDb }
   }
 
-  if (!global.mongoClientCache.promise) {
+  if (!global._mongoClientCache?.promise) {
     const client = new MongoClient(MONGODB_URI!)
-    global.mongoClientCache.promise = client.connect().then((client) => {
+    global._mongoClientCache!.promise = client.connect().then((client) => {
       const db = client.db()
       return { client, db }
     })
   }
 
   try {
-    const { client, db } = await global.mongoClientCache.promise
-    global.mongoClientCache.conn = client
-    global.mongoDb = db
+    const { client, db } = await global._mongoClientCache!.promise!
+    global._mongoClientCache!.conn = client
+    global._mongoDb = db
     return { client, db }
   } catch (e) {
-    global.mongoClientCache.promise = null
+    global._mongoClientCache!.promise = null
     throw e
   }
 }
