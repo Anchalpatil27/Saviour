@@ -162,182 +162,199 @@ export async function fetchHistoricalData(
       CRITICAL: All events MUST be within 5km of the provided coordinates.
     `
 
-    try {
-      // Direct fetch to Gemini API with proper error handling
-      console.log(`Fetching historical data for coordinates: ${latitude}, ${longitude}`)
+    // Define multiple API endpoints to try
+    const endpoints = [
+      {
+        url: "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent",
+        model: "gemini-pro",
+      },
+      {
+        url: "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent",
+        model: "gemini-1.5-pro",
+      },
+      {
+        url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+        model: "gemini-pro (beta)",
+      },
+    ]
 
-      const apiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent"
-      console.log(`Using API URL: ${apiUrl}`)
+    // Try each endpoint until one works
+    let lastError = null
 
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": process.env.GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.1,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
-          },
-        }),
-      })
-
-      console.log(`Gemini API response status: ${response.status}`)
-
-      if (!response.ok) {
-        let errorText = ""
-        try {
-          const errorData = await response.json()
-          errorText = JSON.stringify(errorData)
-          console.error("API error response:", errorData)
-        } catch (parseError) {
-          console.error("Failed to parse error response:", parseError)
-          errorText = await response.text().catch(() => "Could not read error response")
-        }
-
-        console.error(`API error: ${response.status} ${response.statusText}. Response: ${errorText}`)
-
-        return {
-          success: false,
-          data: getSampleHistoricalData(latitude, longitude),
-          error: `API error: ${response.status} ${response.statusText}. Please check your API key and network.`,
-        }
-      }
-
-      const data = await response.json()
-      console.log("Received response from Gemini API")
-
-      // Check if the response has the expected structure
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
-        console.error("Unexpected API response structure:", JSON.stringify(data).substring(0, 200) + "...")
-        return {
-          success: false,
-          data: getSampleHistoricalData(latitude, longitude),
-          error: "Unexpected API response structure",
-        }
-      }
-
-      // Extract text from Gemini response
-      const text = data.candidates[0].content.parts[0].text || ""
-
-      if (!text) {
-        console.error("Empty text in Gemini API response")
-        return {
-          success: false,
-          data: getSampleHistoricalData(latitude, longitude),
-          error: "Empty response from Gemini API",
-        }
-      }
-
-      console.log("Raw Gemini response length:", text.length)
-      console.log("Response preview:", text.substring(0, 100) + "...")
-
-      // Try multiple approaches to extract JSON
-      let jsonData: HistoricalData | null = null
-
-      // Approach 1: Try to parse the entire response as JSON
+    for (const endpoint of endpoints) {
       try {
-        jsonData = JSON.parse(text) as HistoricalData
-        console.log("Successfully parsed entire response as JSON")
-      } catch (parseError) {
-        console.log("Could not parse entire response as JSON, trying to extract JSON object:", parseError)
-      }
+        console.log(`Trying endpoint for ${endpoint.model}: ${endpoint.url}`)
 
-      // Approach 2: Try to extract JSON using regex if approach 1 failed
-      if (!jsonData) {
-        const jsonMatch = text.match(/\{[\s\S]*\}/)
-        if (jsonMatch) {
+        const response = await fetch(endpoint.url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": process.env.GEMINI_API_KEY,
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 2048,
+            },
+          }),
+        })
+
+        console.log(`${endpoint.model} response status: ${response.status}`)
+
+        if (!response.ok) {
+          let errorText = ""
           try {
-            jsonData = JSON.parse(jsonMatch[0]) as HistoricalData
-            console.log("Successfully parsed JSON using regex extraction")
+            const errorData = await response.json()
+            errorText = JSON.stringify(errorData)
+            console.error(`${endpoint.model} error response:`, errorData)
           } catch (parseError) {
-            console.error("Error parsing extracted JSON:", parseError)
+            console.error(`Failed to parse ${endpoint.model} error response:`, parseError)
+            errorText = await response.text().catch(() => "Could not read error response")
           }
-        } else {
-          console.log("No JSON object found in response using regex")
-        }
-      }
 
-      // Approach 3: Try to find JSON between markdown code blocks
-      if (!jsonData) {
-        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
-        if (codeBlockMatch && codeBlockMatch[1]) {
-          try {
-            jsonData = JSON.parse(codeBlockMatch[1]) as HistoricalData
-            console.log("Successfully parsed JSON from code block")
-          } catch (parseError) {
-            console.error("Error parsing JSON from code block:", parseError)
-          }
-        } else {
-          console.log("No code block found in response")
+          console.error(
+            `${endpoint.model} API error: ${response.status} ${response.statusText}. Response: ${errorText}`,
+          )
+          lastError = `${endpoint.model} API error: ${response.status} ${response.statusText}`
+          continue // Try the next endpoint
         }
-      }
 
-      // If we have valid JSON data, return it
-      if (jsonData) {
-        // Validate the structure to ensure it has all required properties
+        const data = await response.json()
+        console.log(`Received response from ${endpoint.model}`)
+
+        // Check if the response has the expected structure
         if (
-          !jsonData.events ||
-          !jsonData.trends ||
-          !jsonData.reports ||
-          !jsonData.frequencyData ||
-          !jsonData.severityData
+          !data.candidates ||
+          !data.candidates[0] ||
+          !data.candidates[0].content ||
+          !data.candidates[0].content.parts
         ) {
-          console.error("JSON data missing required properties:", Object.keys(jsonData))
-          return {
-            success: false,
-            data: getSampleHistoricalData(latitude, longitude),
-            error: "Invalid data structure from API",
+          console.error(
+            `Unexpected ${endpoint.model} API response structure:`,
+            JSON.stringify(data).substring(0, 200) + "...",
+          )
+          lastError = `Unexpected ${endpoint.model} API response structure`
+          continue // Try the next endpoint
+        }
+
+        // Extract text from Gemini response
+        const text = data.candidates[0].content.parts[0].text || ""
+
+        if (!text) {
+          console.error(`Empty text in ${endpoint.model} API response`)
+          lastError = `Empty response from ${endpoint.model} API`
+          continue // Try the next endpoint
+        }
+
+        console.log(`Raw ${endpoint.model} response length:`, text.length)
+        console.log(`${endpoint.model} response preview:`, text.substring(0, 100) + "...")
+
+        // Try multiple approaches to extract JSON
+        let jsonData: HistoricalData | null = null
+
+        // Approach 1: Try to parse the entire response as JSON
+        try {
+          jsonData = JSON.parse(text) as HistoricalData
+          console.log(`Successfully parsed entire ${endpoint.model} response as JSON`)
+        } catch (parseError) {
+          console.log(
+            `Could not parse entire ${endpoint.model} response as JSON, trying to extract JSON object:`,
+            parseError,
+          )
+        }
+
+        // Approach 2: Try to extract JSON using regex if approach 1 failed
+        if (!jsonData) {
+          const jsonMatch = text.match(/\{[\s\S]*\}/)
+          if (jsonMatch) {
+            try {
+              jsonData = JSON.parse(jsonMatch[0]) as HistoricalData
+              console.log(`Successfully parsed JSON using regex extraction from ${endpoint.model}`)
+            } catch (parseError) {
+              console.error(`Error parsing extracted JSON from ${endpoint.model}:`, parseError)
+            }
+          } else {
+            console.log(`No JSON object found in ${endpoint.model} response using regex`)
           }
         }
 
-        // Filter out any events that are beyond 5km if distance is provided
-        if (jsonData.events && Array.isArray(jsonData.events)) {
-          jsonData.events = jsonData.events.filter((event) => {
-            if (!event.distance) return true
-
-            // Extract the numeric part of the distance string (e.g., "3.2 km" -> 3.2)
-            const distanceMatch = event.distance.match(/(\d+(\.\d+)?)/)
-            if (!distanceMatch) return true
-
-            const distance = Number.parseFloat(distanceMatch[0])
-            return distance <= 5
-          })
+        // Approach 3: Try to find JSON between markdown code blocks
+        if (!jsonData) {
+          const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+          if (codeBlockMatch && codeBlockMatch[1]) {
+            try {
+              jsonData = JSON.parse(codeBlockMatch[1]) as HistoricalData
+              console.log(`Successfully parsed JSON from ${endpoint.model} code block`)
+            } catch (parseError) {
+              console.error(`Error parsing JSON from ${endpoint.model} code block:`, parseError)
+            }
+          } else {
+            console.log(`No code block found in ${endpoint.model} response`)
+          }
         }
 
-        revalidatePath("/dashboard/historical")
-        return {
-          success: true,
-          data: jsonData,
-        }
-      }
+        // If we have valid JSON data, return it
+        if (jsonData) {
+          // Validate the structure to ensure it has all required properties
+          if (
+            !jsonData.events ||
+            !jsonData.trends ||
+            !jsonData.reports ||
+            !jsonData.frequencyData ||
+            !jsonData.severityData
+          ) {
+            console.error(`${endpoint.model} JSON data missing required properties:`, Object.keys(jsonData))
+            lastError = `Invalid data structure from ${endpoint.model} API`
+            continue // Try the next endpoint
+          }
 
-      // If all parsing attempts failed, return sample data
-      console.error("Failed to parse JSON from Gemini API response")
-      return {
-        success: false,
-        data: getSampleHistoricalData(latitude, longitude),
-        error: "Failed to parse response from Gemini API",
+          // Filter out any events that are beyond 5km if distance is provided
+          if (jsonData.events && Array.isArray(jsonData.events)) {
+            jsonData.events = jsonData.events.filter((event) => {
+              if (!event.distance) return true
+
+              // Extract the numeric part of the distance string (e.g., "3.2 km" -> 3.2)
+              const distanceMatch = event.distance.match(/(\d+(\.\d+)?)/)
+              if (!distanceMatch) return true
+
+              const distance = Number.parseFloat(distanceMatch[0])
+              return distance <= 5
+            })
+          }
+
+          revalidatePath("/dashboard/historical")
+          return {
+            success: true,
+            data: jsonData,
+          }
+        }
+
+        // If all parsing attempts failed, try the next endpoint
+        console.error(`Failed to parse JSON from ${endpoint.model} API response`)
+        lastError = `Failed to parse response from ${endpoint.model} API`
+      } catch (apiError) {
+        console.error(`${endpoint.model} API error occurred:`, apiError)
+        lastError = `${endpoint.model} API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`
       }
-    } catch (apiError) {
-      console.error("API error occurred:", apiError)
-      return {
-        success: false,
-        data: getSampleHistoricalData(latitude, longitude),
-        error: "Unknown API error. Please check your Gemini API key and network connection.",
-      }
+    }
+
+    // If all endpoints failed, return sample data with the last error
+    console.error("All Gemini API endpoints failed, using sample data")
+    return {
+      success: false,
+      data: getSampleHistoricalData(latitude, longitude),
+      error: lastError || "All Gemini API endpoints failed",
     }
   } catch (error) {
     console.error("Error fetching historical data:", error)

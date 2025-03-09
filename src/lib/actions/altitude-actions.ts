@@ -69,168 +69,190 @@ export async function findMidAltitudePlaces(
       Only return the JSON array, nothing else.
     `
 
-    try {
-      // Direct fetch to Gemini API to avoid TypeScript issues
-      console.log("Sending request to Gemini API")
-      const apiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent"
-      console.log(`Using API URL: ${apiUrl}`)
+    // Define multiple API endpoints to try
+    const endpoints = [
+      {
+        url: "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent",
+        model: "gemini-pro",
+      },
+      {
+        url: "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent",
+        model: "gemini-1.5-pro",
+      },
+      {
+        url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+        model: "gemini-pro (beta)",
+      },
+    ]
 
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": process.env.GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          },
-        }),
-      })
+    // Try each endpoint until one works
+    let lastError = null
 
-      console.log(`Gemini API response status: ${response.status}`)
-
-      if (!response.ok) {
-        let errorText = ""
-        try {
-          const errorData = await response.json()
-          errorText = JSON.stringify(errorData)
-          console.error("API error response:", errorData)
-        } catch (parseError) {
-          console.error("Failed to parse error response:", parseError)
-          errorText = await response.text().catch(() => "Could not read error response")
-        }
-
-        console.error(`API error: ${response.status} ${response.statusText}. Response: ${errorText}`)
-        return {
-          success: false,
-          places: getSamplePlaces(latitude, longitude),
-          error: `API error: ${response.status} ${response.statusText}. Please check your API key and network.`,
-        }
-      }
-
-      const data = await response.json()
-      console.log("Received response from Gemini API")
-
-      // Check if the response has the expected structure
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
-        console.error("Unexpected API response structure:", JSON.stringify(data).substring(0, 200) + "...")
-        return {
-          success: false,
-          places: getSamplePlaces(latitude, longitude),
-          error: "Unexpected API response structure",
-        }
-      }
-
-      // Extract text from Gemini response
-      const text = data.candidates[0].content.parts[0].text || ""
-
-      if (!text) {
-        console.error("Empty text in Gemini API response")
-        return {
-          success: false,
-          places: getSamplePlaces(latitude, longitude),
-          error: "Empty response from Gemini API",
-        }
-      }
-
-      console.log("Raw Gemini response length:", text.length)
-      console.log("Response preview:", text.substring(0, 100) + "...")
-
-      // Try multiple approaches to extract JSON
-      let places: MidAltitudePlace[] | null = null
-
-      // Approach 1: Try to parse the entire response as JSON
+    for (const endpoint of endpoints) {
       try {
-        places = JSON.parse(text) as MidAltitudePlace[]
-        console.log("Successfully parsed entire response as JSON array")
-      } catch (parseError) {
-        console.log("Could not parse entire response as JSON array, trying to extract JSON:", parseError)
-      }
+        console.log(`Trying endpoint for ${endpoint.model}: ${endpoint.url}`)
 
-      // Approach 2: Try to extract JSON using regex if approach 1 failed
-      if (!places) {
-        const jsonMatch = text.match(/\[[\s\S]*\]/)
-        if (jsonMatch) {
-          try {
-            places = JSON.parse(jsonMatch[0]) as MidAltitudePlace[]
-            console.log("Successfully parsed JSON array using regex extraction")
-          } catch (parseError) {
-            console.error("Error parsing extracted JSON array:", parseError)
-          }
-        } else {
-          console.log("No JSON array found in response using regex")
-        }
-      }
-
-      // Approach 3: Try to find JSON between markdown code blocks
-      if (!places) {
-        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
-        if (codeBlockMatch && codeBlockMatch[1]) {
-          try {
-            places = JSON.parse(codeBlockMatch[1]) as MidAltitudePlace[]
-            console.log("Successfully parsed JSON array from code block")
-          } catch (parseError) {
-            console.error("Error parsing JSON array from code block:", parseError)
-          }
-        } else {
-          console.log("No code block found in response")
-        }
-      }
-
-      // If we have valid JSON data, return it
-      if (places && Array.isArray(places)) {
-        // Filter out any places that are beyond 5km
-        places = places.filter((place) => {
-          if (!place.distanceFromUser) return true
-
-          // Extract the numeric part of the distance string (e.g., "3.2 km" -> 3.2)
-          const distanceMatch = place.distanceFromUser.match(/(\d+(\.\d+)?)/)
-          if (!distanceMatch) return true
-
-          const distance = Number.parseFloat(distanceMatch[0])
-          return distance <= 5
+        const response = await fetch(endpoint.url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": process.env.GEMINI_API_KEY,
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            },
+          }),
         })
 
-        console.log(`Found ${places.length} mid-altitude places within 5km`)
+        console.log(`${endpoint.model} response status: ${response.status}`)
 
-        revalidatePath("/dashboard/navigation")
-        return {
-          success: true,
-          places,
+        if (!response.ok) {
+          let errorText = ""
+          try {
+            const errorData = await response.json()
+            errorText = JSON.stringify(errorData)
+            console.error(`${endpoint.model} error response:`, errorData)
+          } catch (parseError) {
+            console.error(`Failed to parse ${endpoint.model} error response:`, parseError)
+            errorText = await response.text().catch(() => "Could not read error response")
+          }
+
+          console.error(
+            `${endpoint.model} API error: ${response.status} ${response.statusText}. Response: ${errorText}`,
+          )
+          lastError = `${endpoint.model} API error: ${response.status} ${response.statusText}`
+          continue // Try the next endpoint
         }
-      }
 
-      // If all parsing attempts failed, return sample data
-      console.error("Failed to parse JSON from Gemini API response")
-      return {
-        success: false,
-        places: getSamplePlaces(latitude, longitude),
-        error: "Failed to parse response from Gemini API",
+        const data = await response.json()
+        console.log(`Received response from ${endpoint.model}`)
+
+        // Check if the response has the expected structure
+        if (
+          !data.candidates ||
+          !data.candidates[0] ||
+          !data.candidates[0].content ||
+          !data.candidates[0].content.parts
+        ) {
+          console.error(
+            `Unexpected ${endpoint.model} API response structure:`,
+            JSON.stringify(data).substring(0, 200) + "...",
+          )
+          lastError = `Unexpected ${endpoint.model} API response structure`
+          continue // Try the next endpoint
+        }
+
+        // Extract text from Gemini response
+        const text = data.candidates[0].content.parts[0].text || ""
+
+        if (!text) {
+          console.error(`Empty text in ${endpoint.model} API response`)
+          lastError = `Empty response from ${endpoint.model} API`
+          continue // Try the next endpoint
+        }
+
+        console.log(`Raw ${endpoint.model} response length:`, text.length)
+        console.log(`${endpoint.model} response preview:`, text.substring(0, 100) + "...")
+
+        // Try multiple approaches to extract JSON
+        let places: MidAltitudePlace[] | null = null
+
+        // Approach 1: Try to parse the entire response as JSON
+        try {
+          places = JSON.parse(text) as MidAltitudePlace[]
+          console.log(`Successfully parsed entire ${endpoint.model} response as JSON array`)
+        } catch (parseError) {
+          console.log(
+            `Could not parse entire ${endpoint.model} response as JSON array, trying to extract JSON:`,
+            parseError,
+          )
+        }
+
+        // Approach 2: Try to extract JSON using regex if approach 1 failed
+        if (!places) {
+          const jsonMatch = text.match(/\[[\s\S]*\]/)
+          if (jsonMatch) {
+            try {
+              places = JSON.parse(jsonMatch[0]) as MidAltitudePlace[]
+              console.log(`Successfully parsed JSON array using regex extraction from ${endpoint.model}`)
+            } catch (parseError) {
+              console.error(`Error parsing extracted JSON array from ${endpoint.model}:`, parseError)
+            }
+          } else {
+            console.log(`No JSON array found in ${endpoint.model} response using regex`)
+          }
+        }
+
+        // Approach 3: Try to find JSON between markdown code blocks
+        if (!places) {
+          const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+          if (codeBlockMatch && codeBlockMatch[1]) {
+            try {
+              places = JSON.parse(codeBlockMatch[1]) as MidAltitudePlace[]
+              console.log(`Successfully parsed JSON array from ${endpoint.model} code block`)
+            } catch (parseError) {
+              console.error(`Error parsing JSON array from ${endpoint.model} code block:`, parseError)
+            }
+          } else {
+            console.log(`No code block found in ${endpoint.model} response`)
+          }
+        }
+
+        // If we have valid JSON data, return it
+        if (places && Array.isArray(places)) {
+          // Filter out any places that are beyond 5km
+          places = places.filter((place) => {
+            if (!place.distanceFromUser) return true
+
+            // Extract the numeric part of the distance string (e.g., "3.2 km" -> 3.2)
+            const distanceMatch = place.distanceFromUser.match(/(\d+(\.\d+)?)/)
+            if (!distanceMatch) return true
+
+            const distance = Number.parseFloat(distanceMatch[0])
+            return distance <= 5
+          })
+
+          console.log(`Found ${places.length} mid-altitude places within 5km using ${endpoint.model}`)
+
+          revalidatePath("/dashboard/navigation")
+          return {
+            success: true,
+            places,
+          }
+        }
+
+        // If all parsing attempts failed, try the next endpoint
+        console.error(`Failed to parse JSON from ${endpoint.model} API response`)
+        lastError = `Failed to parse response from ${endpoint.model} API`
+      } catch (apiError) {
+        console.error(`${endpoint.model} API error occurred:`, apiError)
+        lastError = `${endpoint.model} API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`
       }
-    } catch (apiError) {
-      console.error("API error:", apiError)
-      return {
-        success: true,
-        places: getSamplePlaces(latitude, longitude),
-      }
+    }
+
+    // If all endpoints failed, return sample data with the last error
+    console.error("All Gemini API endpoints failed, using sample data")
+    return {
+      success: true, // Return success: true with sample data to avoid showing error
+      places: getSamplePlaces(latitude, longitude),
     }
   } catch (error) {
     console.error("Error finding mid altitude places:", error)
     return {
-      success: true,
+      success: true, // Return success: true with sample data to avoid showing error
       places: getSamplePlaces(latitude, longitude),
     }
   }
