@@ -72,17 +72,7 @@ export function SafetyGuidelines() {
               <SelectValue placeholder="Select disaster type" />
             </SelectTrigger>
             <SelectContent>
-              {[
-                "Flood",
-                "Earthquake",
-                "Wildfire",
-                "Hurricane",
-                "Tornado",
-                "Tsunami",
-                "Drought",
-                "Landslide",
-                "Blizzard",
-              ].map((type) => (
+              {["Flood", "Earthquake", "Wildfire", "Hurricane", "Tornado"].map((type: string) => (
                 <SelectItem key={type} value={type}>
                   {type}
                 </SelectItem>
