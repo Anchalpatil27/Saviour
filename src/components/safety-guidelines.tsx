@@ -8,7 +8,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SafetyDialog } from "@/components/safety-dialog"
 import { fetchDisasterSafetyData, type DisasterSafetyData } from "@/lib/actions/safety-actions"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+// Define available disaster types
+const DISASTER_TYPES = ["Flood", "Earthquake", "Wildfire", "Hurricane", "Tornado"] as const
+type DisasterType = (typeof DISASTER_TYPES)[number]
 
 export function SafetyGuidelines() {
   const [safetyData, setSafetyData] = useState<DisasterSafetyData | null>(null)
@@ -17,25 +20,20 @@ export function SafetyGuidelines() {
   const [isSampleData, setIsSampleData] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedDisasterType, setSelectedDisasterType] = useState<string>("Flood")
+  const [selectedDisasterType, setSelectedDisasterType] = useState<DisasterType>("Flood")
 
   const loadSafetyData = async () => {
     try {
       setRefreshing(true)
+      setError(null)
 
       console.log(`Fetching safety data for disaster type: ${selectedDisasterType}`)
       const result = await fetchDisasterSafetyData(selectedDisasterType)
 
       if (result.success) {
         setSafetyData(result.data)
-        setIsSampleData(true) // Since fetchDisasterSafetyData always returns sample data for now
+        setIsSampleData(true)
         console.log("Successfully loaded safety data")
-
-        if (result.error) {
-          setError(result.error)
-        } else {
-          setError(null)
-        }
       } else {
         console.error("Error from safety data action:", result.error)
         setError(result.error || "Failed to fetch safety data")
@@ -50,7 +48,13 @@ export function SafetyGuidelines() {
   }
 
   const handleRefresh = () => {
+    setLoading(true)
     loadSafetyData()
+  }
+
+  const handleDisasterTypeChange = (type: DisasterType) => {
+    setSelectedDisasterType(type)
+    setLoading(true)
   }
 
   useEffect(() => {
@@ -67,18 +71,17 @@ export function SafetyGuidelines() {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Safety Guidelines</h2>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <Select value={selectedDisasterType} onValueChange={setSelectedDisasterType}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Select disaster type" />
-            </SelectTrigger>
-            <SelectContent>
-              {["Flood", "Earthquake", "Wildfire", "Hurricane", "Tornado"].map((type: string) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            value={selectedDisasterType}
+            onChange={(e) => handleDisasterTypeChange(e.target.value as DisasterType)}
+            className="px-3 py-2 rounded-md border bg-background"
+          >
+            {DISASTER_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
           <Button
             variant="outline"
             size="sm"
@@ -102,8 +105,8 @@ export function SafetyGuidelines() {
         </Alert>
       )}
 
-      {/* Show error message if there is one, but we still have data */}
-      {error && safetyData && (
+      {/* Show error message if there is one */}
+      {error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4 mr-2" />
           <AlertDescription>{error}</AlertDescription>
@@ -120,12 +123,12 @@ export function SafetyGuidelines() {
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="space-y-4">
-              {safetyData && (
+              {safetyData && safetyData.beforeDisaster.tips.length > 0 ? (
                 <>
                   <div className="border-b pb-4">
                     <h3 className="font-medium mb-2">{safetyData.beforeDisaster.title}</h3>
                     <ul className="space-y-2">
-                      {safetyData.beforeDisaster.tips.map((tip: string, index: number) => (
+                      {safetyData.beforeDisaster.tips.map((tip, index) => (
                         <li key={index} className="flex items-start">
                           <AlertTriangle className="h-4 w-4 text-yellow-500 mr-2 shrink-0 mt-0.5" />
                           <span className="text-sm">{tip}</span>
@@ -134,15 +137,14 @@ export function SafetyGuidelines() {
                     </ul>
                   </div>
                 </>
-              )}
-              {!safetyData && (
+              ) : (
                 <div className="text-center py-6">
                   <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
                   <p className="text-muted-foreground">No preparedness information available</p>
                 </div>
               )}
             </div>
-            {safetyData && (
+            {safetyData && safetyData.beforeDisaster.tips.length > 0 && (
               <Button className="w-full mt-4" onClick={() => setDialogOpen(true)}>
                 Learn More
               </Button>
@@ -159,11 +161,11 @@ export function SafetyGuidelines() {
           </CardHeader>
           <CardContent className="flex-grow">
             <div className="space-y-4">
-              {safetyData && (
+              {safetyData && safetyData.firstAid.tips.length > 0 ? (
                 <div className="border-b pb-4">
                   <h3 className="font-medium mb-2">{safetyData.firstAid.title}</h3>
                   <ul className="space-y-2">
-                    {safetyData.firstAid.tips.map((tip: string, index: number) => (
+                    {safetyData.firstAid.tips.map((tip, index) => (
                       <li key={index} className="flex items-start">
                         <Heart className="h-4 w-4 text-red-500 mr-2 shrink-0 mt-0.5" />
                         <span className="text-sm">{tip}</span>
@@ -171,13 +173,13 @@ export function SafetyGuidelines() {
                     ))}
                   </ul>
                 </div>
-              )}
-              {!safetyData || safetyData.firstAid.tips.length === 0 ? (
+              ) : (
                 <div className="text-center py-6">
                   <Heart className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
                   <p className="text-muted-foreground">No first aid information available</p>
                 </div>
-              ) : (
+              )}
+              {safetyData && safetyData.firstAid.tips.length > 0 && (
                 <p className="text-sm text-muted-foreground mt-4">
                   These guidelines can help save lives during critical situations.
                 </p>
