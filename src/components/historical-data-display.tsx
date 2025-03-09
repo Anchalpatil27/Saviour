@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { BarChart, Calendar, FileText, TrendingUp, AlertTriangle, Download } from "lucide-react"
+import { BarChart, Calendar, FileText, TrendingUp, AlertTriangle, Download, MapPin } from "lucide-react"
 import {
   fetchHistoricalData,
   type HistoricalData,
@@ -12,6 +12,7 @@ import {
   type DisasterReport,
 } from "@/lib/actions/historical-actions"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface HistoricalDataDisplayProps {
   coordinates: { lat: number; lng: number } | null
@@ -108,6 +109,15 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold mb-4">Historical Data & Analytics</h2>
+
+      {/* Add a note about the 5km radius */}
+      <Alert>
+        <AlertDescription className="flex items-center">
+          <MapPin className="h-4 w-4 mr-2" />
+          Showing historical disaster data within 5km of your current location
+        </AlertDescription>
+      </Alert>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="flex flex-col">
           <CardHeader>
@@ -162,6 +172,14 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                     <span>{event.affected.toLocaleString()} affected</span>
                   </div>
                   <p className="text-xs mt-1">{event.description}</p>
+                  {event.distance && (
+                    <div className="flex items-center text-xs mt-1 text-muted-foreground">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      <span>
+                        {event.location} ({event.distance})
+                      </span>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

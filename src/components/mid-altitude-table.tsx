@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Mountain, Navigation, Map, ExternalLink } from "lucide-react"
+import { Mountain, Navigation, Map, ExternalLink, MapPin } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { useAltitudePlaces } from "@/lib/stores/altitude-context-simple"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export function MidAltitudeTable() {
   const { places, loading, selectedPlace, setSelectedPlace } = useAltitudePlaces()
@@ -110,12 +111,21 @@ export function MidAltitudeTable() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
+          {/* Add a note about the 5km radius */}
+          <Alert className="mb-4">
+            <AlertDescription className="flex items-center">
+              <MapPin className="h-4 w-4 mr-2" />
+              Showing mid-altitude places within 5km of your current location
+            </AlertDescription>
+          </Alert>
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="text-left text-sm font-medium text-gray-500">
                   <th className="pb-2">Name</th>
                   <th className="pb-2">Elevation</th>
+                  <th className="pb-2">Distance</th>
                   <th className="pb-2">Risk</th>
                   <th className="pb-2">Action</th>
                 </tr>
@@ -125,6 +135,7 @@ export function MidAltitudeTable() {
                   <tr key={place.id} className="border-t">
                     <td className="py-2">{place.name}</td>
                     <td className="py-2">{place.elevation}</td>
+                    <td className="py-2">{place.distanceFromUser}</td>
                     <td className="py-2">
                       <Badge variant={getRiskColor(place.risk)}>{place.risk}</Badge>
                     </td>

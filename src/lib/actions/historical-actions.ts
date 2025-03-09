@@ -11,6 +11,7 @@ export interface DisasterEvent {
   affected: number
   description: string
   location: string
+  distance?: string // Add distance field
 }
 
 export interface DisasterTrend {
@@ -50,6 +51,7 @@ const getSampleHistoricalData = (_latitude: number, _longitude: number): Histori
         affected: 500,
         description: "Heavy rainfall caused flooding in low-lying areas.",
         location: "Townsville",
+        distance: "2.3 km",
       },
       {
         id: "2",
@@ -59,6 +61,7 @@ const getSampleHistoricalData = (_latitude: number, _longitude: number): Histori
         affected: 200,
         description: "Dry conditions led to a large wildfire.",
         location: "Forestville",
+        distance: "4.1 km",
       },
     ],
     trends: [
@@ -75,8 +78,16 @@ const getSampleHistoricalData = (_latitude: number, _longitude: number): Histori
         fileSize: "1.2 MB",
       },
     ],
-    frequencyData: [{ type: "Flood", count: 2 }],
-    severityData: [{ severity: "Moderate", count: 1 }],
+    frequencyData: [
+      { type: "Flood", count: 3 },
+      { type: "Wildfire", count: 2 },
+      { type: "Landslide", count: 1 },
+    ],
+    severityData: [
+      { severity: "Minor", count: 1 },
+      { severity: "Moderate", count: 3 },
+      { severity: "Severe", count: 2 },
+    ],
   }
 }
 
@@ -85,6 +96,8 @@ export async function fetchHistoricalData(
   longitude: number,
 ): Promise<{ success: boolean; data: HistoricalData; error?: string }> {
   try {
+    console.log(`Starting historical data fetch for coordinates: ${latitude}, ${longitude}`)
+
     // Check if API key exists
     if (!process.env.GEMINI_API_KEY) {
       console.log("No Gemini API key found, using sample data")
@@ -102,9 +115,11 @@ export async function fetchHistoricalData(
     console.log(`Using Gemini API key starting with: ${keyPreview}`)
 
     const prompt = `
-      I need historical disaster data for the area around these coordinates:
+      I need historical disaster data for the area STRICTLY WITHIN 5 KILOMETERS of these coordinates:
       Latitude: ${latitude}
       Longitude: ${longitude}
+
+      IMPORTANT: All events, locations, and data MUST be within 5km of these coordinates. Do not include anything beyond 5km.
 
       Please provide the following information in JSON format:
       
@@ -116,6 +131,7 @@ export async function fetchHistoricalData(
          - affected (number of people affected)
          - description (brief description)
          - location (name of the area)
+         - distance (distance from the coordinates in km, MUST be less than 5km)
       
       2. Disaster trends over the last 10 years:
          - year
@@ -143,6 +159,7 @@ export async function fetchHistoricalData(
       Make the data realistic and relevant to the geographic location of the coordinates. If the location is coastal, include hurricanes/tsunamis. If mountainous, include landslides. If near fault lines, include earthquakes, etc.
       
       IMPORTANT: Return ONLY a valid JSON object with no additional text, markdown formatting, or code blocks.
+      CRITICAL: All events MUST be within 5km of the provided coordinates.
     `
 
     try {
@@ -184,7 +201,9 @@ export async function fetchHistoricalData(
         try {
           const errorData = await response.json()
           errorText = JSON.stringify(errorData)
-        } catch {
+          console.error("API error response:", errorData)
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError)
           errorText = await response.text().catch(() => "Could not read error response")
         }
 
@@ -198,6 +217,7 @@ export async function fetchHistoricalData(
       }
 
       const data = await response.json()
+      console.log("Received response from Gemini API")
 
       // Check if the response has the expected structure
       if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
@@ -231,8 +251,8 @@ export async function fetchHistoricalData(
       try {
         jsonData = JSON.parse(text) as HistoricalData
         console.log("Successfully parsed entire response as JSON")
-      } catch {
-        console.log("Could not parse entire response as JSON, trying to extract JSON object")
+      } catch (parseError) {
+        console.log("Could not parse entire response as JSON, trying to extract JSON object:", parseError)
       }
 
       // Approach 2: Try to extract JSON using regex if approach 1 failed
@@ -242,9 +262,11 @@ export async function fetchHistoricalData(
           try {
             jsonData = JSON.parse(jsonMatch[0]) as HistoricalData
             console.log("Successfully parsed JSON using regex extraction")
-          } catch {
-            console.error("Error parsing extracted JSON")
+          } catch (parseError) {
+            console.error("Error parsing extracted JSON:", parseError)
           }
+        } else {
+          console.log("No JSON object found in response using regex")
         }
       }
 
@@ -255,9 +277,11 @@ export async function fetchHistoricalData(
           try {
             jsonData = JSON.parse(codeBlockMatch[1]) as HistoricalData
             console.log("Successfully parsed JSON from code block")
-          } catch {
-            console.error("Error parsing JSON from code block")
+          } catch (parseError) {
+            console.error("Error parsing JSON from code block:", parseError)
           }
+        } else {
+          console.log("No code block found in response")
         }
       }
 
@@ -271,12 +295,26 @@ export async function fetchHistoricalData(
           !jsonData.frequencyData ||
           !jsonData.severityData
         ) {
-          console.error("JSON data missing required properties")
+          console.error("JSON data missing required properties:", Object.keys(jsonData))
           return {
             success: false,
             data: getSampleHistoricalData(latitude, longitude),
             error: "Invalid data structure from API",
           }
+        }
+
+        // Filter out any events that are beyond 5km if distance is provided
+        if (jsonData.events && Array.isArray(jsonData.events)) {
+          jsonData.events = jsonData.events.filter((event) => {
+            if (!event.distance) return true
+
+            // Extract the numeric part of the distance string (e.g., "3.2 km" -> 3.2)
+            const distanceMatch = event.distance.match(/(\d+(\.\d+)?)/)
+            if (!distanceMatch) return true
+
+            const distance = Number.parseFloat(distanceMatch[0])
+            return distance <= 5
+          })
         }
 
         revalidatePath("/dashboard/historical")
@@ -293,16 +331,16 @@ export async function fetchHistoricalData(
         data: getSampleHistoricalData(latitude, longitude),
         error: "Failed to parse response from Gemini API",
       }
-    } catch {
-      console.error("API error occurred")
+    } catch (apiError) {
+      console.error("API error occurred:", apiError)
       return {
         success: false,
         data: getSampleHistoricalData(latitude, longitude),
         error: "Unknown API error. Please check your Gemini API key and network connection.",
       }
     }
-  } catch {
-    console.error("Error fetching historical data")
+  } catch (error) {
+    console.error("Error fetching historical data:", error)
     return {
       success: false,
       data: getSampleHistoricalData(latitude, longitude),
