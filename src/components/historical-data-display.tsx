@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { BarChart, Calendar, FileText, TrendingUp, AlertTriangle, Download, MapPin, Info } from "lucide-react"
+import { BarChart, Calendar, TrendingUp, AlertTriangle, MapPin, Info } from "lucide-react"
 import {
   fetchHistoricalData,
   type HistoricalData,
   type DisasterTrend,
   type DisasterEvent,
-  type DisasterReport,
 } from "@/lib/actions/historical-actions"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -141,7 +140,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
         </AlertDescription>
       </Alert>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
         <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center text-lg">
@@ -150,7 +149,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-grow">
-            <div className="h-48 bg-muted rounded-md p-4 mb-4 overflow-y-auto">
+            <div className="h-48 bg-muted rounded-md p-4 overflow-y-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-muted-foreground">
@@ -170,7 +169,6 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                 </tbody>
               </table>
             </div>
-            <Button className="w-full">View Detailed Trends</Button>
           </CardContent>
         </Card>
         <Card className="flex flex-col">
@@ -181,7 +179,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-grow">
-            <ul className="space-y-2 mb-4 h-48 overflow-y-auto">
+            <ul className="space-y-2 h-48 overflow-y-auto">
               {data?.events.map((event: DisasterEvent) => (
                 <li key={event.id} className="text-sm border-b pb-2">
                   <div className="flex justify-between items-center mb-1">
@@ -211,38 +209,6 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                 </li>
               )}
             </ul>
-            <Button className="w-full">Open Full Timeline</Button>
-          </CardContent>
-        </Card>
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex items-center text-lg">
-              <FileText className="mr-2 h-5 w-5" />
-              Reports Archive
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <ul className="space-y-2 mb-4 h-48 overflow-y-auto">
-              {data?.reports.map((report: DisasterReport) => (
-                <li key={report.id} className="text-sm border-b pb-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">{report.title}</span>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>{report.date}</span>
-                    <span>{report.fileSize}</span>
-                  </div>
-                  <p className="text-xs mt-1 line-clamp-2">{report.summary}</p>
-                </li>
-              ))}
-              {data?.reports.length === 0 && (
-                <li className="text-center py-4 text-muted-foreground">No reports available for this area</li>
-              )}
-            </ul>
-            <Button className="w-full">Browse All Reports</Button>
           </CardContent>
         </Card>
       </div>
@@ -317,15 +283,14 @@ function HistoricalDataSkeleton() {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold mb-4">Historical Data & Analytics</h2>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
+      <div className="grid gap-6 md:grid-cols-2">
+        {[1, 2].map((i) => (
           <Card key={i} className="flex flex-col">
             <CardHeader>
               <Skeleton className="h-6 w-40" />
             </CardHeader>
             <CardContent className="flex-grow">
-              <Skeleton className="h-48 w-full mb-4" />
-              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-48 w-full" />
             </CardContent>
           </Card>
         ))}
