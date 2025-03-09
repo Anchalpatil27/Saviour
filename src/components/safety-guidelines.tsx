@@ -8,9 +8,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SafetyDialog } from "@/components/safety-dialog"
 import { fetchDisasterSafetyData, type DisasterSafetyData } from "@/lib/actions/safety-actions"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function SafetyGuidelines() {
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [safetyData, setSafetyData] = useState<DisasterSafetyData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -18,31 +18,6 @@ export function SafetyGuidelines() {
   const [refreshing, setRefreshing] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedDisasterType, setSelectedDisasterType] = useState<string>("Flood")
-
-  const getLocation = () => {
-    if (typeof window !== "undefined" && "geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords
-          console.log(`Got coordinates: ${latitude}, ${longitude}`)
-          setCoordinates({ lat: latitude, lng: longitude })
-        },
-        (error) => {
-          console.error("Error getting location:", error)
-          // Use a default location if geolocation fails
-          console.log("Using default coordinates")
-          setCoordinates({ lat: 40.7128, lng: -74.006 }) // New York City coordinates
-          setError(`Using default location. Original error: ${error.message}`)
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-      )
-    } else {
-      console.error("Geolocation not supported")
-      // Use a default location if geolocation is not supported
-      setCoordinates({ lat: 40.7128, lng: -74.006 }) // New York City coordinates
-      setError("Geolocation is not supported by your browser. Using default location.")
-    }
-  }
 
   const loadSafetyData = async () => {
     try {
@@ -79,11 +54,8 @@ export function SafetyGuidelines() {
   }
 
   useEffect(() => {
-    getLocation()
-  }, [])
-
-  useEffect(() => {
     loadSafetyData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDisasterType])
 
   if (loading) {
@@ -94,16 +66,40 @@ export function SafetyGuidelines() {
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Safety Guidelines</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="flex items-center gap-1"
-        >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          {refreshing ? "Refreshing..." : "Refresh"}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <Select value={selectedDisasterType} onValueChange={setSelectedDisasterType}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Select disaster type" />
+            </SelectTrigger>
+            <SelectContent>
+              {[
+                "Flood",
+                "Earthquake",
+                "Wildfire",
+                "Hurricane",
+                "Tornado",
+                "Tsunami",
+                "Drought",
+                "Landslide",
+                "Blizzard",
+              ].map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </Button>
+        </div>
       </div>
 
       {/* Show sample data warning if applicable */}
