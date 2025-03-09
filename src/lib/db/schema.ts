@@ -1,24 +1,29 @@
 import mongoose, { Schema, type Document } from "mongoose"
+import type { ObjectId } from "mongodb"
 
 // Define the User interface
 export interface IUser extends Document {
-  id: string
+  _id: ObjectId // Explicitly define _id as ObjectId
+  id?: string
   name: string
   email: string
+  username?: string
   phoneNumber?: string
   address?: string
   city?: string
   image?: string
-  provider: string
+  provider?: string
+  password?: string
   createdAt: Date
+  updatedAt?: Date
 }
 
 // Define the User schema
 const userSchema = new Schema({
   id: {
     type: String,
-    required: true,
     unique: true,
+    sparse: true, // Allow null/undefined values
   },
   name: {
     type: String,
@@ -28,6 +33,11 @@ const userSchema = new Schema({
     type: String,
     required: true,
     unique: true,
+  },
+  username: {
+    type: String,
+    unique: true,
+    sparse: true, // Allow null/undefined values
   },
   phoneNumber: {
     type: String,
@@ -44,11 +54,16 @@ const userSchema = new Schema({
   },
   provider: {
     type: String,
-    required: true,
+  },
+  password: {
+    type: String,
   },
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
   },
 })
 

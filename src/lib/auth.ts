@@ -4,7 +4,8 @@ import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { User } from "@/lib/db/schema"
-import { DefaultSession, DefaultUser } from "next-auth"
+import type { DefaultSession, DefaultUser } from "next-auth"
+import type { ObjectId } from "mongodb"
 
 // Extend the User type to include the `id` property
 declare module "next-auth" {
@@ -42,7 +43,7 @@ export const authOptions: NextAuthOptions = {
         if (!isValid) return null
 
         return {
-          id: user._id.toString(),
+          id: (user._id as ObjectId).toString(), // Cast _id to ObjectId
           email: user.email,
           name: user.name,
           image: user.image,
@@ -57,6 +58,7 @@ export const authOptions: NextAuthOptions = {
 
         const existingUser = await User.findOne({ email: user.email })
         if (existingUser) {
+          // Use optional chaining to safely check username
           if (!existingUser.username) {
             // User exists but hasn't completed their profile
             return `/auth/complete-profile?email=${user.email}&name=${user.name}&image=${user.image}`
