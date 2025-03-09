@@ -1,7 +1,9 @@
-'use client'
+"use client"
 
+import type React from "react"
 import { SessionProvider } from "next-auth/react"
-import { Session } from "next-auth"
+import type { Session } from "next-auth"
+import { AltitudePlacesProvider } from "@/lib/stores/altitude-context-simple"
 
 type ProvidersProps = {
   children: React.ReactNode
@@ -9,6 +11,11 @@ type ProvidersProps = {
 }
 
 export function Providers({ children, session }: ProvidersProps) {
-  return <SessionProvider session={session}>{children}</SessionProvider>
+  // Let's go back to JSX which is more reliable for this case
+  return (
+    <SessionProvider session={session}>
+      <AltitudePlacesProvider>{children}</AltitudePlacesProvider>
+    </SessionProvider>
+  )
 }
 

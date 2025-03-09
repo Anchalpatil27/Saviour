@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Mountain, Navigation, Map, ExternalLink } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { HighAltitudePlace } from "@/lib/actions/altitude-actions"
+import type { MidAltitudePlace as HighAltitudePlace } from "@/lib/actions/altitude-actions"
 
 interface HighAltitudePlacesProps {
   places: HighAltitudePlace[]

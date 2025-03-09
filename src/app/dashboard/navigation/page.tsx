@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { UserLocationMap } from "@/components/UserLocationMap"
-import { HighAltitudeTable } from "@/components/high-altitude-table"
+import { MidAltitudeTable } from "@/components/mid-altitude-table"
 
 export default async function NavigationPage() {
   const session = await getServerSession(authOptions)
@@ -27,7 +27,7 @@ export default async function NavigationPage() {
         <div>
           <UserLocationMap />
         </div>
-        <HighAltitudeTable />
+        <MidAltitudeTable />
       </div>
       <Card>
         <CardHeader>

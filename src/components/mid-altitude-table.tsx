@@ -14,10 +14,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { useAltitudePlacesStore } from "@/lib/stores/altitude-store"
+import { useAltitudePlaces } from "@/lib/stores/altitude-context-simple"
 
-export function HighAltitudeTable() {
-  const { places, loading, selectedPlace, setSelectedPlace } = useAltitudePlacesStore()
+export function MidAltitudeTable() {
+  const { places, loading, selectedPlace, setSelectedPlace } = useAltitudePlaces()
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const getRiskColor = (risk: string) => {
@@ -66,7 +66,7 @@ export function HighAltitudeTable() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center">
             <Mountain className="mr-2 h-5 w-5" />
-            High Altitudes
+            Mid Altitudes
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
@@ -111,13 +111,13 @@ export function HighAltitudeTable() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center">
             <Mountain className="mr-2 h-5 w-5" />
-            High Altitudes
+            Mid Altitudes
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-grow flex items-center justify-center">
           <div className="text-center py-6">
             <Mountain className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-            <p className="text-muted-foreground">No high altitude places found nearby.</p>
+            <p className="text-muted-foreground">No mid altitude places found nearby.</p>
             <p className="text-sm text-muted-foreground">Try searching in a different location.</p>
           </div>
         </CardContent>
@@ -131,7 +131,7 @@ export function HighAltitudeTable() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center">
             <Mountain className="mr-2 h-5 w-5" />
-            High Altitudes
+            Mid Altitudes
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
@@ -146,7 +146,7 @@ export function HighAltitudeTable() {
                 </tr>
               </thead>
               <tbody>
-                {places.map((place: typeof places[0]) => (
+                {places.map((place) => (
                   <tr key={place.id} className="border-t">
                     <td className="py-2">{place.name}</td>
                     <td className="py-2">{place.elevation}</td>

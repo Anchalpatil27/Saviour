@@ -5,8 +5,8 @@ import { MapPin, Navigation, Compass, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { findHighAltitudePlaces } from "@/lib/actions/altitude-actions"
-import { useAltitudePlacesStore } from "@/lib/stores/altitude-store"
+import { findMidAltitudePlaces } from "@/lib/actions/altitude-actions"
+import { useAltitudePlaces } from "@/lib/stores/altitude-context-simple"
 
 export function UserLocationMap() {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -14,7 +14,7 @@ export function UserLocationMap() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const { setPlaces, setLoading: setLoadingPlaces } = useAltitudePlacesStore()
+  const { setPlaces, setLoading: setLoadingPlaces } = useAltitudePlaces()
 
   const getLocation = () => {
     setLoading(true)
@@ -38,8 +38,8 @@ export function UserLocationMap() {
           setLocationName(`Your location (±${Math.round(accuracy)} meters)`)
           setLoading(false)
 
-          // Fetch high altitude places
-          await fetchHighAltitudePlaces(latitude, longitude)
+          // Fetch mid altitude places
+          await fetchMidAltitudePlaces(latitude, longitude)
         },
         (error) => {
           console.error("Error getting location:", error)
@@ -56,16 +56,16 @@ export function UserLocationMap() {
     }
   }
 
-  const fetchHighAltitudePlaces = async (latitude: number, longitude: number) => {
+  const fetchMidAltitudePlaces = async (latitude: number, longitude: number) => {
     try {
-      const result = await findHighAltitudePlaces(latitude, longitude)
+      const result = await findMidAltitudePlaces(latitude, longitude)
       if (result.success) {
         setPlaces(result.places)
       } else {
-        console.error("Error fetching high altitude places:", result.error)
+        console.error("Error fetching mid altitude places:", result.error)
       }
     } catch (error) {
-      console.error("Error fetching high altitude places:", error)
+      console.error("Error fetching mid altitude places:", error)
     } finally {
       setLoadingPlaces(false)
     }

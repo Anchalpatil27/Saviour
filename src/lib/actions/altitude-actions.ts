@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 
-export interface HighAltitudePlace {
+export interface MidAltitudePlace {
   id: string
   name: string
   elevation: string
@@ -16,10 +16,10 @@ export interface HighAltitudePlace {
   distanceFromUser: string
 }
 
-export async function findHighAltitudePlaces(
+export async function findMidAltitudePlaces(
   latitude: number,
   longitude: number,
-): Promise<{ success: boolean; places: HighAltitudePlace[]; error?: string }> {
+): Promise<{ success: boolean; places: MidAltitudePlace[]; error?: string }> {
   try {
     if (!process.env.GEMINI_API_KEY) {
       console.log("No Gemini API key found, using sample data")
@@ -30,7 +30,7 @@ export async function findHighAltitudePlaces(
     }
 
     const prompt = `
-      I need to find high altitude places (hills, mountains, viewpoints, etc.) within a 5km radius of the following coordinates:
+      I need to find mid altitude places (hills, viewpoints, plateaus, etc.) within a 5km radius of the following coordinates:
       Latitude: ${latitude}
       Longitude: ${longitude}
 
@@ -111,7 +111,7 @@ export async function findHighAltitudePlaces(
       }
 
       try {
-        const places = JSON.parse(jsonMatch[0]) as HighAltitudePlace[]
+        const places = JSON.parse(jsonMatch[0]) as MidAltitudePlace[]
 
         revalidatePath("/dashboard/navigation")
 
@@ -134,7 +134,7 @@ export async function findHighAltitudePlaces(
       }
     }
   } catch (error) {
-    console.error("Error finding high altitude places:", error)
+    console.error("Error finding mid altitude places:", error)
     return {
       success: true,
       places: getSamplePlaces(latitude, longitude),
@@ -143,12 +143,12 @@ export async function findHighAltitudePlaces(
 }
 
 // Helper function to get sample places
-function getSamplePlaces(latitude: number, longitude: number): HighAltitudePlace[] {
+function getSamplePlaces(latitude: number, longitude: number): MidAltitudePlace[] {
   return [
     {
       id: "1",
-      name: "Mount Ridge",
-      elevation: "1,250 ft",
+      name: "Scenic Ridge",
+      elevation: "850 ft",
       status: "Accessible",
       risk: "Low",
       coordinates: { lat: latitude + 0.01, lng: longitude + 0.01 },
@@ -157,8 +157,8 @@ function getSamplePlaces(latitude: number, longitude: number): HighAltitudePlace
     },
     {
       id: "2",
-      name: "Eagle Peak",
-      elevation: "2,340 ft",
+      name: "Lookout Point",
+      elevation: "1,240 ft",
       status: "Caution",
       risk: "Medium",
       coordinates: { lat: latitude + 0.02, lng: longitude - 0.01 },
@@ -167,8 +167,8 @@ function getSamplePlaces(latitude: number, longitude: number): HighAltitudePlace
     },
     {
       id: "3",
-      name: "Summit Point",
-      elevation: "3,120 ft",
+      name: "Valley Overlook",
+      elevation: "1,120 ft",
       status: "Dangerous",
       risk: "High",
       coordinates: { lat: latitude - 0.01, lng: longitude + 0.02 },
