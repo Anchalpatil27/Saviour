@@ -153,7 +153,7 @@ export async function fetchHistoricalData(
       // Approach 1: Try to parse the entire response as JSON
       try {
         jsonData = JSON.parse(text) as HistoricalData
-      } catch (e) {
+      } catch (_) {
         console.log("Could not parse entire response as JSON, trying to extract JSON object")
       }
 
@@ -163,8 +163,8 @@ export async function fetchHistoricalData(
         if (jsonMatch) {
           try {
             jsonData = JSON.parse(jsonMatch[0]) as HistoricalData
-          } catch (e) {
-            console.error("Error parsing extracted JSON:", e)
+          } catch (error) {
+            console.error("Error parsing extracted JSON:", error)
           }
         }
       }
@@ -175,8 +175,8 @@ export async function fetchHistoricalData(
         if (codeBlockMatch && codeBlockMatch[1]) {
           try {
             jsonData = JSON.parse(codeBlockMatch[1]) as HistoricalData
-          } catch (e) {
-            console.error("Error parsing JSON from code block:", e)
+          } catch (error) {
+            console.error("Error parsing JSON from code block:", error)
           }
         }
       }
