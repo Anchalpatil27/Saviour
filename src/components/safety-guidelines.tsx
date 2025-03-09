@@ -136,6 +136,11 @@ export function SafetyGuidelines() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-grow">
+            <p className="text-sm text-muted-foreground mb-4">
+              Learn essential safety measures and preparedness tips for {safetyData?.disasterType || "disaster"}{" "}
+              situations. This guide covers what to do before, during, and after the event to protect yourself and your
+              loved ones.
+            </p>
             <ul className="list-disc pl-5 mb-4 space-y-2 text-sm">
               {safetyData?.beforeTips.slice(0, 3).map((tip, index) => (
                 <li key={index}>
@@ -157,16 +162,26 @@ export function SafetyGuidelines() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-grow">
-            <ul className="space-y-2">
+            <p className="text-sm text-muted-foreground mb-4">
+              Essential first aid knowledge specific to {safetyData?.disasterType || "disaster"} situations. Keep this
+              information readily available and consider taking a certified first aid course.
+            </p>
+            <div className="space-y-4">
               {safetyData?.firstAidTips.map((tip, index) => (
-                <li key={index} className="flex items-start text-sm">
-                  <AlertTriangle className="mr-2 h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
-                  <div>
-                    <strong>{tip.title}:</strong> {tip.description}
+                <div key={index} className="border-b pb-4 last:border-0">
+                  <div className="flex items-start mb-2">
+                    <AlertTriangle className="mr-2 h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
+                    <h4 className="font-medium text-sm">{tip.title}</h4>
                   </div>
-                </li>
+                  <p className="text-sm ml-6">{tip.description}</p>
+                </div>
               ))}
-            </ul>
+            </div>
+            {safetyData?.firstAidTips.length === 0 && (
+              <div className="text-center py-4 text-muted-foreground">
+                <p>No specific first aid information available for this disaster type.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
