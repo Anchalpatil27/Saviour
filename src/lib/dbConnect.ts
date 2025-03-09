@@ -22,7 +22,7 @@ if (!global.mongooseCache) {
 
 async function dbConnect() {
   if (global.mongooseCache.conn) {
-    return global.mongooseCache.conn
+    return global.mongooseCache.conn.db
   }
 
   // Check for MONGODB_URI here, after the cached connection check
@@ -44,13 +44,12 @@ async function dbConnect() {
   try {
     const instance = await global.mongooseCache.promise
     global.mongooseCache.conn = instance.connection
+    return instance.connection.db
   } catch (e) {
     global.mongooseCache.promise = null
     console.error("Error connecting to MongoDB:", e)
     throw e
   }
-
-  return global.mongooseCache.conn
 }
 
 export default dbConnect
