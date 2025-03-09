@@ -5,6 +5,8 @@ import { MapPin, Navigation, Compass, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { findHighAltitudePlaces } from "@/lib/actions/altitude-actions"
+import { useAltitudePlacesStore } from "@/lib/stores/altitude-store"
 
 export function UserLocationMap() {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -12,9 +14,12 @@ export function UserLocationMap() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const { setPlaces, setLoading: setLoadingPlaces } = useAltitudePlacesStore()
+
   const getLocation = () => {
     setLoading(true)
     setError(null)
+    setLoadingPlaces(true)
 
     if (typeof window !== "undefined" && "geolocation" in navigator) {
       // Use maximum accuracy settings
@@ -32,17 +37,37 @@ export function UserLocationMap() {
           setLocation({ lat: latitude, lng: longitude })
           setLocationName(`Your location (±${Math.round(accuracy)} meters)`)
           setLoading(false)
+
+          // Fetch high altitude places
+          await fetchHighAltitudePlaces(latitude, longitude)
         },
         (error) => {
           console.error("Error getting location:", error)
           setError(`Unable to access your location: ${error.message}. Please check your device settings.`)
           setLoading(false)
+          setLoadingPlaces(false)
         },
         options,
       )
     } else {
       setError("Geolocation is not supported by your browser.")
       setLoading(false)
+      setLoadingPlaces(false)
+    }
+  }
+
+  const fetchHighAltitudePlaces = async (latitude: number, longitude: number) => {
+    try {
+      const result = await findHighAltitudePlaces(latitude, longitude)
+      if (result.success) {
+        setPlaces(result.places)
+      } else {
+        console.error("Error fetching high altitude places:", result.error)
+      }
+    } catch (error) {
+      console.error("Error fetching high altitude places:", error)
+    } finally {
+      setLoadingPlaces(false)
     }
   }
 
