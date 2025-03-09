@@ -14,6 +14,7 @@ export function UserLocationMap() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Use the context to update places
   const { setPlaces, setLoading: setLoadingPlaces } = useAltitudePlaces()
 
   const getLocation = () => {
@@ -38,7 +39,7 @@ export function UserLocationMap() {
           setLocationName(`Your location (±${Math.round(accuracy)} meters)`)
           setLoading(false)
 
-          // Fetch mid altitude places
+          // Fetch mid altitude places using the actual device coordinates
           await fetchMidAltitudePlaces(latitude, longitude)
         },
         (error) => {
@@ -58,8 +59,13 @@ export function UserLocationMap() {
 
   const fetchMidAltitudePlaces = async (latitude: number, longitude: number) => {
     try {
+      setLoadingPlaces(true)
+      console.log(`Fetching mid altitude places for coordinates: ${latitude}, ${longitude}`)
+
       const result = await findMidAltitudePlaces(latitude, longitude)
+
       if (result.success) {
+        console.log(`Found ${result.places.length} mid altitude places`)
         setPlaces(result.places)
       } else {
         console.error("Error fetching mid altitude places:", result.error)

@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Mountain, Navigation, Map, ExternalLink } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   Dialog,
   DialogContent,
@@ -70,35 +69,11 @@ export function MidAltitudeTable() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-sm font-medium text-gray-500">
-                  <th className="pb-2">Name</th>
-                  <th className="pb-2">Elevation</th>
-                  <th className="pb-2">Risk</th>
-                  <th className="pb-2">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[1, 2, 3].map((i) => (
-                  <tr key={i} className="border-t">
-                    <td className="py-2">
-                      <Skeleton className="h-4 w-24" />
-                    </td>
-                    <td className="py-2">
-                      <Skeleton className="h-4 w-16" />
-                    </td>
-                    <td className="py-2">
-                      <Skeleton className="h-6 w-16 rounded-full" />
-                    </td>
-                    <td className="py-2">
-                      <Skeleton className="h-8 w-16 rounded-md" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="h-24 flex items-center justify-center">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-3"></div>
+              <p className="text-sm text-muted-foreground">Finding mid altitude places near you...</p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -131,7 +106,7 @@ export function MidAltitudeTable() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center">
             <Mountain className="mr-2 h-5 w-5" />
-            Mid Altitudes
+            Mid Altitudes Near You
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
