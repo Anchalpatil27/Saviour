@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { BarChart, Calendar, FileText, TrendingUp, AlertTriangle, Download, MapPin } from "lucide-react"
+import { BarChart, Calendar, FileText, TrendingUp, AlertTriangle, Download, MapPin, Info } from "lucide-react"
 import {
   fetchHistoricalData,
   type HistoricalData,
@@ -33,6 +33,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
+  const [isSampleData, setIsSampleData] = useState(false)
 
   useEffect(() => {
     async function loadHistoricalData() {
@@ -45,13 +46,19 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
       try {
         setLoading(true)
         setError(null)
+        setIsSampleData(false)
 
         console.log(`Fetching historical data for coordinates: ${coordinates.lat}, ${coordinates.lng}`)
         const result = await fetchHistoricalData(coordinates.lat, coordinates.lng)
 
         if (result.success) {
           setData(result.data)
+          setIsSampleData(!!result.data.isSampleData)
           console.log("Successfully loaded historical data")
+
+          if (result.error) {
+            setError(result.error)
+          }
         } else {
           console.error("Error from historical data action:", result.error)
           setError(result.error || "Failed to fetch historical data")
@@ -75,7 +82,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
     return <HistoricalDataSkeleton />
   }
 
-  if (error || !data) {
+  if (error && !data) {
     return (
       <div className="space-y-6">
         <h2 className="text-2xl font-bold mb-4">Historical Data & Analytics</h2>
@@ -110,6 +117,22 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
     <div className="space-y-6">
       <h2 className="text-2xl font-bold mb-4">Historical Data & Analytics</h2>
 
+      {/* Show sample data warning if applicable */}
+      {isSampleData && (
+        <Alert>
+          <Info className="h-4 w-4 mr-2" />
+          <AlertDescription>Showing sample data. This is not real historical data for your location.</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Show error message if there is one, but we still have data */}
+      {error && data && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4 mr-2" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Add a note about the 5km radius */}
       <Alert>
         <AlertDescription className="flex items-center">
@@ -137,7 +160,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                   </tr>
                 </thead>
                 <tbody>
-                  {data.trends.map((trend: DisasterTrend, index: number) => (
+                  {data?.trends.map((trend: DisasterTrend, index: number) => (
                     <tr key={index} className={index % 2 === 0 ? "bg-muted/50" : ""}>
                       <td className="py-1">{trend.year}</td>
                       <td className="py-1">{trend.count}</td>
@@ -159,7 +182,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
           </CardHeader>
           <CardContent className="flex-grow">
             <ul className="space-y-2 mb-4 h-48 overflow-y-auto">
-              {data.events.map((event: DisasterEvent) => (
+              {data?.events.map((event: DisasterEvent) => (
                 <li key={event.id} className="text-sm border-b pb-2">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">{event.type}</span>
@@ -182,6 +205,11 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                   )}
                 </li>
               ))}
+              {data?.events.length === 0 && (
+                <li className="text-center py-4 text-muted-foreground">
+                  No historical disaster events found within 5km
+                </li>
+              )}
             </ul>
             <Button className="w-full">Open Full Timeline</Button>
           </CardContent>
@@ -195,7 +223,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
           </CardHeader>
           <CardContent className="flex-grow">
             <ul className="space-y-2 mb-4 h-48 overflow-y-auto">
-              {data.reports.map((report: DisasterReport) => (
+              {data?.reports.map((report: DisasterReport) => (
                 <li key={report.id} className="text-sm border-b pb-2">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">{report.title}</span>
@@ -210,6 +238,9 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                   <p className="text-xs mt-1 line-clamp-2">{report.summary}</p>
                 </li>
               ))}
+              {data?.reports.length === 0 && (
+                <li className="text-center py-4 text-muted-foreground">No reports available for this area</li>
+              )}
             </ul>
             <Button className="w-full">Browse All Reports</Button>
           </CardContent>
@@ -227,7 +258,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                 Disaster Frequency by Type
               </h3>
               <div className="space-y-2">
-                {data.frequencyData.map((item: FrequencyDataItem, index: number) => (
+                {data?.frequencyData.map((item: FrequencyDataItem, index: number) => (
                   <div key={index}>
                     <div className="flex justify-between text-sm mb-1">
                       <span>{item.type}</span>
@@ -243,6 +274,9 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                     </div>
                   </div>
                 ))}
+                {data?.frequencyData.length === 0 && (
+                  <div className="text-center py-4 text-muted-foreground">No frequency data available</div>
+                )}
               </div>
             </div>
             <div className="bg-muted p-4 rounded-lg">
@@ -251,7 +285,7 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                 Severity Distribution
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                {data.severityData.map((item: SeverityDataItem, index: number) => (
+                {data?.severityData.map((item: SeverityDataItem, index: number) => (
                   <div key={index} className="bg-background p-3 rounded-md text-center">
                     <div className="text-2xl font-bold">{item.count}</div>
                     <div
@@ -261,11 +295,20 @@ export function HistoricalDataDisplay({ coordinates }: HistoricalDataDisplayProp
                     </div>
                   </div>
                 ))}
+                {data?.severityData.length === 0 && (
+                  <div className="col-span-2 text-center py-4 text-muted-foreground">No severity data available</div>
+                )}
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleRetry} variant="outline">
+          Refresh Data
+        </Button>
+      </div>
     </div>
   )
 }
