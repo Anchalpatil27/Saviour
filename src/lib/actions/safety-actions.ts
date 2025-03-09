@@ -26,6 +26,25 @@ export interface SafetyData {
   isSampleData: boolean
 }
 
+export interface DisasterSafetyData {
+  beforeDisaster: {
+    title: string
+    tips: string[]
+  }
+  duringDisaster: {
+    title: string
+    tips: string[]
+  }
+  afterDisaster: {
+    title: string
+    tips: string[]
+  }
+  firstAid: {
+    title: string
+    tips: string[]
+  }
+}
+
 function getSampleSafetyData(disasterType: string): SafetyData {
   const defaultDisasterTypes = ["Flood", "Earthquake", "Wildfire", "Hurricane", "Tornado"]
 
@@ -287,6 +306,74 @@ export async function fetchSafetyData(
       success: true,
       data: sampleData,
       error: "Error occurred, showing sample data instead",
+    }
+  }
+}
+
+export async function fetchDisasterSafetyData(
+  disasterType: string,
+): Promise<{ success: boolean; data: DisasterSafetyData; error?: string }> {
+  try {
+    // In a real implementation, this would fetch from Gemini API
+    // For now, we'll return sample data
+    const sampleData: DisasterSafetyData = {
+      beforeDisaster: {
+        title: `Before a ${disasterType}`,
+        tips: [
+          `Stay informed about ${disasterType} risks in your area.`,
+          "Create an emergency plan and share it with your family.",
+          "Prepare an emergency kit with essential supplies.",
+          "Know evacuation routes and meeting points.",
+          "Secure important documents in waterproof containers.",
+        ],
+      },
+      duringDisaster: {
+        title: `During a ${disasterType}`,
+        tips: [
+          "Stay calm and follow your emergency plan.",
+          "Listen to official instructions and emergency broadcasts.",
+          "Evacuate immediately if ordered to do so.",
+          "Avoid hazardous areas and downed power lines.",
+          "Help others if it's safe to do so.",
+        ],
+      },
+      afterDisaster: {
+        title: `After a ${disasterType}`,
+        tips: [
+          "Return home only when authorities say it's safe.",
+          "Document damage with photos for insurance purposes.",
+          "Be cautious of structural damage to buildings.",
+          "Check on neighbors, especially elderly or disabled individuals.",
+          "Begin cleanup and recovery following safety guidelines.",
+        ],
+      },
+      firstAid: {
+        title: "Emergency First Aid",
+        tips: [
+          "For severe bleeding: Apply direct pressure with a clean cloth.",
+          "For burns: Cool with running water, don't use ice.",
+          "For broken bones: Immobilize the area, don't try to straighten.",
+          "For shock: Lay person flat, elevate legs, keep warm.",
+          "For CPR: Push hard and fast in center of chest, 100-120 compressions per minute.",
+        ],
+      },
+    }
+
+    return {
+      success: true,
+      data: sampleData,
+    }
+  } catch (error) {
+    console.error("Error fetching disaster safety data:", error)
+    return {
+      success: false,
+      data: {
+        beforeDisaster: { title: "", tips: [] },
+        duringDisaster: { title: "", tips: [] },
+        afterDisaster: { title: "", tips: [] },
+        firstAid: { title: "", tips: [] },
+      },
+      error: "Failed to fetch safety data",
     }
   }
 }

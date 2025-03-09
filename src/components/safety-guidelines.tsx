@@ -2,45 +2,58 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Shield, Heart, RefreshCw, AlertTriangle, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Shield, Stethoscope, AlertTriangle, RefreshCw, Info } from 'lucide-react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { SafetyDialog } from "./safety-dialog"
-import { fetchSafetyData, type DisasterSafetyData } from "@/lib/actions/safety-actions"
-
-const DISASTER_TYPES = [
-  { value: "flood", label: "Flood" },
-  { value: "earthquake", label: "Earthquake" },
-  { value: "hurricane", label: "Hurricane" },
-  { value: "tornado", label: "Tornado" },
-  { value: "wildfire", label: "Wildfire" },
-  { value: "tsunami", label: "Tsunami" },
-  { value: "drought", label: "Drought" },
-  { value: "landslide", label: "Landslide" },
-  { value: "blizzard", label: "Blizzard" },
-]
+import { SafetyDialog } from "@/components/safety-dialog"
+import { fetchDisasterSafetyData, type DisasterSafetyData } from "@/lib/actions/safety-actions"
 
 export function SafetyGuidelines() {
-  const [disasterType, setDisasterType] = useState<string>("flood")
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [safetyData, setSafetyData] = useState<DisasterSafetyData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isSampleData, setIsSampleData] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedDisasterType, setSelectedDisasterType] = useState<string>("Flood")
+
+  const getLocation = () => {
+    if (typeof window !== "undefined" && "geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords
+          console.log(`Got coordinates: ${latitude}, ${longitude}`)
+          setCoordinates({ lat: latitude, lng: longitude })
+        },
+        (error) => {
+          console.error("Error getting location:", error)
+          // Use a default location if geolocation fails
+          console.log("Using default coordinates")
+          setCoordinates({ lat: 40.7128, lng: -74.006 }) // New York City coordinates
+          setError(`Using default location. Original error: ${error.message}`)
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+      )
+    } else {
+      console.error("Geolocation not supported")
+      // Use a default location if geolocation is not supported
+      setCoordinates({ lat: 40.7128, lng: -74.006 }) // New York City coordinates
+      setError("Geolocation is not supported by your browser. Using default location.")
+    }
+  }
 
   const loadSafetyData = async () => {
     try {
       setRefreshing(true)
 
-      console.log(`Fetching safety data for disaster type: ${disasterType}`)
-      const result = await fetchSafetyData(disasterType)
+      console.log(`Fetching safety data for disaster type: ${selectedDisasterType}`)
+      const result = await fetchDisasterSafetyData(selectedDisasterType)
 
       if (result.success) {
         setSafetyData(result.data)
-        setIsSampleData(!!result.data.isSampleData)
+        setIsSampleData(true) // Since fetchDisasterSafetyData always returns sample data for now
         console.log("Successfully loaded safety data")
 
         if (result.error) {
@@ -65,15 +78,13 @@ export function SafetyGuidelines() {
     loadSafetyData()
   }
 
-  const handleDisasterTypeChange = (value: string) => {
-    setDisasterType(value)
-    setLoading(true)
-  }
+  useEffect(() => {
+    getLocation()
+  }, [])
 
   useEffect(() => {
     loadSafetyData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [disasterType])
+  }, [selectedDisasterType])
 
   if (loading) {
     return <SafetyDataSkeleton />
@@ -81,41 +92,27 @@ export function SafetyGuidelines() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Safety Guidelines</h2>
-
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <Select value={disasterType} onValueChange={handleDisasterTypeChange}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Select disaster type" />
-            </SelectTrigger>
-            <SelectContent>
-              {DISASTER_TYPES.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-1"
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-1"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "Refreshing..." : "Refresh"}
+        </Button>
       </div>
 
       {/* Show sample data warning if applicable */}
       {isSampleData && (
         <Alert>
           <Info className="h-4 w-4 mr-2" />
-          <AlertDescription>Showing sample data. This is not comprehensive safety information.</AlertDescription>
+          <AlertDescription>
+            Showing sample safety data. This is not location-specific safety information.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -130,87 +127,88 @@ export function SafetyGuidelines() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center">
+            <CardTitle className="flex items-center text-lg">
               <Shield className="mr-2 h-5 w-5" />
-              {safetyData?.disasterType || "Disaster"} Preparedness
+              Disaster Preparedness
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-grow">
-            <p className="text-sm text-muted-foreground mb-4">
-              Learn essential safety measures and preparedness tips for {safetyData?.disasterType || "disaster"}{" "}
-              situations. This guide covers what to do before, during, and after the event to protect yourself and your
-              loved ones.
-            </p>
-            <ul className="list-disc pl-5 mb-4 space-y-2 text-sm">
-              {safetyData?.beforeTips.slice(0, 3).map((tip, index) => (
-                <li key={index}>
-                  <strong>{tip.title}:</strong> {tip.description}
-                </li>
-              ))}
-            </ul>
-            <Button className="w-full" onClick={() => setDialogOpen(true)}>
-              Learn More
-            </Button>
+            <div className="space-y-4">
+              {safetyData && (
+                <>
+                  <div className="border-b pb-4">
+                    <h3 className="font-medium mb-2">{safetyData.beforeDisaster.title}</h3>
+                    <ul className="space-y-2">
+                      {safetyData.beforeDisaster.tips.map((tip: string, index: number) => (
+                        <li key={index} className="flex items-start">
+                          <AlertTriangle className="h-4 w-4 text-yellow-500 mr-2 shrink-0 mt-0.5" />
+                          <span className="text-sm">{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              )}
+              {!safetyData && (
+                <div className="text-center py-6">
+                  <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">No preparedness information available</p>
+                </div>
+              )}
+            </div>
+            {safetyData && (
+              <Button className="w-full mt-4" onClick={() => setDialogOpen(true)}>
+                Learn More
+              </Button>
+            )}
           </CardContent>
         </Card>
 
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <Stethoscope className="mr-2 h-5 w-5" />
+            <CardTitle className="flex items-center text-lg">
+              <Heart className="mr-2 h-5 w-5" />
               Complete First Aid Guide
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-grow">
-            <p className="text-sm text-muted-foreground mb-4">
-              Comprehensive first aid information for {safetyData?.disasterType || "disaster"} emergencies. 
-              These guidelines can help save lives during critical situations.
-            </p>
-            <div className="space-y-6">
-              {safetyData?.firstAidTips.map((tip, index) => (
-                <div key={index} className="border-b pb-5 last:border-0">
-                  <div className="flex items-start mb-3">
-                    <div className="bg-red-100 dark:bg-red-900/30 p-1.5 rounded-full mr-3">
-                      <Stethoscope className="h-4 w-4 text-red-600 dark:text-red-400" />
-                    </div>
-                    <h4 className="font-medium text-base">{tip.title}</h4>
-                  </div>
-                  <div className="ml-9 space-y-2">
-                    <p className="text-sm">{tip.description}</p>
-                    
-                    {/* Additional detailed steps - this would ideally come from the API but we're adding it for demonstration */}
-                    <div className="mt-2 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
-                      <h5 className="text-xs font-medium uppercase text-muted-foreground mb-2">Step-by-step guide:</h5>
-                      <ol className="list-decimal list-inside text-xs space-y-1.5">
-                        {[1, 2, 3].map((step) => (
-                          <li key={step} className="text-muted-foreground">
-                            {tip.title.includes("CPR") ? 
-                              [`Check responsiveness and call for help`, `Begin chest compressions at 100-120 per minute`, `Continue until help arrives`][step-1] :
-                            tip.title.includes("bleeding") || tip.title.includes("wound") ? 
-                              [`Apply direct pressure with clean cloth`, `Elevate the injured area if possible`, `Apply bandage when bleeding slows`][step-1] :
-                            tip.title.includes("burn") ? 
-                              [`Cool the burn with cool running water`, `Cover with clean, dry bandage`, `Do not apply creams or ointments initially`][step-1] :
-                            tip.title.includes("fracture") || tip.title.includes("broken") ? 
-                              [`Immobilize the injured area`, `Apply cold pack to reduce swelling`, `Seek medical attention immediately`][step-1] :
-                              [`Assess the situation and ensure safety`, `Provide appropriate care based on symptoms`, `Monitor and seek medical help if needed`][step-1]}
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                  </div>
+            <div className="space-y-4">
+              {safetyData && (
+                <div className="border-b pb-4">
+                  <h3 className="font-medium mb-2">{safetyData.firstAid.title}</h3>
+                  <ul className="space-y-2">
+                    {safetyData.firstAid.tips.map((tip: string, index: number) => (
+                      <li key={index} className="flex items-start">
+                        <Heart className="h-4 w-4 text-red-500 mr-2 shrink-0 mt-0.5" />
+                        <span className="text-sm">{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              ))}
+              )}
+              {!safetyData || safetyData.firstAid.tips.length === 0 ? (
+                <div className="text-center py-6">
+                  <Heart className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">No first aid information available</p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-4">
+                  These guidelines can help save lives during critical situations.
+                </p>
+              )}
             </div>
-            {safetyData?.firstAidTips.length === 0 && (
-              <div className="text-center py-4 text-muted-foreground">
-                <p>No specific first aid information available for this disaster type.</p>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
 
-      {safetyData && <SafetyDialog open={dialogOpen} onOpenChange={setDialogOpen} safetyData={safetyData} />}
+      {safetyData && (
+        <SafetyDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          safetyData={safetyData}
+          disasterType={selectedDisasterType}
+        />
+      )}
     </div>
   )
 }
@@ -220,24 +218,20 @@ function SafetyDataSkeleton() {
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Safety Guidelines</h2>
-        <div className="flex gap-2">
-          <Skeleton className="h-10 w-[180px]" />
-          <Skeleton className="h-10 w-24" />
-        </div>
+        <Skeleton className="h-9 w-24" />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {[1, 2].map((i) => (
           <Card key={i} className="flex flex-col">
             <CardHeader>
-              <Skeleton className="h-6 w-full max-w-[200px]" />
+              <Skeleton className="h-6 w-40" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-grow">
               <div className="space-y-4">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
               </div>
               <Skeleton className="h-10 w-full mt-4" />
             </CardContent>
@@ -247,3 +241,4 @@ function SafetyDataSkeleton() {
     </div>
   )
 }
+

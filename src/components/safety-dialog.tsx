@@ -1,127 +1,101 @@
 "use client"
+
+import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AlertTriangle, Shield, Stethoscope, Info } from 'lucide-react'
 import type { DisasterSafetyData } from "@/lib/actions/safety-actions"
+import { Shield, Heart, AlertTriangle, CheckCircle } from "lucide-react"
 
 interface SafetyDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  disasterType: string
   safetyData: DisasterSafetyData
 }
 
-export function SafetyDialog({ open, onOpenChange, safetyData }: SafetyDialogProps) {
+export function SafetyDialog({ open, onOpenChange, disasterType, safetyData }: SafetyDialogProps) {
+  const [activeTab, setActiveTab] = useState("before")
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6 md:p-8">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl flex items-center">
-            <Shield className="mr-2 h-6 w-6" />
-            {safetyData.disasterType} Safety Guidelines
+          <DialogTitle className="text-xl flex items-center">
+            <Shield className="mr-2 h-5 w-5" />
+            {disasterType} Safety Guidelines
           </DialogTitle>
-          <p className="text-muted-foreground mt-2">
-            This comprehensive guide provides detailed safety information for {safetyData.disasterType} situations.
-            Follow these guidelines to protect yourself and others before, during, and after the event.
-          </p>
         </DialogHeader>
 
-        <Tabs defaultValue="before" className="mt-6">
-          <TabsList className="grid grid-cols-3 mb-6 w-full max-w-md mx-auto">
-            <TabsTrigger value="before" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              <span>Before</span>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+          <TabsList className="grid grid-cols-4 mb-4">
+            <TabsTrigger value="before" className="flex items-center">
+              <AlertTriangle className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Before</span>
             </TabsTrigger>
-            <TabsTrigger value="during" className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              <span>During</span>
+            <TabsTrigger value="during" className="flex items-center">
+              <Shield className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">During</span>
             </TabsTrigger>
-            <TabsTrigger value="after" className="flex items-center gap-2">
-              <Info className="h-4 w-4" />
-              <span>After</span>
+            <TabsTrigger value="after" className="flex items-center">
+              <CheckCircle className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">After</span>
+            </TabsTrigger>
+            <TabsTrigger value="firstaid" className="flex items-center">
+              <Heart className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">First Aid</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="before" className="space-y-4">
-            <h3 className="text-lg font-medium">Before a {safetyData.disasterType}</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {safetyData.beforeTips.map((tip, index) => (
-                <Card key={index}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center">
-                      <AlertTriangle className="mr-2 h-4 w-4 text-yellow-500" />
-                      {tip.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">{tip.description}</p>
-                  </CardContent>
-                </Card>
+            <h3 className="text-lg font-medium">{safetyData.beforeDisaster.title}</h3>
+            <ul className="space-y-2">
+              {safetyData.beforeDisaster.tips.map((tip: string, index: number) => (
+                <li key={index} className="flex items-start">
+                  <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2 shrink-0 mt-0.5" />
+                  <span>{tip}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           </TabsContent>
 
           <TabsContent value="during" className="space-y-4">
-            <h3 className="text-lg font-medium">During a {safetyData.disasterType}</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {safetyData.duringTips.map((tip, index) => (
-                <Card key={index}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center">
-                      <AlertTriangle className="mr-2 h-4 w-4 text-red-500" />
-                      {tip.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">{tip.description}</p>
-                  </CardContent>
-                </Card>
+            <h3 className="text-lg font-medium">{safetyData.duringDisaster.title}</h3>
+            <ul className="space-y-2">
+              {safetyData.duringDisaster.tips.map((tip: string, index: number) => (
+                <li key={index} className="flex items-start">
+                  <Shield className="h-5 w-5 text-blue-500 mr-2 shrink-0 mt-0.5" />
+                  <span>{tip}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           </TabsContent>
 
           <TabsContent value="after" className="space-y-4">
-            <h3 className="text-lg font-medium">After a {safetyData.disasterType}</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {safetyData.afterTips.map((tip, index) => (
-                <Card key={index}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center">
-                      <AlertTriangle className="mr-2 h-4 w-4 text-blue-500" />
-                      {tip.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">{tip.description}</p>
-                  </CardContent>
-                </Card>
+            <h3 className="text-lg font-medium">{safetyData.afterDisaster.title}</h3>
+            <ul className="space-y-2">
+              {safetyData.afterDisaster.tips.map((tip: string, index: number) => (
+                <li key={index} className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>{tip}</span>
+                </li>
               ))}
-            </div>
+            </ul>
+          </TabsContent>
+
+          <TabsContent value="firstaid" className="space-y-4">
+            <h3 className="text-lg font-medium">{safetyData.firstAid.title}</h3>
+            <ul className="space-y-2">
+              {safetyData.firstAid.tips.map((tip: string, index: number) => (
+                <li key={index} className="flex items-start">
+                  <Heart className="h-5 w-5 text-red-500 mr-2 shrink-0 mt-0.5" />
+                  <span>{tip}</span>
+                </li>
+              ))}
+            </ul>
           </TabsContent>
         </Tabs>
-
-        <div className="mt-6">
-          <h3 className="text-lg font-medium flex items-center mb-4">
-            <Stethoscope className="mr-2 h-5 w-5" />
-            First Aid for {safetyData.disasterType} Situations
-          </h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            {safetyData.firstAidTips.map((tip, index) => (
-              <Card key={index}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center">
-                    <Stethoscope className="mr-2 h-4 w-4 text-green-500" />
-                    {tip.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm">{tip.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
       </DialogContent>
     </Dialog>
   )
 }
+
