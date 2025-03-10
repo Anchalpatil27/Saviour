@@ -76,11 +76,11 @@ export function SafetyGuidelines() {
             onChange={(e) => handleDisasterTypeChange(e.target.value as DisasterType)}
             className="px-3 py-2 rounded-md border bg-background"
           >
-            {DISASTER_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
+            <option value="Flood">Flood</option>
+            <option value="Earthquake">Earthquake</option>
+            <option value="Wildfire">Wildfire</option>
+            <option value="Hurricane">Hurricane</option>
+            <option value="Tornado">Tornado</option>
           </select>
           <Button
             variant="outline"
