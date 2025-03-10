@@ -92,6 +92,7 @@ export function LocationBasedSafety() {
     if (coordinates) {
       loadSafetyData()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coordinates, selectedDisasterType])
 
   if (loading) {

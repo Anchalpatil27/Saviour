@@ -40,7 +40,6 @@ export interface HistoricalData {
 
 // Sample data for testing purposes
 // Using underscore prefix to indicate these parameters are intentionally unused
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getSampleHistoricalData = (latitude: number, longitude: number): HistoricalData => {
   // Create more realistic sample data based on the coordinates
   const cityName = getCityNameFromCoordinates(latitude, longitude)

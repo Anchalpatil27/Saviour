@@ -101,6 +101,7 @@ export function LocationBasedNews() {
     if (coordinates) {
       loadNewsData()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coordinates])
 
   if (loading) {

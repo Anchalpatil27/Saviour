@@ -10,8 +10,7 @@ import { SafetyDialog } from "@/components/safety-dialog"
 import { fetchDisasterSafetyData, type DisasterSafetyData } from "@/lib/actions/safety-actions"
 
 // Define available disaster types
-const DISASTER_TYPES = ["Flood", "Earthquake", "Wildfire", "Hurricane", "Tornado"] as const
-type DisasterType = (typeof DISASTER_TYPES)[number]
+type DisasterType = "Flood" | "Earthquake" | "Wildfire" | "Hurricane" | "Tornado"
 
 export function SafetyGuidelines() {
   const [safetyData, setSafetyData] = useState<DisasterSafetyData | null>(null)
