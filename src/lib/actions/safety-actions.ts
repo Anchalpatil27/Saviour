@@ -322,6 +322,22 @@ export async function fetchSafetyData(
     // We have an API key, so try using the Gemini API first
     try {
       console.log("Attempting to fetch data from Gemini API")
+
+      // IMPORTANT: Always use hardcoded data in production for now
+      // This is a temporary fix until we resolve the API issues
+      if (process.env.NODE_ENV === "production") {
+        console.log("Using hardcoded data in production environment")
+        const disasterData = DISASTER_DATA[disasterType] || DISASTER_DATA["Flood"]
+        const safetyData = convertToSafetyDataFormat(disasterData, disasterType)
+
+        return {
+          success: true,
+          data: safetyData,
+          error: "Using reliable local data in production environment",
+        }
+      }
+
+      // Only try the API in development
       const apiResult = await fetchSafetyDataFromAPI(latitude, longitude, disasterType)
 
       // If successful, return the API data
@@ -426,7 +442,7 @@ async function fetchSafetyDataFromAPI(
  `
 
   // Clean the API key - remove any whitespace, quotes, etc.
-  const cleanedApiKey = process.env.GEMINI_API_KEY.trim().replace(/["']/g, "")
+  const cleanedApiKey = process.env.GEMINI_API_KEY?.trim().replace(/["']/g, "") || ""
 
   // Define endpoints to try
   const endpoints = [
@@ -463,6 +479,7 @@ async function fetchSafetyDataFromAPI(
             maxOutputTokens: 2048,
           },
         }),
+        cache: "no-store",
       })
 
       if (!response.ok) {
@@ -487,7 +504,7 @@ async function fetchSafetyDataFromAPI(
       // Try direct parsing
       try {
         jsonData = JSON.parse(text) as DisasterSafetyData
-      } catch {
+      } catch (e) {
         console.log("Could not parse entire response as JSON, trying to extract JSON object")
 
         // Try regex extraction
@@ -495,7 +512,7 @@ async function fetchSafetyDataFromAPI(
         if (jsonMatch) {
           try {
             jsonData = JSON.parse(jsonMatch[0]) as DisasterSafetyData
-          } catch {
+          } catch (e) {
             console.error("Error parsing extracted JSON")
           }
         }
@@ -507,7 +524,7 @@ async function fetchSafetyDataFromAPI(
             try {
               jsonData = JSON.parse(codeBlockMatch[1]) as DisasterSafetyData
               console.log("Successfully parsed JSON from code block")
-            } catch {
+            } catch (e) {
               console.error("Error parsing JSON from code block")
             }
           }
@@ -522,8 +539,8 @@ async function fetchSafetyDataFromAPI(
           data: safetyData,
         }
       }
-    } catch (endpointError) {
-      console.error(`Error with endpoint ${endpoint}:`, endpointError)
+    } catch (e) {
+      console.error(`Error with endpoint ${endpoint}:`, e)
       // Continue to the next endpoint
     }
   }
@@ -545,8 +562,8 @@ export async function fetchDisasterSafetyData(
       success: true,
       data,
     }
-  } catch (error) {
-    console.error("Error fetching disaster safety data:", error)
+  } catch (e) {
+    console.error("Error fetching disaster safety data:", e)
 
     // Return a default data structure even in case of error
     return {
@@ -556,3 +573,4 @@ export async function fetchDisasterSafetyData(
     }
   }
 }
+
