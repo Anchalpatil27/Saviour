@@ -479,7 +479,6 @@ async function fetchSafetyDataFromAPI(
             maxOutputTokens: 2048,
           },
         }),
-        cache: "no-store",
       })
 
       if (!response.ok) {
@@ -504,7 +503,7 @@ async function fetchSafetyDataFromAPI(
       // Try direct parsing
       try {
         jsonData = JSON.parse(text) as DisasterSafetyData
-      } catch (e) {
+      } catch {
         console.log("Could not parse entire response as JSON, trying to extract JSON object")
 
         // Try regex extraction
@@ -512,7 +511,7 @@ async function fetchSafetyDataFromAPI(
         if (jsonMatch) {
           try {
             jsonData = JSON.parse(jsonMatch[0]) as DisasterSafetyData
-          } catch (e) {
+          } catch {
             console.error("Error parsing extracted JSON")
           }
         }
@@ -524,7 +523,7 @@ async function fetchSafetyDataFromAPI(
             try {
               jsonData = JSON.parse(codeBlockMatch[1]) as DisasterSafetyData
               console.log("Successfully parsed JSON from code block")
-            } catch (e) {
+            } catch {
               console.error("Error parsing JSON from code block")
             }
           }
@@ -539,8 +538,8 @@ async function fetchSafetyDataFromAPI(
           data: safetyData,
         }
       }
-    } catch (e) {
-      console.error(`Error with endpoint ${endpoint}:`, e)
+    } catch (endpointError) {
+      console.error(`Error with endpoint ${endpoint}:`, endpointError)
       // Continue to the next endpoint
     }
   }
@@ -562,8 +561,8 @@ export async function fetchDisasterSafetyData(
       success: true,
       data,
     }
-  } catch (e) {
-    console.error("Error fetching disaster safety data:", e)
+  } catch (error) {
+    console.error("Error fetching disaster safety data:", error)
 
     // Return a default data structure even in case of error
     return {
@@ -573,4 +572,3 @@ export async function fetchDisasterSafetyData(
     }
   }
 }
-
