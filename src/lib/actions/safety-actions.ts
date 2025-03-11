@@ -487,7 +487,7 @@ async function fetchSafetyDataFromAPI(
       // Try direct parsing
       try {
         jsonData = JSON.parse(text) as DisasterSafetyData
-      } catch (e) {
+      } catch (parseError) {
         console.log("Could not parse entire response as JSON, trying to extract JSON object")
 
         // Try regex extraction
@@ -495,7 +495,7 @@ async function fetchSafetyDataFromAPI(
         if (jsonMatch) {
           try {
             jsonData = JSON.parse(jsonMatch[0]) as DisasterSafetyData
-          } catch (e) {
+          } catch (jsonParseError) {
             console.error("Error parsing extracted JSON")
           }
         }
@@ -507,7 +507,7 @@ async function fetchSafetyDataFromAPI(
             try {
               jsonData = JSON.parse(codeBlockMatch[1]) as DisasterSafetyData
               console.log("Successfully parsed JSON from code block")
-            } catch (e) {
+            } catch (codeBlockParseError) {
               console.error("Error parsing JSON from code block")
             }
           }
@@ -522,8 +522,8 @@ async function fetchSafetyDataFromAPI(
           data: safetyData,
         }
       }
-    } catch (e) {
-      console.error(`Error with endpoint ${endpoint}:`, e)
+    } catch (endpointError) {
+      console.error(`Error with endpoint ${endpoint}:`, endpointError)
       // Continue to the next endpoint
     }
   }
@@ -556,4 +556,3 @@ export async function fetchDisasterSafetyData(
     }
   }
 }
-
