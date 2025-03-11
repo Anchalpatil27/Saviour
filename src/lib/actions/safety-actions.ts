@@ -545,8 +545,8 @@ export async function fetchDisasterSafetyData(
       success: true,
       data,
     }
-  } catch (e) {
-    console.error("Error fetching disaster safety data:", e)
+  } catch (error) {
+    console.error("Error fetching disaster safety data:", error)
 
     // Return a default data structure even in case of error
     return {
