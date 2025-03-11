@@ -10,7 +10,7 @@ import { AlertTriangle, CheckCircle, RefreshCw } from "lucide-react"
 
 export default function SafetyApiTestPage() {
   const [loading, setLoading] = useState(false)
-  const [results, setResults] = useState<any>(null)
+  const [results, setResults] = useState<Record<string, unknown> | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const testSafetyApi = async () => {
@@ -109,7 +109,7 @@ export default function SafetyApiTestPage() {
 
               <div className="space-y-4">
                 <h3 className="font-medium">Endpoint Results</h3>
-                {results.results?.map((result: any, index: number) => (
+                {results.results?.map((result: Record<string, unknown>, index: number) => (
                   <div key={index} className="border p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">{result.endpoint.split("/").pop()}</span>
@@ -124,7 +124,7 @@ export default function SafetyApiTestPage() {
             </div>
           ) : (
             <div className="text-center py-6 text-muted-foreground">
-              No test results yet. Click "Test Safety API" to test the Gemini API for safety features.
+              No test results yet. Click &quot;Test Safety API&quot; to test the Gemini API for safety features.
             </div>
           )}
         </CardContent>
