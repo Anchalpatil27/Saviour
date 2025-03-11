@@ -506,8 +506,9 @@ async function fetchSafetyDataFromAPI(
           if (codeBlockMatch && codeBlockMatch[1]) {
             try {
               jsonData = JSON.parse(codeBlockMatch[1]) as DisasterSafetyData
+              console.log("Successfully parsed JSON from code block")
             } catch (error) {
-              console.error("Error parsing JSON from code block")
+              console.error("Error parsing JSON from code block:", error)
             }
           }
         }
