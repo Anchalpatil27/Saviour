@@ -487,8 +487,7 @@ async function fetchSafetyDataFromAPI(
       // Try direct parsing
       try {
         jsonData = JSON.parse(text) as DisasterSafetyData
-      } catch (parseError) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (e) {
         console.log("Could not parse entire response as JSON, trying to extract JSON object")
 
         // Try regex extraction
@@ -496,8 +495,7 @@ async function fetchSafetyDataFromAPI(
         if (jsonMatch) {
           try {
             jsonData = JSON.parse(jsonMatch[0]) as DisasterSafetyData
-          } catch (error) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (e) {
             console.error("Error parsing extracted JSON")
           }
         }
@@ -509,9 +507,8 @@ async function fetchSafetyDataFromAPI(
             try {
               jsonData = JSON.parse(codeBlockMatch[1]) as DisasterSafetyData
               console.log("Successfully parsed JSON from code block")
-            } catch (error) {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              console.error("Error parsing JSON from code block:", error)
+            } catch (e) {
+              console.error("Error parsing JSON from code block")
             }
           }
         }
@@ -525,9 +522,8 @@ async function fetchSafetyDataFromAPI(
           data: safetyData,
         }
       }
-    } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      console.error(`Error with endpoint ${endpoint}:`, error)
+    } catch (e) {
+      console.error(`Error with endpoint ${endpoint}:`, e)
       // Continue to the next endpoint
     }
   }
@@ -549,9 +545,8 @@ export async function fetchDisasterSafetyData(
       success: true,
       data,
     }
-  } catch (error) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    console.error("Error fetching disaster safety data:", error)
+  } catch (e) {
+    console.error("Error fetching disaster safety data:", e)
 
     // Return a default data structure even in case of error
     return {
