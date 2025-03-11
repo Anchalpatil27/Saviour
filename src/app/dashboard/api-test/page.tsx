@@ -6,10 +6,28 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertTriangle, CheckCircle, RefreshCw } from "lucide-react"
 
+interface KeyInfo {
+  keyExists: boolean
+  keyLength: number
+  keyFirstFour: string
+  keyLastFour: string
+  hasWhitespace: boolean
+  hasQuotes: boolean
+  success: boolean
+}
+
+interface TestResult {
+  success: boolean
+  message?: string
+  endpoint?: string
+  responsePreview?: string
+  error?: string
+}
+
 export default function ApiTestPage() {
   const [loading, setLoading] = useState(false)
-  const [keyInfo, setKeyInfo] = useState<any>(null)
-  const [testResult, setTestResult] = useState<any>(null)
+  const [keyInfo, setKeyInfo] = useState<KeyInfo | null>(null)
+  const [testResult, setTestResult] = useState<TestResult | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const checkApiKey = async () => {
@@ -19,12 +37,12 @@ export default function ApiTestPage() {
     try {
       // First check the key info
       const keyResponse = await fetch("/api/debug/gemini-key")
-      const keyData = await keyResponse.json()
+      const keyData = (await keyResponse.json()) as KeyInfo
       setKeyInfo(keyData)
 
       // Then test the API
       const testResponse = await fetch("/api/test-gemini")
-      const testData = await testResponse.json()
+      const testData = (await testResponse.json()) as TestResult
       setTestResult(testData)
     } catch (err) {
       console.error("API test failed:", err)
@@ -90,7 +108,7 @@ export default function ApiTestPage() {
               </div>
             ) : (
               <div className="text-center py-6 text-muted-foreground">
-                Click "Test API Key" to check your Gemini API key.
+                Click &quot;Test API Key&quot; to check your Gemini API key.
               </div>
             )}
           </CardContent>
@@ -120,7 +138,7 @@ export default function ApiTestPage() {
               </div>
             ) : (
               <div className="text-center py-6 text-muted-foreground">
-                No test results yet. Click "Test API Key" to test the Gemini API.
+                No test results yet. Click &quot;Test API Key&quot; to test the Gemini API.
               </div>
             )}
           </CardContent>
@@ -137,14 +155,14 @@ export default function ApiTestPage() {
               <h3 className="font-medium mb-2">Common API Key Issues</h3>
               <ul className="list-disc pl-5 space-y-2">
                 <li>
-                  <strong>Whitespace or quotes:</strong> Make sure your API key doesn't have any extra spaces, tabs, or
-                  quotes around it.
+                  <strong>Whitespace or quotes:</strong> Make sure your API key doesn&apos;t have any extra spaces,
+                  tabs, or quotes around it.
                 </li>
                 <li>
-                  <strong>Incorrect key:</strong> Verify you're using the correct API key from Google AI Studio.
+                  <strong>Incorrect key:</strong> Verify you&apos;re using the correct API key from Google AI Studio.
                 </li>
                 <li>
-                  <strong>Key not active:</strong> Ensure your API key is active and hasn't been revoked.
+                  <strong>Key not active:</strong> Ensure your API key is active and hasn&apos;t been revoked.
                 </li>
                 <li>
                   <strong>API access:</strong> Make sure your Google Cloud project has the Gemini API enabled.

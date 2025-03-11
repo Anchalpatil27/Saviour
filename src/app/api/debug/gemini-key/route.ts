@@ -18,9 +18,14 @@ export async function GET() {
       return NextResponse.json(
         {
           success: false,
-          error: "GEMINI_API_KEY environment variable is not set",
+          keyExists: false,
+          keyLength: 0,
+          keyFirstFour: "",
+          keyLastFour: "",
+          hasWhitespace: false,
+          hasQuotes: false,
         },
-        { status: 500 },
+        { status: 200 },
       )
     }
 
@@ -40,6 +45,12 @@ export async function GET() {
       {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
+        keyExists: false,
+        keyLength: 0,
+        keyFirstFour: "",
+        keyLastFour: "",
+        hasWhitespace: false,
+        hasQuotes: false,
       },
       { status: 500 },
     )
