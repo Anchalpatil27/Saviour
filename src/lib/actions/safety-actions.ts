@@ -487,7 +487,7 @@ async function fetchSafetyDataFromAPI(
       // Try direct parsing
       try {
         jsonData = JSON.parse(text) as DisasterSafetyData
-      } catch (parseError) {
+      } catch {
         console.log("Could not parse entire response as JSON, trying to extract JSON object")
 
         // Try regex extraction
@@ -495,7 +495,7 @@ async function fetchSafetyDataFromAPI(
         if (jsonMatch) {
           try {
             jsonData = JSON.parse(jsonMatch[0]) as DisasterSafetyData
-          } catch (jsonParseError) {
+          } catch {
             console.error("Error parsing extracted JSON")
           }
         }
@@ -507,7 +507,7 @@ async function fetchSafetyDataFromAPI(
             try {
               jsonData = JSON.parse(codeBlockMatch[1]) as DisasterSafetyData
               console.log("Successfully parsed JSON from code block")
-            } catch (codeBlockParseError) {
+            } catch {
               console.error("Error parsing JSON from code block")
             }
           }
