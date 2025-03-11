@@ -86,7 +86,8 @@ export async function GET() {
         try {
           const data = await response.json()
           responseText = JSON.stringify(data)
-        } catch (_) {
+        } catch {
+          // Just get the text without using a variable
           responseText = await response.text()
         }
 

@@ -8,9 +8,26 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertTriangle, CheckCircle, RefreshCw } from "lucide-react"
 
+// Define proper types for the API response
+interface ApiResult {
+  endpoint: string
+  success: boolean
+  status: string
+  response?: string
+  error?: string
+}
+
+interface ApiResponse {
+  success: boolean
+  message?: string
+  apiKeyLength?: number
+  apiKeyPreview?: string
+  results?: ApiResult[]
+}
+
 export default function SafetyApiTestPage() {
   const [loading, setLoading] = useState(false)
-  const [results, setResults] = useState<Record<string, unknown> | null>(null)
+  const [results, setResults] = useState<ApiResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const testSafetyApi = async () => {
@@ -109,17 +126,23 @@ export default function SafetyApiTestPage() {
 
               <div className="space-y-4">
                 <h3 className="font-medium">Endpoint Results</h3>
-                {results.results?.map((result: Record<string, unknown>, index: number) => (
-                  <div key={index} className="border p-4 rounded-lg">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium">{result.endpoint.split("/").pop()}</span>
-                      <Badge variant={result.success ? "success" : "destructive"}>{result.status}</Badge>
+                {results.results && results.results.length > 0 ? (
+                  results.results.map((result, index) => (
+                    <div key={index} className="border p-4 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-medium">
+                          {typeof result.endpoint === "string" ? result.endpoint.split("/").pop() : "Unknown endpoint"}
+                        </span>
+                        <Badge variant={result.success ? "success" : "destructive"}>{result.status}</Badge>
+                      </div>
+                      <div className="bg-muted p-3 rounded-md text-sm overflow-auto max-h-40">
+                        <pre>{result.response || result.error || "No response"}</pre>
+                      </div>
                     </div>
-                    <div className="bg-muted p-3 rounded-md text-sm overflow-auto max-h-40">
-                      <pre>{result.response || result.error || "No response"}</pre>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">No endpoint results available</p>
+                )}
               </div>
             </div>
           ) : (
