@@ -7,11 +7,14 @@ import UserForm from "@/components/admin/UserForm"
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
-// Use the correct type for Next.js page props
+interface PageParams {
+  id: string
+}
+
 export default async function EditUserPage({
-  searchParams,
+  params,
 }: {
-  searchParams: Record<string, string | string[] | undefined>
+  params: PageParams
 }) {
   const session = await getServerSession(authOptions)
 
@@ -19,19 +22,11 @@ export default async function EditUserPage({
     redirect("/auth/login")
   }
 
-  // Handle both string and string[] cases
-  const idParam = searchParams.id
-  const id = typeof idParam === "string" ? idParam : Array.isArray(idParam) ? idParam[0] : undefined
-
-  if (!id) {
-    redirect("/admin/users")
-  }
-
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Edit User</h1>
       <Suspense fallback={<div>Loading...</div>}>
-        <UserForm id={id} />
+        <UserForm id={params.id} />
       </Suspense>
     </div>
   )
