@@ -7,11 +7,14 @@ import UserForm from "@/components/admin/UserForm"
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
-export default async function EditUserPage({
-  params,
-}: {
-  params: { id: string }
-}) {
+// Fix the type definition for the page component
+interface PageProps {
+  params: {
+    id: string
+  }
+}
+
+export default async function EditUserPage({ params }: PageProps) {
   const session = await getServerSession(authOptions)
 
   if (!session?.user?.email || session.user.email !== "vikrantkrd@gmail.com") {
@@ -27,4 +30,3 @@ export default async function EditUserPage({
     </div>
   )
 }
-
