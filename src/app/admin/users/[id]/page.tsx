@@ -2,13 +2,12 @@ import { Suspense } from "react"
 import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
-import UserForm from "@/components/admin/UserForm"
+import UserDetail from "@/components/admin/UserDetail"
 
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
-// Remove the custom PageProps interface and use the correct type annotation
-export default async function EditUserPage({
+export default async function UserDetailPage({
   params,
 }: {
   params: { id: string }
@@ -21,9 +20,9 @@ export default async function EditUserPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Edit User</h1>
+      <h1 className="text-2xl font-bold">User Details</h1>
       <Suspense fallback={<div>Loading...</div>}>
-        <UserForm id={params.id} />
+        <UserDetail id={params.id} />
       </Suspense>
     </div>
   )
