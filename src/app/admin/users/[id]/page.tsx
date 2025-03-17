@@ -1,3 +1,4 @@
+// app/admin/users/[id]/page.tsx
 import { Suspense } from "react"
 import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
