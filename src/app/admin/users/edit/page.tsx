@@ -7,10 +7,11 @@ import UserForm from "@/components/admin/UserForm"
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
+// Use the correct type for Next.js page props
 export default async function EditUserPage({
   searchParams,
 }: {
-  searchParams: { id?: string }
+  searchParams: Record<string, string | string[] | undefined>
 }) {
   const session = await getServerSession(authOptions)
 
@@ -18,7 +19,9 @@ export default async function EditUserPage({
     redirect("/auth/login")
   }
 
-  const id = searchParams.id
+  // Handle both string and string[] cases
+  const idParam = searchParams.id
+  const id = typeof idParam === "string" ? idParam : Array.isArray(idParam) ? idParam[0] : undefined
 
   if (!id) {
     redirect("/admin/users")
