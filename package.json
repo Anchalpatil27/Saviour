@@ -44,9 +44,9 @@
     "mongoose": "^8.12.1",
     "next": "15.1.0",
     "next-auth": "^4.24.11",
-    "react": "^19.0.0",
+    "react": "^18.2.0",
     "react-day-picker": "^8.10.1",
-    "react-dom": "^19.0.0",
+    "react-dom": "^18.2.0",
     "react-globe.gl": "^2.28.3",
     "react-hook-form": "^7.54.2",
     "react-leaflet": "^5.0.0",
@@ -87,3 +87,4 @@
     "typescript": "^5"
   }
 }
+
