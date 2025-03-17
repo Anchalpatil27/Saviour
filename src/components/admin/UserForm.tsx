@@ -1,17 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Loader2 } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -23,223 +21,143 @@ const formSchema = z.object({
   city: z.string().min(2, {
     message: "City must be at least 2 characters.",
   }),
-  role: z.enum(["user", "admin"], {
-    required_error: "Please select a role.",
-  }),
-  password: z
-    .string()
-    .min(6, {
-      message: "Password must be at least 6 characters.",
-    })
-    .optional()
-    .or(z.literal("")),
+  role: z.string(),
 })
 
-type UserFormValues = z.infer<typeof formSchema>
-
 interface UserFormProps {
-  user?: {
-    id: string
-    name: string
-    email: string
-    city: string
-    role: string
-  }
-  defaultCity?: string
-  preserveCity?: string
+  id?: string
 }
 
-export function UserForm({ user, defaultCity, preserveCity }: UserFormProps) {
+export default function UserForm({ id }: UserFormProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [adminSetupRequired, setAdminSetupRequired] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<UserFormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: user
-      ? {
-          name: user.name,
-          email: user.email,
-          city: user.city,
-          role: user.role as "user" | "admin",
-          password: "", // Don't prefill password
-        }
-      : {
-          name: "",
-          email: "",
-          city: defaultCity || "",
-          role: "user",
-          password: "",
-        },
+    defaultValues: {
+      name: "",
+      email: "",
+      city: "",
+      role: "user",
+    },
   })
 
-  async function onSubmit(values: UserFormValues) {
-    setIsSubmitting(true)
-    setError(null)
-    setAdminSetupRequired(false)
-
-    try {
-      const url = user ? `/api/admin/users/${user.id}` : "/api/admin/users"
-
-      const method = user ? "PUT" : "POST"
-
-      // If editing a user and password is empty, remove it from the request
-      if (user && (!values.password || values.password.trim() === "")) {
-        const { password, ...valuesWithoutPassword } = values
-        values = valuesWithoutPassword as UserFormValues
+  useEffect(() => {
+    if (id) {
+      const fetchUser = async () => {
+        try {
+          const response = await fetch(`/api/admin/users/${id}`)
+          if (response.ok) {
+            const user = await response.json()
+            form.reset(user)
+          }
+        } catch (error) {
+          console.error("Error fetching user:", error)
+        }
       }
 
-      const response = await fetch(url, {
-        method,
+      fetchUser()
+    }
+  }, [id, form])
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/admin/users${id ? `/${id}` : ""}`, {
+        method: id ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(values),
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        if (data.adminSetupRequired) {
-          setAdminSetupRequired(true)
-          throw new Error("Admin profile not set up or city not found")
-        }
-        throw new Error(data.error || "Failed to save user")
+      if (response.ok) {
+        router.push("/admin/users")
+      } else {
+        console.error("Failed to save user")
       }
-
-      // Preserve city filter when redirecting back
-      const cityParam = preserveCity ? `?city=${preserveCity}` : ""
-
-      // Redirect back to users list
-      router.push(`/admin/users${cityParam}`)
-      router.refresh()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+    } catch (error) {
+      console.error("Error saving user:", error)
     } finally {
-      setIsSubmitting(false)
+      setIsLoading(false)
     }
   }
 
-  const handleCancel = () => {
-    // Preserve city filter when canceling
-    const cityParam = preserveCity ? `?city=${preserveCity}` : ""
-    router.push(`/admin/users${cityParam}`)
-  }
-
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>
-              {error}
-              {adminSetupRequired && (
-                <div className="mt-2">
-                  <Link href="/admin/setup-profile">
-                    <Button variant="outline" size="sm">
-                      Set Up Admin Profile
-                    </Button>
-                  </Link>
-                </div>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>{id ? "Edit User" : "Create User"}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="User name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="John Doe" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="john@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="city"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>City</FormLabel>
-              <FormControl>
-                <Input placeholder="New York" {...field} />
-              </FormControl>
-              <FormDescription>This will be automatically set to your admin city.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormDescription>Admin users have full access to all features.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{user ? "New Password" : "Password"}</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              {user && <FormDescription>Leave blank to keep the current password.</FormDescription>}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {user ? "Update User" : "Create User"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="user.email@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input placeholder="User city" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Saving..." : id ? "Update User" : "Create User"}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   )
 }
 

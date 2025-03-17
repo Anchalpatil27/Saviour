@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search } from "lucide-react"
 import Link from "next/link"
-import { UserTable } from "@/components/admin/UserTable"
+import UserTable from "@/components/admin/UserTable"
 import { CityFilter } from "@/components/admin/CityFilter"
 // Import the safe MongoDB functions instead of direct MongoDB
 import { findOne, find } from "@/lib/mongodb-safe"

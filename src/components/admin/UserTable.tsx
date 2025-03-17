@@ -4,19 +4,8 @@ import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Edit, MoreHorizontal, Trash2 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { Edit, MoreHorizontal, Trash2, Eye } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface User {
   id: string
@@ -32,18 +21,22 @@ interface UserTableProps {
   preserveCity?: string
 }
 
-export function UserTable({ users, preserveCity }: UserTableProps) {
+export default function UserTable({ users: initialUsers, preserveCity }: UserTableProps) {
   const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const [users, setUsers] = useState<User[]>(initialUsers)
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState<string | null>(null)
 
   const handleEdit = (userId: string) => {
     // Preserve city filter when navigating
-    const params = new URLSearchParams(searchParams)
     const cityParam = preserveCity ? `?city=${preserveCity}` : ""
-
     router.push(`/admin/users/edit/${userId}${cityParam}`)
+  }
+
+  const handleView = (userId: string) => {
+    // Preserve city filter when navigating
+    const cityParam = preserveCity ? `?city=${preserveCity}` : ""
+    router.push(`/admin/users/${userId}${cityParam}`)
   }
 
   const handleDelete = async () => {
@@ -55,8 +48,8 @@ export function UserTable({ users, preserveCity }: UserTableProps) {
       })
 
       if (response.ok) {
-        // Refresh the page to show updated data
-        router.refresh()
+        // Update local state
+        setUsers(users.filter((user) => user.id !== deleteUserId))
       } else {
         console.error("Failed to delete user")
       }
@@ -88,9 +81,7 @@ export function UserTable({ users, preserveCity }: UserTableProps) {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.city}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.role === "admin" ? "default" : "outline"}>{user.role}</Badge>
-                  </TableCell>
+                  <TableCell>{user.role}</TableCell>
                   <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -101,6 +92,10 @@ export function UserTable({ users, preserveCity }: UserTableProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleView(user.id)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleEdit(user.id)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
@@ -117,7 +112,7 @@ export function UserTable({ users, preserveCity }: UserTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  {preserveCity ? `No users found in ${preserveCity}.` : "No users found."}
+                  No users found.
                 </TableCell>
               </TableRow>
             )}
@@ -125,22 +120,22 @@ export function UserTable({ users, preserveCity }: UserTableProps) {
         </Table>
       </div>
 
-      <AlertDialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the user and all associated data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {deleteUserId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
+            <p className="mb-4">Are you sure you want to delete this user? This action cannot be undone.</p>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setDeleteUserId(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDelete}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

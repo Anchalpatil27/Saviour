@@ -4,19 +4,8 @@ import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Edit, MoreHorizontal, Trash2, Eye, CheckCircle, XCircle } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { Edit, MoreHorizontal, Trash2, Eye } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Switch } from "@/components/ui/switch"
 
 interface Resource {
@@ -36,10 +25,8 @@ interface ResourcesTableProps {
   preserveCity?: string
 }
 
-export function ResourcesTable({ resources: initialResources, preserveCity }: ResourcesTableProps) {
+export default function ResourcesTable({ resources: initialResources, preserveCity }: ResourcesTableProps) {
   const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
   const [resources, setResources] = useState<Resource[]>(initialResources)
   const [deleteResourceId, setDeleteResourceId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<string | null>(null)
@@ -75,10 +62,10 @@ export function ResourcesTable({ resources: initialResources, preserveCity }: Re
           ),
         )
       } else {
-        console.error("Failed to toggle resource availability")
+        console.error("Failed to toggle resource status")
       }
     } catch (error) {
-      console.error("Error toggling resource availability:", error)
+      console.error("Error toggling resource status:", error)
     } finally {
       setIsLoading(null)
     }
@@ -105,21 +92,6 @@ export function ResourcesTable({ resources: initialResources, preserveCity }: Re
     }
   }
 
-  const getResourceTypeColor = (type: string) => {
-    switch (type) {
-      case "shelter":
-        return "bg-blue-500 hover:bg-blue-600"
-      case "food":
-        return "bg-green-500 hover:bg-green-600"
-      case "medical":
-        return "bg-red-500 hover:bg-red-600"
-      case "evacuation":
-        return "bg-orange-500 hover:bg-orange-600"
-      default:
-        return "bg-gray-500 hover:bg-gray-600"
-    }
-  }
-
   return (
     <>
       <div className="rounded-md border">
@@ -128,7 +100,6 @@ export function ResourcesTable({ resources: initialResources, preserveCity }: Re
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>
-              <TableHead>Location</TableHead>
               <TableHead>City</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
@@ -140,10 +111,7 @@ export function ResourcesTable({ resources: initialResources, preserveCity }: Re
               resources.map((resource) => (
                 <TableRow key={resource.id}>
                   <TableCell className="font-medium">{resource.name}</TableCell>
-                  <TableCell>
-                    <Badge className={getResourceTypeColor(resource.type)}>{resource.type}</Badge>
-                  </TableCell>
-                  <TableCell>{resource.location}</TableCell>
+                  <TableCell>{resource.type}</TableCell>
                   <TableCell>{resource.city}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
@@ -176,12 +144,12 @@ export function ResourcesTable({ resources: initialResources, preserveCity }: Re
                         <DropdownMenuItem onClick={() => handleToggleAvailable(resource.id, resource.available)}>
                           {resource.available ? (
                             <>
-                              <XCircle className="mr-2 h-4 w-4" />
+                              <Trash2 className="mr-2 h-4 w-4" />
                               Mark Unavailable
                             </>
                           ) : (
                             <>
-                              <CheckCircle className="mr-2 h-4 w-4" />
+                              <Eye className="mr-2 h-4 w-4" />
                               Mark Available
                             </>
                           )}
@@ -197,8 +165,8 @@ export function ResourcesTable({ resources: initialResources, preserveCity }: Re
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  {preserveCity ? `No resources found in ${preserveCity}.` : "No resources found."}
+                <TableCell colSpan={6} className="h-24 text-center">
+                  No resources found.
                 </TableCell>
               </TableRow>
             )}
@@ -206,22 +174,22 @@ export function ResourcesTable({ resources: initialResources, preserveCity }: Re
         </Table>
       </div>
 
-      <AlertDialog open={!!deleteResourceId} onOpenChange={() => setDeleteResourceId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the resource.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {deleteResourceId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
+            <p className="mb-4">Are you sure you want to delete this resource? This action cannot be undone.</p>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setDeleteResourceId(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDelete}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
