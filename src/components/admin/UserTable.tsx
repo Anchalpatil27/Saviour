@@ -27,15 +27,15 @@ export default function UserTable({ users: initialUsers, preserveCity }: UserTab
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
 
   const handleEdit = (userId: string) => {
-    // Update to use the dynamic route
-    const cityParam = preserveCity ? `?city=${preserveCity}` : ""
-    router.push(`/admin/users/edit/${userId}${cityParam}`)
+    // Use the new user page with mode=edit
+    const cityParam = preserveCity ? `&city=${preserveCity}` : ""
+    router.push(`/admin/users/user?id=${userId}&mode=edit${cityParam}`)
   }
 
   const handleView = (userId: string) => {
-    // Update to use the dynamic route
-    const cityParam = preserveCity ? `?city=${preserveCity}` : ""
-    router.push(`/admin/users/${userId}${cityParam}`)
+    // Use the new user page with default mode (view)
+    const cityParam = preserveCity ? `&city=${preserveCity}` : ""
+    router.push(`/admin/users/user?id=${userId}${cityParam}`)
   }
 
   const handleDelete = async () => {
