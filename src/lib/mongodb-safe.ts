@@ -1,7 +1,18 @@
 // This file provides a safe way to use MongoDB in server components
 
 // Import types only to avoid bundling issues
-import type { Db, MongoClient, Document, Filter, FindOptions, UpdateFilter, OptionalUnlessRequiredId } from "mongodb"
+import type {
+  Db,
+  MongoClient,
+  Document,
+  Filter,
+  FindOptions,
+  UpdateFilter,
+  OptionalUnlessRequiredId,
+  InsertOneResult,
+  UpdateResult,
+  DeleteResult,
+} from "mongodb"
 
 // Define a type for the result of connectToMongoDB
 interface MongoDBConnection {
@@ -46,7 +57,7 @@ export async function countDocuments<T extends Document>(collection: string, que
 export async function insertOne<T extends Document>(
   collection: string,
   document: OptionalUnlessRequiredId<T>,
-): Promise<any> {
+): Promise<InsertOneResult<T>> {
   const { db } = await safeConnectToMongoDB()
   return db.collection<T>(collection).insertOne(document)
 }
@@ -55,12 +66,12 @@ export async function updateOne<T extends Document>(
   collection: string,
   filter: Filter<T>,
   update: UpdateFilter<T>,
-): Promise<any> {
+): Promise<UpdateResult> {
   const { db } = await safeConnectToMongoDB()
   return db.collection<T>(collection).updateOne(filter, update)
 }
 
-export async function deleteOne<T extends Document>(collection: string, filter: Filter<T>): Promise<any> {
+export async function deleteOne<T extends Document>(collection: string, filter: Filter<T>): Promise<DeleteResult> {
   const { db } = await safeConnectToMongoDB()
   return db.collection<T>(collection).deleteOne(filter)
 }

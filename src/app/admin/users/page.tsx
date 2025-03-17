@@ -11,14 +11,14 @@ import UserTable from "@/components/admin/UserTable"
 import { CityFilter } from "@/components/admin/CityFilter"
 // Import the safe MongoDB functions instead of direct MongoDB
 import { findOne, find } from "@/lib/mongodb-safe"
-import type { Document } from "mongodb"
+import type { Document, ObjectId } from "mongodb"
 
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
 // Define a User type that extends Document
 interface User extends Document {
-  _id: any
+  _id: ObjectId // Use ObjectId instead of any
   name?: string
   email?: string
   city?: string

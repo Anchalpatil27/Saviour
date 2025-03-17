@@ -10,14 +10,14 @@ import { AlertsTable } from "@/components/admin/AlertsTable"
 import { CityFilter } from "@/components/admin/CityFilter"
 // Import the safe MongoDB functions instead of direct MongoDB
 import { findOne, find } from "@/lib/mongodb-safe"
-import type { Document } from "mongodb"
+import type { Document, ObjectId } from "mongodb"
 
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
 // Define an Alert type that extends Document
 interface Alert extends Document {
-  _id: any
+  _id: ObjectId // Use ObjectId instead of any
   title?: string
   message?: string
   type?: string

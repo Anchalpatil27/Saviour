@@ -5,6 +5,7 @@
     "@typescript-eslint/no-unused-vars": "warn",
     "react/no-unescaped-entities": "off",
     "import/no-unresolved": "off"
-  }
+  },
+  "ignorePatterns": ["node_modules/", ".next/"]
 }
 
