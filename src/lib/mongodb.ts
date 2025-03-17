@@ -1,3 +1,4 @@
+// This file remains unchanged - it's your core MongoDB connection logic
 import mongoose from "mongoose"
 import { MongoClient, type Db } from "mongodb"
 

@@ -33,12 +33,12 @@ export default function LoginPage() {
       setError('Invalid email or password')
       setIsLoading(false)
     } else {
-      router.push('/dashboard')
+      router.push('/')
     }
   }
 
   const handleGoogleLogin = () => {
-    signIn('google', { callbackUrl: '/dashboard' })
+    signIn('google', { callbackUrl: '/' })
   }
 
   return (
