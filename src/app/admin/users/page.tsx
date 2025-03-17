@@ -1,28 +1,37 @@
 import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
-import { connectToMongoDB } from "@/lib/mongodb"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search } from "lucide-react"
 import Link from "next/link"
-import { UserTable } from "@/components/admin/UserTable"
+// Updated import to use default import
+import UserTable from "@/components/admin/UserTable"
 import { CityFilter } from "@/components/admin/CityFilter"
+// Import the safe MongoDB functions instead of direct MongoDB
+import { findOne, find } from "@/lib/mongodb-safe"
+import type { Document } from "mongodb"
 
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
+// Define a User type that extends Document
+interface User extends Document {
+  _id: any
+  name?: string
+  email?: string
+  city?: string
+  role?: string
+  createdAt?: Date
+}
+
 async function getUsers(adminCity: string) {
   try {
-    const { db } = await connectToMongoDB()
+    // Use the safe find function instead of direct MongoDB access with the correct type
+    const users = await find<User>("users", { city: adminCity }, { sort: { createdAt: -1 }, limit: 100 })
 
-    // Only fetch users for admin's city
-    const query = { city: adminCity }
-
-    const users = await db.collection("users").find(query).sort({ createdAt: -1 }).limit(100).toArray()
-
-    return users.map((user: any) => ({
+    return users.map((user) => ({
       id: user._id.toString(),
       name: user.name || "No Name",
       email: user.email || "No Email",
@@ -43,9 +52,8 @@ export default async function UsersPage() {
     redirect("/auth/login")
   }
 
-  // Get admin's city
-  const { db } = await connectToMongoDB()
-  const adminUser = await db.collection("users").findOne({ email: session.user.email }, { projection: { city: 1 } })
+  // Get admin's city using the safe findOne function
+  const adminUser = await findOne("users", { email: session.user.email }, { city: 1 })
 
   if (!adminUser?.city) {
     return (

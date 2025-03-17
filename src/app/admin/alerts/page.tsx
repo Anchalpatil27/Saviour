@@ -10,16 +10,30 @@ import { AlertsTable } from "@/components/admin/AlertsTable"
 import { CityFilter } from "@/components/admin/CityFilter"
 // Import the safe MongoDB functions instead of direct MongoDB
 import { findOne, find } from "@/lib/mongodb-safe"
+import type { Document } from "mongodb"
 
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
+// Define an Alert type that extends Document
+interface Alert extends Document {
+  _id: any
+  title?: string
+  message?: string
+  type?: string
+  severity?: string
+  city?: string
+  active?: boolean
+  createdAt?: Date
+  expiresAt?: Date | null
+}
+
 async function getAlerts(adminCity: string) {
   try {
-    // Use the safe find function instead of direct MongoDB access
-    const alerts = await find("alerts", { city: adminCity }, { sort: { createdAt: -1 }, limit: 100 })
+    // Use the safe find function instead of direct MongoDB access with the correct type
+    const alerts = await find<Alert>("alerts", { city: adminCity }, { sort: { createdAt: -1 }, limit: 100 })
 
-    return alerts.map((alert: any) => ({
+    return alerts.map((alert) => ({
       id: alert._id.toString(),
       title: alert.title || "Untitled Alert",
       message: alert.message || "",

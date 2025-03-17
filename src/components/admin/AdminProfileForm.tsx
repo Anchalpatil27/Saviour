@@ -22,6 +22,7 @@ const formSchema = z.object({
   }),
 })
 
+// Changed to default export to match import in setup-profile/page.tsx
 export default function AdminProfileForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)

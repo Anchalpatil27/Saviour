@@ -10,16 +10,30 @@ import ResourcesTable from "@/components/admin/ResourcesTable"
 import { CityFilter } from "@/components/admin/CityFilter"
 // Import the safe MongoDB functions instead of direct MongoDB
 import { findOne, find } from "@/lib/mongodb-safe"
+import type { Document } from "mongodb"
 
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
+// Define a Resource type that extends Document
+interface Resource extends Document {
+  _id: any
+  name?: string
+  type?: string
+  description?: string
+  location?: string
+  city?: string
+  contact?: string
+  available?: boolean
+  createdAt?: Date
+}
+
 async function getResources(adminCity: string) {
   try {
-    // Use the safe find function instead of direct MongoDB access
-    const resources = await find("resources", { city: adminCity }, { sort: { createdAt: -1 }, limit: 100 })
+    // Use the safe find function instead of direct MongoDB access with the correct type
+    const resources = await find<Resource>("resources", { city: adminCity }, { sort: { createdAt: -1 }, limit: 100 })
 
-    return resources.map((resource: any) => ({
+    return resources.map((resource) => ({
       id: resource._id.toString(),
       name: resource.name || "Untitled Resource",
       type: resource.type || "general",
@@ -58,7 +72,7 @@ export default async function ResourcesPage() {
                   ? "Your admin profile doesn't exist in the database yet."
                   : "Please set your city in your profile to manage resources."}
               </p>
-              <Link href={!adminUser ? "/admin/setup-profile" : "/admin/setup-profile"}>
+              <Link href="/admin/setup-profile">
                 <Button>{!adminUser ? "Set Up Admin Profile" : "Update Admin Profile"}</Button>
               </Link>
             </div>

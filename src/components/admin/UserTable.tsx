@@ -21,11 +21,13 @@ interface UserTableProps {
   preserveCity?: string
 }
 
+// Changed to default export to match import in users/page.tsx
 export default function UserTable({ users: initialUsers, preserveCity }: UserTableProps) {
   const router = useRouter()
   const [users, setUsers] = useState<User[]>(initialUsers)
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState<string | null>(null)
+  // Remove unused state variables
+  // const [isLoading, setIsLoading] = useState<string | null>(null)
 
   const handleEdit = (userId: string) => {
     // Preserve city filter when navigating
