@@ -37,8 +37,8 @@ export default function UserTable({ users: initialUsers, preserveCity }: UserTab
 
   const handleView = (userId: string) => {
     // Preserve city filter when navigating
-    const cityParam = preserveCity ? `?city=${preserveCity}` : ""
-    router.push(`/admin/users/${userId}${cityParam}`)
+    const cityParam = preserveCity ? `&city=${preserveCity}` : ""
+    router.push(`/admin/users/view?id=${userId}${cityParam}`)
   }
 
   const handleDelete = async () => {

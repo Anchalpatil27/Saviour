@@ -7,15 +7,22 @@ import UserDetail from "@/components/admin/UserDetail"
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
-// Try a different approach with no type annotations at all
-export default async function UserDetailPage(props: any) {
-  const { params } = props
-  const id = params.id
-
+// Create a non-dynamic route that gets the ID from the query parameters
+export default async function ViewUserPage({
+  searchParams,
+}: {
+  searchParams: { id: string }
+}) {
   const session = await getServerSession(authOptions)
 
   if (!session?.user?.email || session.user.email !== "vikrantkrd@gmail.com") {
     redirect("/auth/login")
+  }
+
+  const id = searchParams.id
+
+  if (!id) {
+    redirect("/admin/users")
   }
 
   return (
