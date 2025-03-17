@@ -21,22 +21,19 @@ interface UserTableProps {
   preserveCity?: string
 }
 
-// Changed to default export to match import in users/page.tsx
 export default function UserTable({ users: initialUsers, preserveCity }: UserTableProps) {
   const router = useRouter()
   const [users, setUsers] = useState<User[]>(initialUsers)
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
-  // Remove unused state variables
-  // const [isLoading, setIsLoading] = useState<string | null>(null)
 
   const handleEdit = (userId: string) => {
-    // Preserve city filter when navigating
-    const cityParam = preserveCity ? `?city=${preserveCity}` : ""
-    router.push(`/admin/users/edit/${userId}${cityParam}`)
+    // Update to use the new non-dynamic route
+    const cityParam = preserveCity ? `&city=${preserveCity}` : ""
+    router.push(`/admin/users/edit?id=${userId}${cityParam}`)
   }
 
   const handleView = (userId: string) => {
-    // Preserve city filter when navigating
+    // Update to use the new non-dynamic route
     const cityParam = preserveCity ? `&city=${preserveCity}` : ""
     router.push(`/admin/users/view?id=${userId}${cityParam}`)
   }

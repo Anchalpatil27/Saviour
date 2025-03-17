@@ -11,7 +11,7 @@ export const fetchCache = "force-no-store"
 export default async function ViewUserPage({
   searchParams,
 }: {
-  searchParams: { id: string }
+  searchParams: { id?: string }
 }) {
   const session = await getServerSession(authOptions)
 

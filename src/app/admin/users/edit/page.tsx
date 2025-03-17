@@ -7,11 +7,10 @@ import UserForm from "@/components/admin/UserForm"
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
-// Remove the custom PageProps interface and use the correct type annotation
 export default async function EditUserPage({
-  params,
+  searchParams,
 }: {
-  params: { id: string }
+  searchParams: { id?: string }
 }) {
   const session = await getServerSession(authOptions)
 
@@ -19,12 +18,19 @@ export default async function EditUserPage({
     redirect("/auth/login")
   }
 
+  const id = searchParams.id
+
+  if (!id) {
+    redirect("/admin/users")
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Edit User</h1>
       <Suspense fallback={<div>Loading...</div>}>
-        <UserForm id={params.id} />
+        <UserForm id={id} />
       </Suspense>
     </div>
   )
 }
+
