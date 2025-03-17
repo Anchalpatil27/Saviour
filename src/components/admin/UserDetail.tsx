@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useRouter } from "next/navigation"
+// Remove the unused router import
+// import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Edit } from "lucide-react"
 
@@ -23,7 +24,8 @@ interface User {
 }
 
 export default function UserDetail({ id }: UserDetailProps) {
-  const router = useRouter()
+  // Remove the unused router variable
+  // const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
