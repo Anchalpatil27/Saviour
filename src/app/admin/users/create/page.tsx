@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
-// Updated import to use default import
 import UserForm from "@/components/admin/UserForm"
 
 export const dynamic = "force-dynamic"
