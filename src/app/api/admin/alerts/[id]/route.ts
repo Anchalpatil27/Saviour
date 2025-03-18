@@ -4,11 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { connectToMongoDB } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
-interface Params {
-  id: string
-}
-
-export async function GET(request: Request, { params }: { params: Params }) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -41,7 +37,7 @@ export async function GET(request: Request, { params }: { params: Params }) {
   }
 }
 
-export async function PUT(request: Request, { params }: { params: Params }) {
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -99,7 +95,7 @@ export async function PUT(request: Request, { params }: { params: Params }) {
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Params }) {
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
 
