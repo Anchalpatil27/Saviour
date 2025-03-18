@@ -8,9 +8,9 @@ import UserForm from "@/components/admin/UserForm"
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
-// Define the correct type for PageProps
+// Correctly define searchParams type
 type PageProps = {
-  searchParams: { id: string; mode?: string }
+  searchParams: Record<string, string | undefined>
 }
 
 export default async function UserPage({ searchParams }: PageProps) {
