@@ -8,9 +8,8 @@ import UserForm from "@/components/admin/UserForm"
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
-// Correctly define searchParams type
 type PageProps = {
-  searchParams: Record<string, string | undefined>
+  searchParams: URLSearchParams
 }
 
 export default async function UserPage({ searchParams }: PageProps) {
@@ -20,7 +19,9 @@ export default async function UserPage({ searchParams }: PageProps) {
     redirect("/auth/login")
   }
 
-  const { id, mode } = searchParams
+  // Parse searchParams correctly
+  const id = searchParams.get("id")
+  const mode = searchParams.get("mode")
 
   if (!id) {
     redirect("/admin/users")
