@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
 type PageProps = {
-  searchParams: URLSearchParams
+  searchParams: Record<string, string | undefined>
 }
 
 export default async function UserPage({ searchParams }: PageProps) {
@@ -19,9 +19,9 @@ export default async function UserPage({ searchParams }: PageProps) {
     redirect("/auth/login")
   }
 
-  // Parse searchParams correctly
-  const id = searchParams.get("id")
-  const mode = searchParams.get("mode")
+  // Cast searchParams to bypass type check issue
+  const id = (searchParams as Record<string, string>).id
+  const mode = (searchParams as Record<string, string>).mode
 
   if (!id) {
     redirect("/admin/users")
