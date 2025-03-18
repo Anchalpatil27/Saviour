@@ -4,13 +4,9 @@ import { authOptions } from "@/lib/auth"
 import { connectToMongoDB } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
-type Params = {
-  id: string
-}
-
 export async function GET(
   request: Request,
-  context: { params: Params } // ✅ Type ko explicitly define karo
+  context: { params: Record<string, string> } // ✅ FIXED Type Issue
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -19,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = context.params
+    const { id } = context.params as { id: string } // ✅ Typecasting to string
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
