@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { connectToMongoDB } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, context: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -13,7 +13,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = context.params
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
@@ -39,7 +39,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, context: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -48,7 +48,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = context.params
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
@@ -102,7 +102,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, context: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -111,7 +111,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = context.params
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
@@ -142,4 +142,3 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     return NextResponse.json({ error: "Failed to delete alert" }, { status: 500 })
   }
 }
-
