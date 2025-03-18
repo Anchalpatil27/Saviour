@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
 type PageProps = {
-  searchParams: Record<string, string | undefined>
+  searchParams: Promise<Record<string, string | undefined>>
 }
 
 export default async function UserPage({ searchParams }: PageProps) {
@@ -19,9 +19,8 @@ export default async function UserPage({ searchParams }: PageProps) {
     redirect("/auth/login")
   }
 
-  // Cast searchParams to bypass type check issue
-  const id = (searchParams as Record<string, string>).id
-  const mode = (searchParams as Record<string, string>).mode
+  // Await the promise to resolve the params correctly
+  const { id, mode } = await searchParams
 
   if (!id) {
     redirect("/admin/users")
