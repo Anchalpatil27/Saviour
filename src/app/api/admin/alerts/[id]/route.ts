@@ -10,7 +10,7 @@ type Context = {
   }
 }
 
-export async function GET(
+export async function PATCH(
   request: Request,
   { params }: Context // ✅ FIXED Type Issue
 ) {
@@ -36,14 +36,18 @@ export async function GET(
       return NextResponse.json({ error: "Alert not found" }, { status: 404 })
     }
 
+    // ✅ Toggle logic yahan karo
+    const updatedAlert = await db.collection("alerts").updateOne(
+      { _id: new ObjectId(params.id) },
+      { $set: { active: !alert.active } }
+    )
+
     return NextResponse.json({
-      alert: {
-        ...alert,
-        id: alert._id.toString(),
-      },
+      success: true,
+      message: `Alert toggled successfully`,
     })
   } catch (error) {
-    console.error("Error fetching alert:", error)
-    return NextResponse.json({ error: "Failed to fetch alert" }, { status: 500 })
+    console.error("Error toggling alert:", error)
+    return NextResponse.json({ error: "Failed to toggle alert" }, { status: 500 })
   }
 }
