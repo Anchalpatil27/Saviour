@@ -4,11 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { connectToMongoDB } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
-interface Params {
-  id: string
-}
-
-export async function GET(request: NextRequest, context: { params: Params }) {
+export async function GET(request: NextRequest, context: { params: Record<string, string> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -16,7 +12,7 @@ export async function GET(request: NextRequest, context: { params: Params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = context.params
+    const id = context.params.id
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
@@ -42,7 +38,7 @@ export async function GET(request: NextRequest, context: { params: Params }) {
   }
 }
 
-export async function PUT(request: NextRequest, context: { params: Params }) {
+export async function PUT(request: NextRequest, context: { params: Record<string, string> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -50,7 +46,7 @@ export async function PUT(request: NextRequest, context: { params: Params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = context.params
+    const id = context.params.id
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
@@ -100,7 +96,7 @@ export async function PUT(request: NextRequest, context: { params: Params }) {
   }
 }
 
-export async function DELETE(request: NextRequest, context: { params: Params }) {
+export async function DELETE(request: NextRequest, context: { params: Record<string, string> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -108,7 +104,7 @@ export async function DELETE(request: NextRequest, context: { params: Params }) 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = context.params
+    const id = context.params.id
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
