@@ -8,11 +8,12 @@ import UserForm from "@/components/admin/UserForm"
 export const dynamic = "force-dynamic"
 export const fetchCache = "force-no-store"
 
-export default async function UserPage({
-  searchParams,
-}: {
+// Define the correct type for PageProps
+type PageProps = {
   searchParams: { id: string; mode?: string }
-}) {
+}
+
+export default async function UserPage({ searchParams }: PageProps) {
   const session = await getServerSession(authOptions)
 
   if (!session?.user?.email || session.user.email !== "vikrantkrd@gmail.com") {
@@ -30,8 +31,9 @@ export default async function UserPage({
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{isEdit ? "Edit User" : "User Details"}</h1>
-      <Suspense fallback={<div>Loading...</div>}>{isEdit ? <UserForm id={id} /> : <UserDetail id={id} />}</Suspense>
+      <Suspense fallback={<div>Loading...</div>}>
+        {isEdit ? <UserForm id={id} /> : <UserDetail id={id} />}
+      </Suspense>
     </div>
   )
 }
-
