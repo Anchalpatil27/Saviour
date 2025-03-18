@@ -1,10 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { connectToMongoDB } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
-export async function GET(request: NextRequest, context: { params: Record<string, string> }) {
+interface Params {
+  id: string
+}
+
+export async function GET(request: Request, { params }: { params: Params }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -12,14 +16,13 @@ export async function GET(request: NextRequest, context: { params: Record<string
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const id = context.params.id
+    const { id } = params
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
     }
 
     const { db } = await connectToMongoDB()
-
     const alert = await db.collection("alerts").findOne({ _id: new ObjectId(id) })
 
     if (!alert) {
@@ -38,7 +41,7 @@ export async function GET(request: NextRequest, context: { params: Record<string
   }
 }
 
-export async function PUT(request: NextRequest, context: { params: Record<string, string> }) {
+export async function PUT(request: Request, { params }: { params: Params }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -46,7 +49,7 @@ export async function PUT(request: NextRequest, context: { params: Record<string
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const id = context.params.id
+    const { id } = params
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
@@ -79,7 +82,7 @@ export async function PUT(request: NextRequest, context: { params: Record<string
           updatedAt: new Date(),
           updatedBy: session.user.email,
         },
-      }
+      },
     )
 
     await db.collection("activity_logs").insertOne({
@@ -96,7 +99,7 @@ export async function PUT(request: NextRequest, context: { params: Record<string
   }
 }
 
-export async function DELETE(request: NextRequest, context: { params: Record<string, string> }) {
+export async function DELETE(request: Request, { params }: { params: Params }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -104,7 +107,7 @@ export async function DELETE(request: NextRequest, context: { params: Record<str
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const id = context.params.id
+    const { id } = params
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
