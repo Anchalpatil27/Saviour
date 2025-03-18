@@ -1,26 +1,18 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { connectToMongoDB } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
-// Define params type correctly
-type RouteParams = {
-  params: {
-    id: string
-  }
-}
-
-export async function GET(request: Request, context: RouteParams) {
+export async function GET(request: NextRequest, { params }: { params: Record<string, string> }) {
   try {
     const session = await getServerSession(authOptions)
 
-    // Check if user is admin
     if (!session?.user?.email || session.user.email !== "vikrantkrd@gmail.com") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = context.params
+    const { id } = params
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
@@ -46,7 +38,7 @@ export async function GET(request: Request, context: RouteParams) {
   }
 }
 
-export async function PUT(request: Request, context: RouteParams) {
+export async function PUT(request: NextRequest, { params }: { params: Record<string, string> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -54,7 +46,7 @@ export async function PUT(request: Request, context: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = context.params
+    const { id } = params
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
@@ -104,7 +96,7 @@ export async function PUT(request: Request, context: RouteParams) {
   }
 }
 
-export async function DELETE(request: Request, context: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: { params: Record<string, string> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -112,7 +104,7 @@ export async function DELETE(request: Request, context: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = context.params
+    const { id } = params
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
