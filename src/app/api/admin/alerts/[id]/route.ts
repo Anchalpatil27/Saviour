@@ -3,10 +3,11 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { connectToMongoDB } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
+import { ParsedUrlQuery } from "querystring" // ✅ FIXED Type Error
 
 export async function GET(
   request: Request,
-  context: { params: Record<string, string> } // ✅ FIXED Type Issue
+  context: { params: ParsedUrlQuery }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,7 +16,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = context.params as { id: string } // ✅ Typecasting to string
+    // ✅ Typecast params using ParsedUrlQuery
+    const { id } = context.params as { id: string }
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid alert ID" }, { status: 400 })
