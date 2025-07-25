@@ -1,51 +1,61 @@
-import { getServerSession } from "next-auth/next"
-import { redirect } from "next/navigation"
-import { authOptions } from "@/lib/auth"
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Phone, Ambulance, Truck, Shield } from "lucide-react"
 import { EmergencyContactForm } from "@/components/emergency-contact-form"
 import { EmergencyContactList } from "@/components/emergency-contact-list"
-import { connectToMongoDB } from "@/lib/mongodb"
-import type { EmergencyContactDTO } from "@/lib/models/emergency-contact"
+import { auth, db } from "@/lib/firebase"
+import { collection, query, where, onSnapshot } from "firebase/firestore"
 
-// Move the server function logic directly into the page component
-async function getContacts(userId: string): Promise<EmergencyContactDTO[]> {
-  try {
-    const { db } = await connectToMongoDB()
-
-    // Get emergency contacts for the user
-    const contacts = await db.collection("emergencyContacts").find({ userId }).sort({ createdAt: -1 }).toArray()
-
-    // Map to DTO
-    return contacts.map((contact) => ({
-      id: contact._id.toString(),
-      name: contact.name,
-      relation: contact.relation,
-      phoneNumber: contact.phoneNumber,
-    }))
-  } catch (error) {
-    console.error("Error fetching emergency contacts:", error)
-    return []
-  }
+type EmergencyContactDTO = {
+  id: string
+  name: string
+  relation: string
+  phoneNumber: string
+  userId?: string
 }
 
-export default async function EmergencyPage() {
-  const session = await getServerSession(authOptions)
+export default function EmergencyPage() {
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [userContacts, setUserContacts] = useState<EmergencyContactDTO[]>([])
+  const [loading, setLoading] = useState(true)
 
-  if (!session || !session.user || !session.user.email) {
-    redirect("/auth/login")
-  }
+  // Auth restriction
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((firebaseUser) => {
+      if (!firebaseUser) router.push("/auth/login")
+      else setUser(firebaseUser)
+    })
+    return () => unsub()
+  }, [router])
 
-  // This ensures TypeScript knows that session.user and session.user.email are defined
-
-  // Get user ID
-  const { db } = await connectToMongoDB()
-  const user = await db.collection("users").findOne({ email: session.user.email })
-  const userId = user ? user._id.toString() : ""
-
-  // Fetch user's emergency contacts directly
-  const userContacts = await getContacts(userId)
+  // Real-time fetch user's emergency contacts from Firestore
+  useEffect(() => {
+    if (!user) return
+    setLoading(true)
+    const contactsRef = collection(db, "emergency_contacts")
+    const q = query(contactsRef, where("userId", "==", user.uid))
+    const unsub = onSnapshot(q, (snapshot) => {
+      const contacts: EmergencyContactDTO[] = []
+      snapshot.forEach((doc) => {
+        const data = doc.data()
+        contacts.push({
+          id: doc.id,
+          name: data.name,
+          relation: data.relation,
+          phoneNumber: data.phoneNumber,
+          userId: data.userId,
+        })
+      })
+      setUserContacts(contacts)
+      setLoading(false)
+    })
+    return () => unsub()
+  }, [user])
 
   const emergencyContacts = [
     { name: "Emergency Services", number: "112", icon: Phone },
@@ -80,11 +90,14 @@ export default async function EmergencyPage() {
           <CardTitle className="text-lg">Personal Emergency Contacts</CardTitle>
         </CardHeader>
         <CardContent>
-          <EmergencyContactList contacts={userContacts} />
-          <EmergencyContactForm userId={userId} />
+          {loading ? (
+            <div className="text-center py-4">Loading contacts...</div>
+          ) : (
+            <EmergencyContactList contacts={userContacts} userId={user?.uid} />
+          )}
+          {user && <EmergencyContactForm userId={user.uid} />}
         </CardContent>
       </Card>
     </div>
   )
 }
-

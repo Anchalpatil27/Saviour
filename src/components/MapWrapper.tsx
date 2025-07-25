@@ -1,35 +1,63 @@
-"use client"
+import { useRef, useEffect } from "react"
+import { GoogleMap, useJsApiLoader } from "@react-google-maps/api"
 
-import { GoogleMap, Marker } from "@react-google-maps/api"
-import { useMemo } from "react"
+const containerStyle = {
+  width: "100%",
+  height: "500px",
+}
 
-const Map = ({ center, markers, onMarkerClick }: {
-  center: { lat: number; lng: number }
-  markers: Array<{ lat: number; lng: number; id: string }>
-  onMarkerClick: (id: string) => void
-}) => {
-  const mapOptions = useMemo(() => ({
-    disableDefaultUI: true,
-    clickableIcons: false,
-    mapId: process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID
-  }), [])
+export default function MapWrapper({ center, markers, onMarkerClick }) {
+  const mapRef = useRef<google.maps.Map | null>(null)
+  const markerRefs = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries: ["marker"], // Required for AdvancedMarkerElement
+  })
+
+  // Add AdvancedMarkerElements when map and API are loaded
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current || !window.google?.maps?.marker?.AdvancedMarkerElement) return
+
+    // Remove old markers
+    markerRefs.current.forEach(marker => marker.map = null)
+    markerRefs.current = []
+
+    // Add new markers
+    markers.forEach(markerData => {
+      const marker = new window.google.maps.marker.AdvancedMarkerElement({
+        map: mapRef.current!,
+        position: { lat: markerData.lat, lng: markerData.lng },
+        title: markerData.label,
+      })
+      marker.addListener("click", () => onMarkerClick(markerData.id))
+      markerRefs.current.push(marker)
+    })
+
+    // Cleanup on unmount
+    return () => {
+      markerRefs.current.forEach(marker => marker.map = null)
+      markerRefs.current = []
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, markers])
+
+  if (loadError) return <div>Error loading maps</div>
+  if (!isLoaded) return <div>Loading...</div>
 
   return (
     <GoogleMap
-      options={mapOptions}
-      zoom={13}
+      mapContainerStyle={containerStyle}
       center={center}
-      mapContainerStyle={{ width: '100%', height: '100%' }}
-    >
-      {markers.map((marker) => (
-        <Marker
-          key={marker.id}
-          position={{ lat: marker.lat, lng: marker.lng }}
-          onClick={() => onMarkerClick(marker.id)}
-        />
-      ))}
-    </GoogleMap>
+      zoom={12}
+      onLoad={map => {
+        mapRef.current = map
+      }}
+      options={{
+        clickableIcons: false,
+        mapTypeControl: false,
+        streetViewControl: false,
+      }}
+    />
   )
 }
-
-export default Map

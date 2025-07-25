@@ -4,48 +4,52 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertTriangle, CheckCircle, RefreshCw } from "lucide-react"
-
-interface KeyInfo {
-  keyExists: boolean
-  keyLength: number
-  keyFirstFour: string
-  keyLastFour: string
-  hasWhitespace: boolean
-  hasQuotes: boolean
-  success: boolean
-}
-
-interface TestResult {
-  success: boolean
-  message?: string
-  endpoint?: string
-  responsePreview?: string
-  error?: string
-}
+import { AlertTriangle, CheckCircle, RefreshCw, Globe } from "lucide-react"
 
 export default function ApiTestPage() {
   const [loading, setLoading] = useState(false)
-  const [keyInfo, setKeyInfo] = useState<KeyInfo | null>(null)
-  const [testResult, setTestResult] = useState<TestResult | null>(null)
+  const [clientResult, setClientResult] = useState<any>(null)
+  const [serverResult, setServerResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const checkApiKey = async () => {
+  // Client-side test
+  const testClientKey = async () => {
     setLoading(true)
     setError(null)
-
+    setClientResult(null)
     try {
-      // First check the key info
-      const keyResponse = await fetch("/api/debug/gemini-key")
-      const keyData = (await keyResponse.json()) as KeyInfo
-      setKeyInfo(keyData)
-
-      // Then test the API
-      const testResponse = await fetch("/api/test-gemini")
-      const testData = (await testResponse.json()) as TestResult
-      setTestResult(testData)
+      const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY
+      if (!key) throw new Error("NEXT_PUBLIC_GEMINI_API_KEY not found in environment variables.")
+      const prompt = "Say hello from Gemini API (client test)"
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        }
+      )
+      const data = await response.json()
+      setClientResult(data)
     } catch (err) {
-      console.error("API test failed:", err)
+      setError(err instanceof Error ? err.message : "Unknown error occurred")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Server-side test (calls your Next.js API route)
+  const testServerKey = async () => {
+    setLoading(true)
+    setError(null)
+    setServerResult(null)
+    try {
+      const response = await fetch("/api/test-gemini")
+      const data = await response.json()
+      setServerResult(data)
+    } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error occurred")
     } finally {
       setLoading(false)
@@ -54,18 +58,30 @@ export default function ApiTestPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col md:flex-row gap-4 mb-4">
         <h2 className="text-2xl font-bold">Gemini API Key Test</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={checkApiKey}
-          disabled={loading}
-          className="flex items-center gap-1"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Testing..." : "Test API Key"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={testClientKey}
+            disabled={loading}
+            className="flex items-center gap-1"
+          >
+            <Globe className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Testing..." : "Test Client Key"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={testServerKey}
+            disabled={loading}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Testing..." : "Test Server Key"}
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -78,37 +94,30 @@ export default function ApiTestPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>API Key Information</CardTitle>
+            <CardTitle>Client-Side Test Result</CardTitle>
           </CardHeader>
           <CardContent>
-            {keyInfo ? (
+            {clientResult ? (
               <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Key Exists:</span>
-                  <span>{keyInfo.keyExists ? "✅ Yes" : "❌ No"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Key Length:</span>
-                  <span>{keyInfo.keyLength} characters</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Key Preview:</span>
-                  <span>
-                    {keyInfo.keyFirstFour}...{keyInfo.keyLastFour}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Has Whitespace:</span>
-                  <span>{keyInfo.hasWhitespace ? "⚠️ Yes" : "✅ No"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Has Quotes:</span>
-                  <span>{keyInfo.hasQuotes ? "⚠️ Yes" : "✅ No"}</span>
+                <Alert variant={clientResult?.candidates ? "default" : "destructive"} className="bg-opacity-20">
+                  {clientResult?.candidates ? (
+                    <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                  )}
+                  <AlertDescription>
+                    {clientResult?.candidates
+                      ? "Client-side Gemini API key is working!"
+                      : `Client-side test failed: ${clientResult?.error?.message || JSON.stringify(clientResult)}`}
+                  </AlertDescription>
+                </Alert>
+                <div className="bg-muted p-3 rounded-md text-sm overflow-auto max-h-40">
+                  <pre>{JSON.stringify(clientResult, null, 2)}</pre>
                 </div>
               </div>
             ) : (
               <div className="text-center py-6 text-muted-foreground">
-                Click &quot;Test API Key&quot; to check your Gemini API key.
+                Click &quot;Test Client Key&quot; to test Gemini API from browser.
               </div>
             )}
           </CardContent>
@@ -116,29 +125,30 @@ export default function ApiTestPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>API Test Result</CardTitle>
+            <CardTitle>Server-Side Test Result</CardTitle>
           </CardHeader>
           <CardContent>
-            {testResult ? (
-              <div className="space-y-4">
-                <Alert variant={testResult.success ? "default" : "destructive"} className="bg-opacity-20">
-                  {testResult.success ? (
+            {serverResult ? (
+              <div className="space-y-2">
+                <Alert variant={serverResult?.success ? "default" : "destructive"} className="bg-opacity-20">
+                  {serverResult?.success ? (
                     <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
                   ) : (
                     <AlertTriangle className="h-4 w-4 mr-2" />
                   )}
                   <AlertDescription>
-                    {testResult.success ? "API key is working correctly!" : "API key test failed."}
+                    {serverResult?.success
+                      ? "Server-side Gemini API key is working!"
+                      : `Server-side test failed: ${serverResult?.error || JSON.stringify(serverResult)}`}
                   </AlertDescription>
                 </Alert>
-
                 <div className="bg-muted p-3 rounded-md text-sm overflow-auto max-h-40">
-                  <pre>{JSON.stringify(testResult, null, 2)}</pre>
+                  <pre>{JSON.stringify(serverResult, null, 2)}</pre>
                 </div>
               </div>
             ) : (
               <div className="text-center py-6 text-muted-foreground">
-                No test results yet. Click &quot;Test API Key&quot; to test the Gemini API.
+                Click &quot;Test Server Key&quot; to test Gemini API from backend.
               </div>
             )}
           </CardContent>
@@ -155,43 +165,37 @@ export default function ApiTestPage() {
               <h3 className="font-medium mb-2">Common API Key Issues</h3>
               <ul className="list-disc pl-5 space-y-2">
                 <li>
-                  <strong>Whitespace or quotes:</strong> Make sure your API key doesn&apos;t have any extra spaces,
-                  tabs, or quotes around it.
+                  <strong>MakerSuite keys:</strong> Only work from browser, not server-side.
                 </li>
                 <li>
-                  <strong>Incorrect key:</strong> Verify you&apos;re using the correct API key from Google AI Studio.
+                  <strong>Google Cloud keys:</strong> Needed for server-side requests.
                 </li>
                 <li>
-                  <strong>Key not active:</strong> Ensure your API key is active and hasn&apos;t been revoked.
+                  <strong>Origin restrictions:</strong> MakerSuite keys may not work from localhost or custom domains.
                 </li>
                 <li>
-                  <strong>API access:</strong> Make sure your Google Cloud project has the Gemini API enabled.
+                  <strong>Whitespace or quotes:</strong> Make sure your API key doesn't have any extra spaces, tabs, or quotes.
                 </li>
                 <li>
                   <strong>Billing:</strong> Check if your Google Cloud billing is set up correctly.
                 </li>
               </ul>
             </div>
-
             <div>
               <h3 className="font-medium mb-2">How to Fix</h3>
               <ol className="list-decimal pl-5 space-y-2">
                 <li>
-                  Go to{" "}
-                  <a
-                    href="https://makersuite.google.com/app/apikey"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Google AI Studio
-                  </a>{" "}
-                  and create a new API key
+                  For <strong>client-side</strong>: Use MakerSuite key and call Gemini API directly from browser.
                 </li>
-                <li>Copy the key directly without adding any spaces or quotes</li>
-                <li>In your Vercel project, go to Settings → Environment Variables</li>
-                <li>Update the GEMINI_API_KEY value with the new key</li>
-                <li>Redeploy your application</li>
+                <li>
+                  For <strong>server-side</strong>: Use Google Cloud key, enable Gemini API, and set up billing.
+                </li>
+                <li>
+                  If testing locally, try deploying to Vercel/Netlify for production domain.
+                </li>
+                <li>
+                  Always copy the key directly, no spaces or quotes.
+                </li>
               </ol>
             </div>
           </div>
@@ -200,4 +204,3 @@ export default function ApiTestPage() {
     </div>
   )
 }
-

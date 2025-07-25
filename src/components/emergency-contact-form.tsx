@@ -1,14 +1,13 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus } from "lucide-react"
-import { addEmergencyContact } from "@/lib/actions/emergency-contact-actions"
 import { useToast } from "@/hooks/use-toast"
+import { db } from "@/lib/firebase"
+import { collection, addDoc, Timestamp } from "firebase/firestore"
 
 interface EmergencyContactFormProps {
   userId: string
@@ -33,34 +32,26 @@ export function EmergencyContactForm({ userId }: EmergencyContactFormProps) {
     setIsLoading(true)
 
     try {
-      const result = await addEmergencyContact({
+      await addDoc(collection(db, "emergency_contacts"), {
         ...formData,
-        userId, // Pass the userId directly
+        userId,
+        createdAt: Timestamp.now(),
       })
 
-      if (result.success) {
-        toast({
-          title: "Contact added",
-          description: "Emergency contact has been added successfully.",
-        })
-        // Reset form
-        setFormData({
-          name: "",
-          relation: "",
-          phoneNumber: "",
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to add contact",
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Contact added",
+        description: "Emergency contact has been added successfully.",
+      })
+      setFormData({
+        name: "",
+        relation: "",
+        phoneNumber: "",
+      })
     } catch (error) {
       console.error("Form submission error:", error)
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "Failed to add contact",
         variant: "destructive",
       })
     } finally {
@@ -112,4 +103,3 @@ export function EmergencyContactForm({ userId }: EmergencyContactFormProps) {
     </form>
   )
 }
-
