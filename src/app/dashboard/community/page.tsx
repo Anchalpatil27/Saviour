@@ -1,31 +1,53 @@
-import { Suspense } from "react"
-import { CommunityChat } from "@/components/community-chat"
-import { redirect } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { MapPin } from "lucide-react"
+"use client"
 
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { connectToMongoDB } from "@/lib/mongodb"
+import React, { useEffect, useState, Suspense } from "react";
+import { CommunityChat } from "@/components/community-chat";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { MapPin } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
-export default async function CommunityPage() {
-  const session = await getServerSession(authOptions)
+export default function CommunityPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!session?.user?.email) {
-    redirect("/auth/login")
+  // Auth restriction
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (!firebaseUser) {
+        router.push("/auth/login");
+      } else {
+        // Fetch user profile from Firestore
+        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+        if (userDoc.exists()) {
+          setUser({ ...userDoc.data(), id: firebaseUser.uid, email: firebaseUser.email, name: firebaseUser.displayName });
+        } else {
+          // If user doc doesn't exist, redirect to login or profile setup
+          router.push("/auth/login");
+        }
+      }
+      setLoading(false);
+    });
+    return () => unsub();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="h-[400px] w-full flex items-center justify-center bg-card rounded-xl border">
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-3"></div>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
-  // Get user from database to get the city
-  const { db } = await connectToMongoDB()
-  const user = await db.collection("users").findOne({ email: session.user.email })
+  if (!user) return null;
 
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  // Generate userId from _id or use existing id
-  const userId = user._id ? user._id.toString() : user.id
+  const userId = user.id;
 
   return (
     <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6">
@@ -68,6 +90,5 @@ export default async function CommunityPage() {
         </Suspense>
       )}
     </div>
-  )
+  );
 }
-
