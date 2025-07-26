@@ -77,7 +77,7 @@ export default function Header() {
                   size="sm"
                   className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
                 >
-                  <Link href={user?.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
+                  <Link href={user?.email === "vikrantkrd@gmail.com" ? "/dashboard" : "/dashboard"}>
                     Dashboard
                   </Link>
                 </Button>
