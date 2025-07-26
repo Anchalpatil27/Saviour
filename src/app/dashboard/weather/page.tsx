@@ -10,7 +10,7 @@ import { auth } from "@/lib/firebase"
 import Image from "next/image"
 import { useIsClient } from "usehooks-ts"
 
-const OPEN_WEATHER_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY
+const OPEN_WEATHER_API_KEY = process.env.OPENWEATHERMAP_API_KEY
 
 type WeatherData = {
   current: any

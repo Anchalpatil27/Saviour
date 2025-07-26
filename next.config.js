@@ -13,7 +13,7 @@ const nextConfig = {
   reactStrictMode: true,
   env: {
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-    NEXT_PUBLIC_OPENWEATHERMAP_API_KEY: process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY,
+    OPENWEATHERMAP_API_KEY: process.env.OPENWEATHERMAP_API_KEY,
   },
   experimental: {
     optimizePackageImports: ['lucide-react'],

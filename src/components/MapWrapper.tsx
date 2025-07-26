@@ -11,7 +11,7 @@ export default function MapWrapper({ center, markers, onMarkerClick }) {
   const markerRefs = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
 
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY!,
     libraries: ["marker"], // Required for AdvancedMarkerElement
   })
 
