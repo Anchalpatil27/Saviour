@@ -1,37 +1,31 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
-import { useSession, signOut } from "next-auth/react"
+import { auth } from "@/lib/firebase"
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { data: session } = useSession()
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser)
+    })
+    return () => unsub()
+  }, [])
 
   const handleSignOut = async () => {
     try {
-      const response = await signOut({
-        redirect: false,
-        callbackUrl: "/",
-      })
-
-      if (response?.url) {
-        window.location.href = response.url
-      } else {
-        console.error("Sign out successful, but no redirect URL provided")
-        window.location.href = "/"
-      }
+      await auth.signOut()
+      setUser(null)
+      window.location.href = "/"
     } catch (error) {
       console.error("Error during sign out:", error)
-      // Log the error response for debugging
-      if (error instanceof Error) {
-        console.error("Error message:", error.message)
-      }
-      // Fallback: redirect to home page
-      window.location.href = "/"
+      window.location.href = "/auth/login"
     }
   }
 
@@ -55,7 +49,7 @@ export default function Header() {
             <Link href="/donate" className="hover:text-blue-600 transition-colors hover:scale-105 transform">
               Donate
             </Link>
-            {!session && (
+            {!user && (
               <>
                 <Button
                   asChild
@@ -75,7 +69,7 @@ export default function Header() {
                 </Button>
               </>
             )}
-            {session && (
+            {user && (
               <>
                 <Button
                   asChild
@@ -83,7 +77,7 @@ export default function Header() {
                   size="sm"
                   className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
                 >
-                  <Link href={session?.user?.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
+                  <Link href={user?.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
                     Dashboard
                   </Link>
                 </Button>
@@ -93,7 +87,7 @@ export default function Header() {
                   size="sm"
                   className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
                 >
-                  Sign Out
+                  Log Out
                 </Button>
               </>
             )}
@@ -118,7 +112,7 @@ export default function Header() {
             <Link href="/donate" className="hover:text-blue-600 transition-colors">
               Donate
             </Link>
-            {!session && (
+            {!user && (
               <>
                 <Button
                   asChild
@@ -138,7 +132,7 @@ export default function Header() {
                 </Button>
               </>
             )}
-            {session && (
+            {user && (
               <>
                 <Button
                   asChild
@@ -146,7 +140,7 @@ export default function Header() {
                   size="sm"
                   className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
                 >
-                  <Link href={session?.user?.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
+                  <Link href={user?.email === "vikrantkrd@gmail.com" ? "/admin/dashboard" : "/dashboard"}>
                     Dashboard
                   </Link>
                 </Button>
@@ -156,7 +150,7 @@ export default function Header() {
                   size="sm"
                   className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
                 >
-                  Sign Out
+                  Log Out
                 </Button>
               </>
             )}
@@ -166,4 +160,3 @@ export default function Header() {
     </header>
   )
 }
-

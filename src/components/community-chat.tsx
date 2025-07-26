@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Users, Image, Video, File, Mic, X, FileText } from "lucide-react";
+import { Send, Users, Image, Video, FileText, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,10 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Progress } from "@/components/ui/progress";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, addDoc, Timestamp } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 interface MessageInterface {
   id: string;
@@ -23,9 +21,10 @@ interface MessageInterface {
   userImage?: string;
   city: string;
   createdAt: Date | string;
-  mediaUrl?: string;
+  mediaBase64?: string;
   mediaType?: 'image' | 'video' | 'document' | 'audio';
   fileName?: string;
+  fileMime?: string;
 }
 
 interface CommunityProps {
@@ -40,9 +39,8 @@ export function CommunityChat({ userId, userCity, userName = "User", userImage }
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeUsers, setActiveUsers] = useState<number>(0);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isMediaMenuOpen, setIsMediaMenuOpen] = useState(false);
-  const [preview, setPreview] = useState<{ url: string; type: string; file: File } | null>(null);
+  const [preview, setPreview] = useState<{ url: string; type: string; file: File; base64: string } | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,9 +64,10 @@ export function CommunityChat({ userId, userCity, userName = "User", userImage }
           userName: data.userName,
           userImage: data.userImage,
           city: userCity,
-          mediaUrl: data.mediaUrl,
+          mediaBase64: data.mediaBase64,
           mediaType: data.mediaType,
           fileName: data.fileName,
+          fileMime: data.fileMime,
           createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
         };
       });
@@ -86,6 +85,16 @@ export function CommunityChat({ userId, userCity, userName = "User", userImage }
     }
   }, [messages]);
 
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!newMessage.trim() && !preview) || loading || !userCity) return;
@@ -93,44 +102,27 @@ export function CommunityChat({ userId, userCity, userName = "User", userImage }
 
     try {
       const messagesRef = collection(db, "chats_users", userCity, "messages");
-      
+
       if (preview) {
-        // Upload media file
-        const storageRef = ref(storage, `community_chats/${userCity}/${Date.now()}_${preview.file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, preview.file);
+        const fileType = preview.file.type.split('/')[0];
+        const mediaType = fileType === 'application' ? 'document' : fileType as 'image' | 'video' | 'audio';
 
-        uploadTask.on('state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(progress);
-          },
-          (error) => {
-            console.error("Upload failed:", error);
-            setLoading(false);
-          },
-          async () => {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            const fileType = preview.file.type.split('/')[0];
-            const mediaType = fileType === 'application' ? 'document' : fileType as 'image' | 'video' | 'audio';
-            
-            await addDoc(messagesRef, {
-              content: newMessage || `Sent ${preview.file.name}`,
-              userId,
-              userName,
-              userImage: userImage || "",
-              city: userCity,
-              mediaUrl: downloadURL,
-              mediaType,
-              fileName: preview.file.name,
-              createdAt: Timestamp.now(),
-            });
+        await addDoc(messagesRef, {
+          content: newMessage || `Sent ${preview.file.name}`,
+          userId,
+          userName,
+          userImage: userImage || "",
+          city: userCity,
+          mediaBase64: preview.base64,
+          mediaType,
+          fileName: preview.file.name,
+          fileMime: preview.file.type,
+          createdAt: Timestamp.now(),
+        });
 
-            setPreview(null);
-            setNewMessage("");
-            setUploadProgress(0);
-            setLoading(false);
-          }
-        );
+        setPreview(null);
+        setNewMessage("");
+        setLoading(false);
       } else {
         // Text message
         await addDoc(messagesRef, {
@@ -155,17 +147,19 @@ export function CommunityChat({ userId, userCity, userName = "User", userImage }
     if (!file || !userCity) return;
 
     setIsMediaMenuOpen(false);
-    
+
+    const base64 = await fileToBase64(file);
+
     // Create preview
     if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
-      const url = URL.createObjectURL(file);
-      setPreview({ url, type: file.type, file });
+      setPreview({ url: base64, type: file.type, file, base64 });
     } else {
       // For documents
       setPreview({
         url: '',
         type: file.type,
         file,
+        base64,
       });
     }
   };
@@ -271,25 +265,26 @@ export function CommunityChat({ userId, userCity, userName = "User", userImage }
                           </Tooltip>
                         </TooltipProvider>
                         <div>
-                          {message.mediaUrl ? (
+                          {message.mediaBase64 ? (
                             <div className={`rounded-2xl overflow-hidden ${
                               message.userId === userId ? "border border-primary" : "border"
                             }`}>
                               {message.mediaType === 'image' ? (
                                 <img 
-                                  src={message.mediaUrl} 
+                                  src={message.mediaBase64} 
                                   alt={message.content} 
                                   className="max-w-[250px] max-h-[250px] object-cover"
                                 />
                               ) : message.mediaType === 'video' ? (
                                 <video 
-                                  src={message.mediaUrl} 
+                                  src={message.mediaBase64} 
                                   controls 
                                   className="max-w-[250px] max-h-[250px]"
                                 />
                               ) : (
                                 <a 
-                                  href={message.mediaUrl} 
+                                  href={message.mediaBase64} 
+                                  download={message.fileName}
                                   target="_blank" 
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-2 px-3 py-2 text-xs"
@@ -327,13 +322,13 @@ export function CommunityChat({ userId, userCity, userName = "User", userImage }
           <div className="relative">
             {preview.type.startsWith('image') ? (
               <img 
-                src={preview.url} 
+                src={preview.base64} 
                 alt="Preview" 
                 className="max-h-[100px] rounded-md object-contain"
               />
             ) : preview.type.startsWith('video') ? (
               <video 
-                src={preview.url} 
+                src={preview.base64} 
                 controls 
                 className="max-h-[100px] rounded-md"
               />
@@ -352,12 +347,6 @@ export function CommunityChat({ userId, userCity, userName = "User", userImage }
               <X className="h-3 w-3" />
             </Button>
           </div>
-        </div>
-      )}
-
-      {uploadProgress > 0 && uploadProgress < 100 && (
-        <div className="px-2 pb-2">
-          <Progress value={uploadProgress} className="h-2" />
         </div>
       )}
 

@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Progress } from "@/components/ui/progress"
-import { Bell, AlertTriangle, CheckCircle, Users, BarChart, TrendingUp, Map, Book, Users as Community, Plus, Heart, ChevronRight } from 'lucide-react'
+import { Bell, AlertTriangle, CheckCircle, TrendingUp, Map, Book, Users as Community, Plus, Heart, ChevronRight, X, BarChart } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { auth } from "@/lib/firebase"
 import { db } from "@/lib/firebase"
@@ -14,6 +13,9 @@ import axios from "axios"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
+import FirstAidTutorial from "@/components/Safety/First-Aid-Tutorial"
+import FloodSafety from "@/components/Safety/Flood-Safety"
+import EarthquakeSafety from "@/components/Safety/Earthquake-Safety"
 
 export default function Dashboard() {
   const [profile, setProfile] = useState<any>(null)
@@ -23,6 +25,7 @@ export default function Dashboard() {
   const [helpProvided, setHelpProvided] = useState(0)
   const [loading, setLoading] = useState(true)
   const [notificationsCount, setNotificationsCount] = useState(3)
+  const [openPopup, setOpenPopup] = useState<string | null>(null)
   const router = useRouter()
 
   // Fetch user profile from Firestore
@@ -43,7 +46,6 @@ export default function Dashboard() {
   // Fetch SOS stats
   const fetchSosStats = async (uid: string) => {
     try {
-      // SOS Raised: where userId == uid
       const sosRaisedQuery = query(
         collection(db, "sos_requests"),
         where("userId", "==", uid)
@@ -51,7 +53,6 @@ export default function Dashboard() {
       const sosRaisedSnap = await getDocs(sosRaisedQuery)
       setSosRaised(sosRaisedSnap.size)
 
-      // Help Provided: where acceptedBy == uid and status == "accepted" or "responded"
       const helpProvidedQuery = query(
         collection(db, "sos_requests"),
         where("acceptedBy", "==", uid),
@@ -104,11 +105,9 @@ export default function Dashboard() {
       const user = auth.currentUser
       if (!user) return
 
-      // Get location
       const coords = await fetchLocation()
       setLocation(coords)
 
-      // Save location to Firestore under 'weather' collection (document id = user.uid)
       if (coords) {
         const weatherRef = doc(db, "weather", user.uid)
         await setDoc(weatherRef, {
@@ -119,7 +118,6 @@ export default function Dashboard() {
         await fetchWeather(coords)
       }
 
-      // Fetch user profile and stats
       await fetchUserProfile(user.uid)
       await fetchSosStats(user.uid)
       setLoading(false)
@@ -134,10 +132,8 @@ export default function Dashboard() {
           <Skeleton className="h-8 w-[200px]" />
           <Skeleton className="h-10 w-10 rounded-full" />
         </div>
-        
         <div className="grid gap-6">
           <Skeleton className="h-[180px] w-full rounded-xl" />
-          
           <div className="space-y-2">
             <Skeleton className="h-6 w-[150px]" />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -146,7 +142,6 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          
           <div className="space-y-2">
             <Skeleton className="h-6 w-[150px]" />
             <div className="flex gap-4">
@@ -154,7 +149,6 @@ export default function Dashboard() {
               <Skeleton className="h-[120px] w-full rounded-lg" />
             </div>
           </div>
-          
           <div className="space-y-2">
             <div className="flex justify-between">
               <Skeleton className="h-6 w-[150px]" />
@@ -171,22 +165,52 @@ export default function Dashboard() {
     )
   }
 
-  // Quick actions
   const quickActions = [
     { title: "Create SOS", icon: <Plus className="w-6 h-6" />, color: "bg-red-500 hover:bg-red-600", route: "/dashboard/sos" },
     { title: "View Map", icon: <Map className="w-6 h-6" />, color: "bg-blue-500 hover:bg-blue-600", route: "/dashboard/navigation" },
     { title: "Resources", icon: <Book className="w-6 h-6" />, color: "bg-green-500 hover:bg-green-600", route: "/dashboard/resources" },
-    { title: "Community", icon: <Community className="w-6 h-6" />, color: "bg-yellow-500 hover:bg-yellow-600", route: "/dashboard/chat" },
+    { title: "Community Chat", icon: <Community className="w-6 h-6" />, color: "bg-yellow-500 hover:bg-yellow-600", route: "/dashboard/community" },
   ]
 
-  // Safety updates
   const safetyUpdates = [
-    { title: "First Aid Tutorial", icon: <CheckCircle className="h-5 w-5 text-green-500" />, description: "Learn essential first aid steps" },
-    { title: "Flood Safety", icon: <AlertTriangle className="h-5 w-5 text-blue-500" />, description: "Flood safety rules & video" },
-    { title: "Earthquake Safety", icon: <TrendingUp className="h-5 w-5 text-yellow-500" />, description: "Earthquake safety rules & video" },
+    { 
+      title: "First Aid Tutorial", 
+      icon: <CheckCircle className="h-5 w-5 text-green-500" />, 
+      description: "Learn essential first aid steps",
+      key: "firstAid",
+      component: (
+        <FirstAidTutorial
+          open={openPopup === "firstAid"}
+          onClose={() => setOpenPopup(null)}
+        />
+      )
+    },
+    { 
+      title: "Flood Safety", 
+      icon: <AlertTriangle className="h-5 w-5 text-blue-500" />, 
+      description: "Flood safety rules & video",
+      key: "floodSafety",
+      component: (
+        <FloodSafety
+          open={openPopup === "floodSafety"}
+          onClose={() => setOpenPopup(null)}
+        />
+      )
+    },
+    { 
+      title: "Earthquake Safety", 
+      icon: <TrendingUp className="h-5 w-5 text-yellow-500" />, 
+      description: "Earthquake safety rules & video",
+      key: "earthquakeSafety",
+      component: (
+        <EarthquakeSafety
+          open={openPopup === "earthquakeSafety"}
+          onClose={() => setOpenPopup(null)}
+        />
+      )
+    },
   ]
 
-  // Greeting
   const greeting = () => {
     const hour = new Date().getHours()
     if (hour < 12) return "Good morning"
@@ -204,7 +228,6 @@ export default function Dashboard() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h1>
         </div>
-        
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
@@ -214,7 +237,6 @@ export default function Dashboard() {
               </Badge>
             )}
           </Button>
-          
           <Avatar>
             <AvatarImage src={profile?.photoUrl} />
             <AvatarFallback>
@@ -274,6 +296,7 @@ export default function Dashboard() {
             <Button 
               key={index} 
               className={`${action.color} text-white h-24 flex flex-col items-center justify-center gap-2 rounded-xl transition-all hover:shadow-md`}
+              onClick={() => router.push(action.route)}
             >
               <div className="p-2 bg-white/20 rounded-full">
                 {action.icon}
@@ -302,7 +325,6 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-          
           <Card className="bg-gradient-to-r from-green-500 to-emerald-400 text-white border-0">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -323,15 +345,15 @@ export default function Dashboard() {
       {/* Safety Updates */}
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Safety Updates</h2>
-          <Button variant="ghost" className="text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
-            View All <ChevronRight className="h-4 w-4" />
-          </Button>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Safety Guide</h2>
         </div>
-        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {safetyUpdates.map((update, index) => (
-            <Card key={index} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={index} 
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => setOpenPopup(update.key)}
+            >
               <CardContent className="p-6">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full">
@@ -342,9 +364,6 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       {update.description}
                     </p>
-                    <Button variant="link" size="sm" className="px-0 mt-2">
-                      Learn more
-                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -352,6 +371,42 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      {/* Popup for Safety Rules */}
+      {openPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg max-w-lg w-full p-6 relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2"
+              onClick={() => setOpenPopup(null)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+            <div>
+              {openPopup === "firstAid" && (
+                <FirstAidTutorial
+                  open={true}
+                  onClose={() => setOpenPopup(null)}
+                />
+              )}
+              {openPopup === "floodSafety" && (
+                <FloodSafety
+                  open={true}
+                  onClose={() => setOpenPopup(null)}
+                />
+              )}
+              {openPopup === "earthquakeSafety" && (
+                <EarthquakeSafety
+                  open={true}
+                  onClose={() => setOpenPopup(null)}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

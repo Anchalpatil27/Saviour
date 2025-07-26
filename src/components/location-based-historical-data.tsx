@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button"
 export function LocationBasedHistoricalData() {
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true) // Renamed from 'loading' to 'isLoading'
+  const [isLoading, setIsLoading] = useState(true)
 
   const getLocation = () => {
-    setIsLoading(true) // Updated to use the renamed state variable
+    setIsLoading(true)
     setError(null)
 
     if (typeof window !== "undefined" && "geolocation" in navigator) {
@@ -20,18 +20,22 @@ export function LocationBasedHistoricalData() {
         (position) => {
           const { latitude, longitude } = position.coords
           setCoordinates({ lat: latitude, lng: longitude })
-          setIsLoading(false) // Updated to use the renamed state variable
+          setIsLoading(false)
         },
         (error) => {
           console.error("Error getting location:", error)
-          setError(`Unable to access your location: ${error.message}. Please check your device settings.`)
-          setIsLoading(false) // Updated to use the renamed state variable
+          const message =
+            error && typeof error.message === "string" && error.message.length > 0
+              ? error.message
+              : "Unknown error or permission denied."
+          setError(`Unable to access your location: ${message} Please check your device settings and allow location access.`)
+          setIsLoading(false)
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
       )
     } else {
       setError("Geolocation is not supported by your browser.")
-      setIsLoading(false) // Updated to use the renamed state variable
+      setIsLoading(false)
     }
   }
 
@@ -51,11 +55,9 @@ export function LocationBasedHistoricalData() {
     )
   }
 
-  // Use isLoading in a conditional if needed
   if (isLoading) {
     return <div>Loading location data...</div>
   }
 
   return <HistoricalDataDisplay coordinates={coordinates} />
 }
-
