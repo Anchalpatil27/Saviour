@@ -31,7 +31,7 @@ export function LocationBasedHistoricalData() {
           setError(`Unable to access your location: ${message} Please check your device settings and allow location access.`)
           setIsLoading(false)
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+                { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
       )
     } else {
       setError("Geolocation is not supported by your browser.")
