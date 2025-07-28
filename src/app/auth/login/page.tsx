@@ -1,71 +1,95 @@
 "use client"
 
-// filepath: c:\Users\ayush\Desktop\Saviour2.O\src\app\auth\login\page.tsx
-
 import { useState } from "react"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { auth, db } from "@/lib/firebase"
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth"
-import { doc, getDoc, setDoc } from "firebase/firestore"
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
+import { doc, getDoc } from "firebase/firestore"
+import { Mail, Loader2, User, Users, Shield } from "lucide-react"
+
+const USER_ROLES = ["user", "admin"] as const
+type UserRole = (typeof USER_ROLES)[number]
 
 export default function LoginPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [selectedRole, setSelectedRole] = useState<UserRole>("user")
+  const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
 
-  const ensureUserDoc = async (user: any) => {
-    const userRef = doc(db, "users", user.uid)
-    const userSnap = await getDoc(userRef)
-    if (!userSnap.exists()) {
-      // If logging in with Google and user doc doesn't exist, create it
-      await setDoc(userRef, {
-        uid: user.uid,
-        email: user.email,
-        fullName: user.displayName || "",
-        city: "",
-        photoURL: user.photoURL || "",
-        role: "user",
-        provider: user.providerData?.[0]?.providerId || "unknown",
-      })
-    }
+  // Helper to get collection name by role
+  const getCollectionByRole = (role: UserRole) => {
+    if (role === "user") return "users"
+    return "admins"
   }
 
-  const handleGoogleLogin = async () => {
-    setIsLoading(true)
-    setError(null)
-    const provider = new GoogleAuthProvider()
-    try {
-      const result = await signInWithPopup(auth, provider)
-      await ensureUserDoc(result.user)
-      router.push(callbackUrl)
-    } catch (error: any) {
-      setError(error?.message || "Google login failed. Please allow popups.")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  // Email/password login
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     setError(null)
+    if (!email.trim() || !password.trim()) {
+      setError("Please enter email and password.")
+      return
+    }
+    setLoading(true)
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password)
-      await ensureUserDoc(result.user)
-      router.push(callbackUrl)
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const collectionName = getCollectionByRole(selectedRole)
+      const userDoc = await getDoc(doc(db, collectionName, userCredential.user.uid))
+      if (!userDoc.exists()) {
+        setError(`No ${selectedRole} account found for this email.`)
+        setLoading(false)
+        return
+      }
+      // Route by role
+      if (selectedRole === "admin") {
+        router.replace("/admin-dashboard")
+      } else {
+        router.replace("/dashboard")
+      }
     } catch (error: any) {
-      setError(error?.message || "Email login failed")
+      let message = "Login failed. Please try again."
+      if (error.code === "auth/invalid-email") message = "Invalid email address."
+      if (error.code === "auth/user-disabled") message = "This account has been disabled."
+      if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password")
+        message = "Invalid email or password."
+      if (error.code === "auth/too-many-requests")
+        message = "Too many attempts. Please try again later."
+      setError(message)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
+    }
+  }
+
+  // Google login
+  const handleGoogleLogin = async () => {
+    setError(null)
+    setGoogleLoading(true)
+    try {
+      const provider = new GoogleAuthProvider()
+      const result = await signInWithPopup(auth, provider)
+      const collectionName = getCollectionByRole(selectedRole)
+      const userDoc = await getDoc(doc(db, collectionName, result.user.uid))
+      if (!userDoc.exists()) {
+        setError(`No ${selectedRole} account found for this email.`)
+        setGoogleLoading(false)
+        return
+      }
+      // Route by role
+      if (selectedRole === "admin") {
+        router.replace("/admin/dashboard")
+      } else {
+        router.replace("/dashboard")
+      }
+    } catch (error: any) {
+      setError("Google login failed. Please allow popups.")
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -76,36 +100,46 @@ export default function LoginPage() {
           <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
         </CardHeader>
         <CardContent className="mt-6">
-          <form className="space-y-4" onSubmit={handleEmailLogin}>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                disabled={isLoading}
-              />
+          <form className="space-y-4" onSubmit={handleLogin}>
+            <div className="flex justify-center gap-2 mb-2">
+              {USER_ROLES.map((role) => (
+                <Button
+                  key={role}
+                  type="button"
+                  variant={selectedRole === role ? "default" : "outline"}
+                  className="flex items-center gap-1"
+                  onClick={() => setSelectedRole(role)}
+                >
+                  {role === "user" ? <User className="w-4 h-4" /> : role === "admin" ? <Users className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                </Button>
+              ))}
             </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              disabled={loading}
+            />
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              disabled={loading}
+            />
             {error && (
               <div className="text-red-500 text-sm text-center">{error}</div>
             )}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : `Login as ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}`}
             </Button>
           </form>
           <div className="relative w-full my-6">
@@ -116,16 +150,21 @@ export default function LoginPage() {
               <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
             </div>
           </div>
-          <Button variant="outline" onClick={handleGoogleLogin} disabled={isLoading} className="w-full">
-            {isLoading ? "Logging in..." : "Google"}
+          <Button
+            variant="outline"
+            onClick={handleGoogleLogin}
+            disabled={googleLoading}
+            className="w-full"
+          >
+            {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Google"}
           </Button>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-center text-sm">
             Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="text-blue-500 hover:underline">
+            <a href="/auth/signup" className="text-blue-500 hover:underline">
               Sign up
-            </Link>
+            </a>
           </div>
         </CardFooter>
       </Card>
