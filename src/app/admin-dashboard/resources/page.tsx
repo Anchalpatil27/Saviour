@@ -142,27 +142,29 @@ export default function AdminResourcesPage() {
   const [processing, setProcessing] = useState(false)
   const [snackbar, setSnackbar] = useState<{ show: boolean; message: string; type?: string }>({ show: false, message: "" })
 
-  // Optimized: Fetch admin city once, cache in localStorage, use for resource creation
+  // Fetch admin city from Firestore admins collection by UID, cache in localStorage for instant future loads
   useEffect(() => {
-    if (!currentUser || !currentUser.uid) return
-    const localKey = `adminCity_${currentUser.uid}`
-    const cachedCity = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null
+    if (!currentUser || !currentUser.uid) return;
+    const localKey = `adminCity_${currentUser.uid}`;
+    const cachedCity = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null;
     if (cachedCity) {
-      setAdminCity(cachedCity)
-      return
+      setAdminCity(cachedCity);
     }
-    
-    if (typeof window !== 'undefined') {
-      setTimeout(() => {
-        let city = window.prompt('Enter your city (for admin resource management):')
-        if (!city || !city.trim()) city = 'DefaultCity'
-        setAdminCity(city)
-        localStorage.setItem(localKey, city)
-      }, 100)
-    } else {
-      setAdminCity('DefaultCity')
-    }
-  }, [currentUser])
+    // Always fetch from Firestore in background to update cache if changed
+    const fetchCity = async () => {
+      try {
+        const adminDoc = await getDoc(doc(db, "admins", currentUser.uid));
+        const city = adminDoc.exists() && adminDoc.data().city ? adminDoc.data().city : "DefaultCity";
+        setAdminCity(city);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(localKey, city);
+        }
+      } catch {
+        setAdminCity("DefaultCity");
+      }
+    };
+    fetchCity();
+  }, [currentUser]);
 
   // Fetch resources and requests
   useEffect(() => {
