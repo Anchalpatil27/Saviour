@@ -61,8 +61,8 @@ export async function POST(request: Request) {
       from: `"${SMTP_FROM_NAME}" <${SMTP_FROM_EMAIL}>`,
       to: CONTACT_RECIPIENT_EMAIL,
       replyTo: email,
-      subject: `New message from ${name} via Portfolio Contact Form`,
-      text: `You have received a new message from your portfolio contact form:\n\nName: ${name}\nEmail: ${email}\nMessage:\n${message}`,
+      subject: `New message from ${name} via Saviour Contact Form`,
+      text: `You have received a new message from your Saviour contact form:\n\nName: ${name}\nEmail: ${email}\nMessage:\n${message}`,
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
           <h2 style="color: #333;">New Contact Form Submission</h2>
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
           <p><strong>Message:</strong></p>
           <p style="padding: 10px; border-left: 3px solid #eee;">${message.replace(/\n/g, "<br>")}</p>
           <hr>
-          <p style="font-size: 0.9em; color: #777;">This message was sent from your portfolio contact form.</p>
+          <p style="font-size: 0.9em; color: #777;">This message was sent from your Saviour contact form.</p>
         </div>
       `,
     }
