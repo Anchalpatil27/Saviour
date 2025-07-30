@@ -136,7 +136,7 @@ export async function fetchHistoricalData(
     console.log(`Starting historical data fetch for coordinates: ${latitude}, ${longitude}`)
 
     // Check if API key exists
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
       console.log("No Gemini API key found, using sample data")
       return {
         success: true,
@@ -146,9 +146,9 @@ export async function fetchHistoricalData(
 
     // For debugging - log a safe version of the key
     const keyPreview =
-      process.env.GEMINI_API_KEY.substring(0, 4) +
+      process.env.NEXT_PUBLIC_GEMINI_API_KEY.substring(0, 4) +
       "..." +
-      process.env.GEMINI_API_KEY.substring(process.env.GEMINI_API_KEY.length - 4)
+      process.env.NEXT_PUBLIC_GEMINI_API_KEY.substring(process.env.NEXT_PUBLIC_GEMINI_API_KEY.length - 4)
     console.log(`Using Gemini API key starting with: ${keyPreview}`)
 
     // More detailed prompt with emphasis on accuracy and relevance

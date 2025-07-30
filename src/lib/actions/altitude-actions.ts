@@ -23,7 +23,7 @@ export async function findMidAltitudePlaces(
   try {
     console.log(`Starting mid-altitude places search for coordinates: ${latitude}, ${longitude}`)
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
       console.log("No Gemini API key found, using sample data")
       return {
         success: true,
@@ -79,7 +79,7 @@ export async function findMidAltitudePlaces(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": process.env.GEMINI_API_KEY,
+          "x-goog-api-key": process.env.NEXT_PUBLIC_GEMINI_API_KEY,
         },
         body: JSON.stringify({
           contents: [

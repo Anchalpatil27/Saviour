@@ -68,7 +68,7 @@ export default function AdminDashboard() {
 
   // Fetch weather using OpenWeatherMap API
   const fetchWeather = async (coords: { latitude: number; longitude: number }) => {
-    const apiKey = "120c1d742105474a5f77dbf48559c643"
+    const apiKey = "process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY"
     try {
       const weatherResp = await axios.get(
         `https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&units=metric&appid=${apiKey}`

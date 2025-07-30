@@ -18,7 +18,7 @@ export default function ApiTestPage() {
     setError(null)
     setClientResult(null)
     try {
-      const key = process.env.GEMINI_API_KEY
+      const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY
       if (!key) throw new Error("GEMINI_API_KEY not found in environment variables.")
       const prompt = "Say hello from Gemini API (client test)"
       const response = await fetch(
