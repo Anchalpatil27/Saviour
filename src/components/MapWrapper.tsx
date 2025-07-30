@@ -1,5 +1,5 @@
-import { useRef, useEffect } from "react"
-import { GoogleMap, useJsApiLoader } from "@react-google-maps/api"
+import { useRef, useState } from "react"
+import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from "@react-google-maps/api"
 
 const containerStyle = {
   width: "100%",
@@ -7,40 +7,13 @@ const containerStyle = {
 }
 
 export default function MapWrapper({ center, markers, onMarkerClick }) {
-  const mapRef = useRef<google.maps.Map | null>(null)
-  const markerRefs = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
+  const mapRef = useRef(null)
+  const [activeMarker, setActiveMarker] = useState(null)
 
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY!,
-    libraries: ["marker"], // Required for AdvancedMarkerElement
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    libraries: [],
   })
-
-  // Add AdvancedMarkerElements when map and API are loaded
-  useEffect(() => {
-    if (!isLoaded || !mapRef.current || !window.google?.maps?.marker?.AdvancedMarkerElement) return
-
-    // Remove old markers
-    markerRefs.current.forEach(marker => marker.map = null)
-    markerRefs.current = []
-
-    // Add new markers
-    markers.forEach(markerData => {
-      const marker = new window.google.maps.marker.AdvancedMarkerElement({
-        map: mapRef.current!,
-        position: { lat: markerData.lat, lng: markerData.lng },
-        title: markerData.label,
-      })
-      marker.addListener("click", () => onMarkerClick(markerData.id))
-      markerRefs.current.push(marker)
-    })
-
-    // Cleanup on unmount
-    return () => {
-      markerRefs.current.forEach(marker => marker.map = null)
-      markerRefs.current = []
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, markers])
 
   if (loadError) return <div>Error loading maps</div>
   if (!isLoaded) return <div>Loading...</div>
@@ -53,11 +26,38 @@ export default function MapWrapper({ center, markers, onMarkerClick }) {
       onLoad={map => {
         mapRef.current = map
       }}
+      onClick={() => setActiveMarker(null)}
       options={{
         clickableIcons: false,
         mapTypeControl: false,
         streetViewControl: false,
       }}
-    />
+    >
+      {markers.map(marker => (
+        <Marker
+          key={marker.id}
+          position={{ lat: marker.lat, lng: marker.lng }}
+          title={marker.label}
+          icon={marker.iconUrl || undefined}
+          label={marker.urgency ? { text: marker.urgency, color: marker.urgency === 'High' ? '#ef4444' : marker.urgency === 'Medium' ? '#fbbf24' : '#3b82f6', fontWeight: 'bold', fontSize: '14px' } : undefined}
+          onClick={() => {
+            setActiveMarker(marker.id === activeMarker ? null : marker.id)
+            if (onMarkerClick) onMarkerClick(marker.id)
+          }}
+        >
+          {activeMarker === marker.id && (
+            <InfoWindow onCloseClick={() => setActiveMarker(null)}>
+              <div style={{ minWidth: 180 }}>
+                <div style={{ fontWeight: 'bold', marginBottom: 4 }}>{marker.label}</div>
+                {marker.urgency && (
+                  <div style={{ color: marker.urgency === 'High' ? '#ef4444' : marker.urgency === 'Medium' ? '#fbbf24' : '#3b82f6', fontWeight: 'bold' }}>{marker.urgency}</div>
+                )}
+                {marker.info && <div style={{ marginTop: 4 }}>{marker.info}</div>}
+              </div>
+            </InfoWindow>
+          )}
+        </Marker>
+      ))}
+    </GoogleMap>
   )
 }

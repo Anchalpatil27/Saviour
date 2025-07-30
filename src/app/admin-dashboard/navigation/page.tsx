@@ -157,7 +157,9 @@ export default function NavigationPage() {
       })
       setSelectedSOS(null)
     } catch (e) {
-      // ignore
+      console.error("Error responding to SOS:", e)
+      alert("Failed to respond to SOS. Please try again later.")
+      setSelectedSOS(null)
     }
   }
 
