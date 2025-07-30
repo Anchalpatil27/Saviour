@@ -1,73 +1,235 @@
-import { Metadata } from 'next'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Mail, Phone, MapPin } from 'lucide-react'
+"use client"
 
-export const metadata: Metadata = {
-  title: 'Contact Us - SAVIOUR',
-  description: 'Get in touch with SAVIOUR for any inquiries or support',
-}
+import type React from "react"
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { EnvelopeIcon, PhoneIcon, MapPinIcon, CheckCircleIcon } from "@heroicons/react/24/outline"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/ui/use-toast"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-export default function ContactPage() {
+// Form validation schema
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  message: z.string().min(10, {
+    message: "Message must be at least 10 characters.",
+  }),
+})
+
+const ContactPage: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(false)
+  const [showSuccessAlertCard, setShowSuccessAlertCard] = useState(false)
+  const { toast } = useToast()
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      message: "",
+    },
+  })
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (showSuccessAlertCard) {
+      timer = setTimeout(() => {
+        setShowSuccessAlertCard(false)
+      }, 5000) // Hide after 5 seconds
+    }
+    return () => clearTimeout(timer)
+  }, [showSuccessAlertCard])
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true)
+    setShowSuccessAlertCard(false) // Reset alert visibility on new submission
+
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        form.reset()
+        setShowSuccessAlertCard(true) // Show the success alert card
+      } else {
+        throw new Error(result.error || "Failed to send message")
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred."
+      toast({
+        // Still use toast for errors
+        title: "Error",
+        description: `There was an error sending your message: ${errorMessage}`,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('/contact-texture.svg')] opacity-10"></div>
-      <div className="container mx-auto px-4 py-16 relative z-10">
-        <h1 className="text-5xl font-bold mb-12 text-ce\nter text-blue-800">Contact Us</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          <div className="bg-white p-8 rounded-lg shadow-lg animate-fade-in-left">
-            <h2 className="text-2xl font-semibold mb-6 text-blue-800">Get in Touch</h2>
-            <form className="space-y-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <Input id="name" type="text" placeholder="Your Name" required className="w-full" />
-              </div>
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                <Input id="email" type="email" placeholder="your@gmail.com" required className="w-full" />
-              </div>
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                <Textarea id="message" placeholder="Your message here..." required className="w-full" rows={4} />
-              </div>
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">Send Message</Button>
-            </form>
-          </div>
-          <div className="space-y-8 animate-fade-in-right">
-            <div>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-800">Contact Information</h2>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <Mail className="w-6 h-6 text-blue-600" />
-                  <span>info@saviour.org</span>
+    <section
+      id="contact"
+      className="py-16 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 relative"
+    >
+      <div className="container mx-auto px-4">
+        {showSuccessAlertCard && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20, transition: { duration: 0.3 } }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4" // Positioned at the top
+          >
+            <Alert
+              variant="default"
+              className="bg-green-100 dark:bg-green-800 border-green-500 dark:border-green-600 text-green-700 dark:text-green-200"
+            >
+              <CheckCircleIcon className="h-5 w-5 text-green-500 dark:text-green-400" />
+              <AlertTitle className="font-semibold">Message Sent!</AlertTitle>
+              <AlertDescription>Your message has been sent successfully. We'll get back to you soon.</AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-4xl mx-auto"
+        >
+          <Card className="overflow-hidden shadow-lg">
+            <CardHeader className="bg-primary text-primary-foreground p-6 md:p-10">
+              <CardTitle className="text-3xl md:text-4xl font-bold text-center">Get in Touch</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 md:p-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">Contact Information</h3>
+                  <div className="space-y-4">
+                    <motion.a
+                      href="mailto:vikrantkrd@gmail.com"
+                      className="flex items-center text-gray-600 dark:text-gray-300 hover:text-primary transition-colors duration-200"
+                      whileHover={{ x: 5 }}
+                    >
+                      <EnvelopeIcon className="h-5 w-5 mr-2" />
+                      vikrantkrd@gmail.com
+                    </motion.a>
+                    <motion.a
+                      href="tel:+918306721779"
+                      className="flex items-center text-gray-600 dark:text-gray-300 hover:text-primary transition-colors duration-200"
+                      whileHover={{ x: 5 }}
+                    >
+                      <PhoneIcon className="h-5 w-5 mr-2" />
+                      +91 8306721779
+                    </motion.a>
+                    <motion.p className="flex items-center text-gray-600 dark:text-gray-300" whileHover={{ x: 5 }}>
+                      <MapPinIcon className="h-5 w-5 mr-2" />
+                      IIITDM Jabalpur
+                    </motion.p>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <Phone className="w-6 h-6 text-blue-600" />
-                  <span>+91 8306721779</span>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <MapPin className="w-6 h-6 text-blue-600" />
-                  <span>IIITDM Jabalpur</span>
+                <div>
+                  <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-6">Send me a message</h3>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input placeholder="your.email@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Message</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Your message here..." rows={4} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" disabled={isLoading} className="w-full">
+                        {isLoading ? (
+                          <>
+                            <svg
+                              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            Sending...
+                          </>
+                        ) : (
+                          "Send Message"
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
                 </div>
               </div>
-            </div>
-            <div>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-800">Hours of Operation</h2>
-              <p>Monday - Friday: 9:00 AM - 5:00 PM</p>
-              <p>Saturday - Sunday: Closed</p>
-              <p className="mt-2 font-semibold">24/7 Emergency Hotline: +91 8306721779</p>
-            </div>
-            <div className="bg-blue-100 p-6 rounded-lg">
-              <h2 className="text-xl font-semibold mb-2 text-blue-800">Need Immediate Assistance?</h2>
-              <p className="mb-4">Our emergency response team is available 24/7 for urgent situations.</p>
-              <Button asChild className="bg-red-600 hover:bg-red-700 text-white">
-                <a href="tel:+918306721779">Call Emergency Hotline</a>
-              </Button>
-            </div>
-          </div>
-        </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
-    </div>
+    </section>
   )
 }
+
+export default ContactPage;
