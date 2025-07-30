@@ -3,6 +3,7 @@ import { Activity, AlertCircle, BarChart2, CloudSun, Database, Navigation, Newsp
 export const sidebarItems = [
   { name: 'Dashboard', icon: Activity, href: '/dashboard' },
   { name: 'Profile', icon: UserCircle, href: '/dashboard/profile' },
+  { name: 'SOS', icon: UserCircle, href: '/dashboard/sos' },
   { name: 'Alerts', icon: AlertCircle, href: '/dashboard/alerts' },
   { name: 'Navigation', icon: Navigation, href: '/dashboard/navigation' },
   { name: 'Resources', icon: Database, href: '/dashboard/resources' },

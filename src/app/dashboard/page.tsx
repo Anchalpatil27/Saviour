@@ -68,36 +68,19 @@ export default function Dashboard() {
 
   // Fetch weather using OpenWeatherMap API
   const fetchWeather = async (coords: { latitude: number; longitude: number }) => {
-    const apiKey = "process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY"
+    const apiKey = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY || ""
     try {
       const weatherResp = await axios.get(
         `https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&units=metric&appid=${apiKey}`
       )
       setWeather(weatherResp.data)
     } catch (err) {
+      console.error("Weather API error:", err)
       setWeather(null)
     }
   }
 
-  // Fetch location using browser Geolocation API
-  const fetchLocation = async () => {
-    return new Promise<{ latitude: number; longitude: number } | null>((resolve) => {
-      if (!navigator.geolocation) {
-        resolve(null)
-        return
-      }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          resolve({
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-          })
-        },
-        () => resolve(null),
-        { enableHighAccuracy: true }
-      )
-    })
-  }
+  // We don't need this separate function anymore as we're using direct geolocation in useEffect
 
   useEffect(() => {
     const loadData = async () => {
@@ -105,21 +88,39 @@ export default function Dashboard() {
       const user = auth.currentUser
       if (!user) return
 
-      const coords = await fetchLocation()
-      setLocation(coords)
-
-      if (coords) {
-        const weatherRef = doc(db, "weather", user.uid)
-        await setDoc(weatherRef, {
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          lastLocationUpdate: new Date(),
-        })
-        await fetchWeather(coords)
-      }
-
-      await fetchUserProfile(user.uid)
-      await fetchSosStats(user.uid)
+      // Run these operations in parallel
+      const userProfilePromise = fetchUserProfile(user.uid)
+      const sosStatsPromise = fetchSosStats(user.uid)
+      
+      // Start location fetch immediately
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const coords = {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          }
+          setLocation(coords)
+          
+          // Store location in background, don't wait for it
+          const weatherRef = doc(db, "weather", user.uid)
+          setDoc(weatherRef, {
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            lastLocationUpdate: new Date(),
+          }).catch(e => console.error("Error saving location:", e))
+          
+          // Fetch weather with the coordinates
+          fetchWeather(coords)
+        },
+        (err) => {
+          console.error("Geolocation error:", err)
+          setLocation(null)
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+      )
+      
+      // Wait for these to complete before removing loading state
+      await Promise.all([userProfilePromise, sosStatsPromise])
       setLoading(false)
     }
     loadData()

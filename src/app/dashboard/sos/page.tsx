@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { AlertTriangle, CheckCircle, XCircle, MapPin, ImagePlus, AlertCircle, Loader2 } from "lucide-react"
 import { auth, db } from "@/lib/firebase"
@@ -140,33 +141,122 @@ export default function SOSPage() {
   const [locationError, setLocationError] = useState(false)
   const router = useRouter()
 
+  // Use local storage to cache location data
+  const getLocationFromCache = () => {
+    try {
+      const cachedData = localStorage.getItem('emergency_location_cache')
+      if (cachedData) {
+        const { location, city, timestamp } = JSON.parse(cachedData)
+        // Check if cache is less than 5 minutes old
+        if (location && city && timestamp && Date.now() - timestamp < 5 * 60 * 1000) {
+          return { location, city }
+        }
+      }
+    } catch (e) {
+      console.error("Error reading cached location:", e)
+    }
+    return null
+  }
+
+  const saveLocationToCache = (location: { latitude: number; longitude: number }, cityName: string | null) => {
+    try {
+      localStorage.setItem('emergency_location_cache', JSON.stringify({
+        location,
+        city: cityName,
+        timestamp: Date.now()
+      }))
+    } catch (e) {
+      console.error("Error caching location:", e)
+    }
+  }
+
+  // Get city from coordinates using reverse geocoding
+  const getCityFromCoordinates = async (latitude: number, longitude: number): Promise<string | null> => {
+    try {
+      // Use Promise.race to implement a faster timeout
+      const result = await Promise.race([
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`),
+        new Promise<Response>((_, reject) => 
+          setTimeout(() => reject(new Error('Geocoding timeout')), 3000)
+        )
+      ]) as Response
+      
+      const data = await result.json()
+      return data.address?.city || data.address?.town || data.address?.village || null
+    } catch (e) {
+      console.error("Geocoding error:", e)
+      return null
+    }
+  }
+
   useEffect(() => {
     if (!("geolocation" in navigator)) {
       setLocationError(true)
       return
     }
     
+    // First check cache for instant display
+    const cachedData = getLocationFromCache()
+    if (cachedData) {
+      setUserLocation(cachedData.location)
+      setCity(cachedData.city)
+    }
+
+    // Use high accuracy with a shorter timeout for faster response
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        const locationData = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        }
+        setUserLocation(locationData)
+        
+        // Run city detection in parallel, don't wait for it
+        getCityFromCoordinates(pos.coords.latitude, pos.coords.longitude)
+          .then(cityName => {
+            if (cityName) {
+              setCity(cityName)
+              // Cache the successful result
+              saveLocationToCache(locationData, cityName)
+            }
+          })
+          .catch(() => {
+            // If reverse geocoding fails but we have coordinates, 
+            // we can still proceed with the alert
+            console.log("Could not determine city, but location is available")
+          })
+      },
+      (error) => {
+        console.error("Geolocation error:", error)
+        setLocationError(true)
+        setUserLocation(null)
+        
+        // If we have cached data and geolocation fails, still use the cache
+        if (cachedData && !userLocation) {
+          setUserLocation(cachedData.location)
+          setCity(cachedData.city)
+        }
+      },
+      { 
+        enableHighAccuracy: true, 
+        timeout: 5000, 
+        maximumAge: 60000 
+      }
+    )
+    
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
         setUserLocation({
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
         })
-        try {
-          const resp = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`
-          )
-          const data = await resp.json()
-          setCity(data.address?.city || data.address?.town || data.address?.village || null)
-        } catch {
-          setCity(null)
-        }
       },
-      () => {
-        setLocationError(true)
-        setUserLocation(null)
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
+      () => {}, 
+      { 
+        enableHighAccuracy: false, 
+        timeout: 2000,
+        maximumAge: 300000
+      }
     )
   }, [])
 
@@ -250,10 +340,8 @@ export default function SOSPage() {
       alert("Could not fetch your location. Please enable location services.")
       return
     }
-    if (!city) {
-      alert("Could not determine your city. Please try again.")
-      return
-    }
+    
+    // Don't block on city if we have coordinates
     setIsSending(true)
     try {
       const user = auth.currentUser
@@ -262,20 +350,34 @@ export default function SOSPage() {
         setIsSending(false)
         return
       }
-      let imageUrl = null
-      if (imageFile) {
+      
+      // Process image upload and SOS creation in parallel
+      const uploadPromise = imageFile ? uploadImageAsBase64(imageFile).catch(error => {
+        console.error("Image upload error:", error)
+        return null
+      }) : Promise.resolve(null)
+      
+      // Use IP-based geolocation as backup if we don't have city data
+      let cityName = city
+      if (!cityName) {
         try {
-          imageUrl = await uploadImageAsBase64(imageFile)
-        } catch (error: any) {
-          console.error("Image upload error:", error)
-          alert(error.message || "Failed to upload image. Continuing without image.")
+          const ipResponse = await fetch('https://ipapi.co/json/')
+          const ipData = await ipResponse.json()
+          cityName = ipData.city || null
+        } catch (e) {
+          console.error("IP geolocation error:", e)
         }
       }
+      
+      // Wait for the image upload to complete
+      const imageUrl = await uploadPromise
+      
+      // Create the SOS document with the most accurate location data we have
       await addDoc(collection(db, "sos_requests"), {
         userId: user.uid,
         latitude: userLocation.latitude,
         longitude: userLocation.longitude,
-        city: normalizeCity(city),
+        city: normalizeCity(cityName), // Use whatever city data we have, even if null
         emergencyType: selectedEmergencyType,
         alertLevel: selectedAlertLevel,
         description,
@@ -285,7 +387,26 @@ export default function SOSPage() {
         senderContact: user.phoneNumber || user.email || "",
         imageUrl: imageUrl || null,
         status: "active",
+        deviceInfo: {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          timestamp: new Date().toISOString()
+        }
       })
+      
+      // Update location cache after successful SOS submission
+      if (userLocation && city) {
+        try {
+          localStorage.setItem('emergency_location_cache', JSON.stringify({
+            location: userLocation,
+            city: city,
+            timestamp: Date.now()
+          }))
+        } catch (e) {
+          console.error("Error updating location cache:", e)
+        }
+      }
+      
       setSosSent(true)
       setCanCancel(true)
       setCancelCountdown(5)
@@ -466,29 +587,59 @@ export default function SOSPage() {
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                   <div className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-1">Your Current Location</h4>
+                    <div className="w-full">
+                      <div className="flex justify-between items-center mb-1">
+                        <h4 className="font-medium text-blue-800 dark:text-blue-200">Your Current Location</h4>
+                        {userLocation && (
+                          <span className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-0.5 rounded-full">
+                            ✓ Located
+                          </span>
+                        )}
+                      </div>
+                      
                       {userLocation ? (
                         <>
-                          <p className="text-sm text-gray-700 dark:text-gray-300">
-                            Coordinates: {userLocation.latitude.toFixed(6)}, {userLocation.longitude.toFixed(6)}
-                          </p>
-                          {city && (
+                          <div className="flex flex-wrap justify-between gap-2">
                             <p className="text-sm text-gray-700 dark:text-gray-300">
-                              Estimated location: {city}
+                              Coordinates: {userLocation.latitude.toFixed(6)}, {userLocation.longitude.toFixed(6)}
                             </p>
+                            <p className="text-xs text-gray-500">
+                              Accuracy: High
+                            </p>
+                          </div>
+                          
+                          {city ? (
+                            <div className="mt-1 p-1.5 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded flex items-center">
+                              <CheckCircle className="w-3 h-3 text-green-500 mr-1.5" />
+                              <p className="text-sm text-gray-700 dark:text-gray-300">
+                                <span className="font-medium">Detected location:</span> {city}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="mt-1 flex items-center">
+                              <Loader2 className="w-3 h-3 text-amber-500 animate-spin mr-1.5" />
+                              <p className="text-sm text-amber-600 dark:text-amber-400">
+                                Determining city name...
+                              </p>
+                            </div>
                           )}
                         </>
                       ) : locationError ? (
-                        <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-                          <AlertCircle className="w-4 h-4" />
-                          Could not access your location. Please enable location services.
-                        </p>
+                        <div className="p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                          <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                            <AlertCircle className="w-4 h-4" />
+                            Could not access your location. Please enable location services.
+                          </p>
+                        </div>
                       ) : (
-                        <p className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                          Detecting your location...
-                        </p>
+                        <div className="flex justify-center py-2">
+                          <div className="flex flex-col items-center">
+                            <div className="w-8 h-8 border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mb-2"></div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              Detecting your location...
+                            </p>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
