@@ -1,71 +1,170 @@
-# SAVIOUR - Disaster Management Platform
+# 🌟 [![Next.js](https://img.shields.io/badge/Next.js-15.1.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4.1-06B6D4?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.4.2-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![iOS](https://img.shields.io/badge/iOS_App-Available-black?style=for-the-badge&logo=apple)](https://github.com/vikrantwiz02/Saviour)
+[![Android](https://img.shields.io/badge/Android_App-Available-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/vikrantwiz02/Saviour)OUR - Disaster Management Platform
 
-![Saviour Logo](/public/Saviour.png)
+<div align="center">
+  <img src="/public/Saviour.png" alt="Saviour Logo" width="300px">
+  
+  [![Next.js](https://img.shields.io/badge/Next.js-15.1.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+  [![Firebase](https://img.shields.io/badge/Firebase-12.0.0-orange?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
+  [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4.1-blue?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+  [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+  
+  <h3>Empowering communities to prepare, respond, and recover from disasters</h3>
+</div>
 
-## Overview
+## 🚀 Overview
 
-SAVIOUR is a comprehensive disaster management platform designed to empower communities and save lives during emergencies. Built with Next.js and Firebase, this application provides real-time alerts, emergency coordination, resource management, and safety information to help users prepare for, respond to, and recover from natural disasters and other emergency situations.
+**SAVIOUR** is a cutting-edge disaster management platform built to save lives and strengthen community resilience during emergencies. Leveraging modern web technologies, our application delivers:
 
-## Key Features
+- ⚡ **Real-time emergency coordination**
+- 🔔 **Instant alerts and notifications**
+- 📍 **Location-based resource tracking**
+- 👥 **Community support networks**
+- 📊 **Resource management tools**
+- 🛡️ **Comprehensive safety information**
+- 📱 **Available on Web, iOS, and Android platforms**
+
+<div align="center">
+  <img src="https://i.imgur.com/placeholder-screenshot.png" alt="Saviour Platform Screenshot" width="80%">
+</div>
+
+## 📱 Mobile Apps
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="https://img.shields.io/badge/iOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="iOS">
+      </td>
+      <td align="center">
+        <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android">
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" align="center">
+        <a href="https://github.com/vikrantwiz02/Saviour" target="_blank">
+          <img src="https://img.shields.io/badge/View Mobile Repository-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Repository">
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2">
+        <p align="center">The mobile versions of SAVIOUR are available for both iOS and Android platforms, providing on-the-go access to critical emergency features and disaster management tools. The mobile app codebase is maintained in a separate repository.</p>
+      </td>
+    </tr>
+  </table>
+</div>
+
+## ✨ Key Features
 
 ### 🚨 Emergency Alert System
+<details>
+<summary><b>Expand for details</b></summary>
+
 - Real-time SOS alerts with location tracking
 - Multi-level emergency categorization (High/Medium/Low priority)
 - Support for various emergency types (Medical, Fire, Natural Disasters, etc.)
 - Image upload capability for emergency documentation
 - 5-second cancellation window for accidental alerts
+</details>
 
 ### 🗺️ Navigation & Location Services
+<details>
+<summary><b>Expand for details</b></summary>
+
 - Fast location detection with caching for immediate response
 - Fallback mechanisms for geolocation services
 - Integration with OpenWeatherMap for local weather alerts
 - Map visualization of nearby emergencies and resources
+</details>
 
 ### 📊 Resource Management
+<details>
+<summary><b>Expand for details</b></summary>
+
 - Track essential supplies in your area
 - Request and offer resources during emergencies
 - Inventory management for disaster response teams
 - Base64 storage for images and documents
+</details>
 
 ### 👥 Community Support
+<details>
+<summary><b>Expand for details</b></summary>
+
 - User-to-user assistance network
 - Community chat for local coordination
 - Help tracking for emergency responders
 - SOS response coordination
+</details>
 
 ### 📱 User & Admin Dashboards
+<details>
+<summary><b>Expand for details</b></summary>
+
 - User-friendly dashboards with real-time updates
 - Admin controls for resource allocation and emergency management
 - Safety statistics and activity tracking
 - Quick action buttons for common emergency tasks
+</details>
 
 ### 🛡️ Safety Information
+<details>
+<summary><b>Expand for details</b></summary>
+
 - Comprehensive safety guidelines for different emergencies
 - Video tutorials for first aid and safety procedures
 - Interactive safety guide for various disaster scenarios
 - Educational resources on disaster preparedness
+</details>
 
-## Technical Stack
+## 💻 Technical Stack
 
-### Frontend
-- **Framework**: Next.js 15.1.0
-- **UI Libraries**: TailwindCSS, shadcn/ui components
-- **State Management**: React Hooks, Zustand
-- **Maps & Visualization**: Leaflet, React-Leaflet, React-Globe.gl
-- **Animation**: Framer Motion
+<div align="center">
+  <table>
+    <tr>
+      <th>Frontend</th>
+      <th>Backend</th>
+      <th>Communication</th>
+    </tr>
+    <tr>
+      <td>
+        <ul>
+          <li>Next.js 15.1.0</li>
+          <li>TailwindCSS</li>
+          <li>shadcn/ui components</li>
+          <li>React Hooks, Zustand</li>
+          <li>Leaflet, React-Globe.gl</li>
+          <li>Framer Motion</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>Firebase Firestore</li>
+          <li>Firebase Auth</li>
+          <li>Base64 encoding</li>
+          <li>OpenWeatherMap API</li>
+          <li>Nominatim Geocoding</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>Socket.io</li>
+          <li>In-app notifications</li>
+          <li>Nodemailer</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</div>
 
-### Backend
-- **Database**: Firebase Firestore
-- **Authentication**: Firebase Auth
-- **Storage**: Base64 encoding in Firestore
-- **APIs**: OpenWeatherMap, Nominatim Geocoding
-
-### Communication
-- **Real-time**: Socket.io
-- **Notifications**: In-app notifications
-- **Email**: Nodemailer
-
-## Project Structure
+## 📂 Project Structure
 
 ```
 saviour-project/
@@ -90,31 +189,48 @@ saviour-project/
 └── ...                 # Configuration files
 ```
 
-## Getting Started
+## 🚀 Getting Started
 
-### Prerequisites
+<details>
+<summary><b>Prerequisites</b></summary>
+
 - Node.js (v18 or higher)
 - npm or yarn
 - Firebase account
+</details>
 
-### Installation
+### 📱 Mobile App Installation
 
-1. Clone the repository:
+For installing the mobile version:
+
+1. **Visit the mobile repository:**
+   [https://github.com/vikrantwiz02/Saviour](https://github.com/vikrantwiz02/Saviour)
+
+2. **Follow the installation instructions** in the mobile app repository README.
+
+### ⚙️ Web App Installation
+
+1. **Clone the repository:**
 ```bash
-github.com/vikrantwiz02/Saviour2.O
+git clone github.com/vikrantwiz02/Saviour2.O
 cd Saviour2.O
 ```
 
-2. Install dependencies:
+2. **Install dependencies:**
 ```bash
 npm install
 # or
 yarn install
 ```
 
-3. Set up environment variables:
-Create a `.env.local` file in the root directory with the following variables:
-```
+3. **Set up environment variables:**
+
+Create a `.env.local` file in the root directory:
+
+<details>
+<summary>View required environment variables</summary>
+
+```env
 NEXT_PUBLIC_GEMINI_API_KEY=
 JWT_SECRET=
 NEXTAUTH_URL=
@@ -138,52 +254,132 @@ SMTP_FROM_EMAIL=
 SMTP_FROM_NAME=Saviour_Team
 CONTACT_RECIPIENT_EMAIL=
 ```
+</details>
 
-4. Run the development server:
+4. **Start the development server:**
 ```bash
 npm run dev
 # or
 yarn dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. **Open [http://localhost:3000](http://localhost:3000) in your browser**
 
-## Deployment
+## 🚢 Deployment
 
-The easiest way to deploy the application is to use Vercel:
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyourusername%2Fsaviour-project)
+<div align="center">
+  
+  [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvikrantwiz02%2FSaviour2.O)
+  
+</div>
 
 For other deployment options, follow the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying).
 
-## Performance Optimizations
+## ⚡ Performance Optimizations
 
-The application includes several performance optimizations:
-- Location caching to speed up emergency responses
-- Parallel data fetching for faster dashboard loading
-- Optimized geolocation with fallback mechanisms
-- Efficient handling of image uploads with size restrictions
-- Progressive loading of UI components
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><h3>🚀</h3> Location caching</td>
+      <td align="center"><h3>⚡</h3> Parallel data fetching</td>
+      <td align="center"><h3>📱</h3> Progressive loading</td>
+    </tr>
+    <tr>
+      <td>Speeds up emergency responses</td>
+      <td>Faster dashboard loading</td>
+      <td>Optimized UI components</td>
+    </tr>
+    <tr>
+      <td align="center"><h3>📍</h3> Geolocation fallbacks</td>
+      <td align="center"><h3>🖼️</h3> Optimized images</td>
+      <td align="center"><h3>🌐</h3> API optimizations</td>
+    </tr>
+    <tr>
+      <td>Multiple location sources</td>
+      <td>Size restrictions & efficient handling</td>
+      <td>Rate limiting & caching</td>
+    </tr>
+  </table>
+</div>
 
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+<ol>
+  <li>Fork the repository</li>
+  <li>Create your feature branch (<code>git checkout -b feature/amazing-feature</code>)</li>
+  <li>Commit your changes (<code>git commit -m 'Add some amazing feature'</code>)</li>
+  <li>Push to the branch (<code>git push origin feature/amazing-feature</code>)</li>
+  <li>Open a Pull Request</li>
+</ol>
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgements
+## 🙏 Acknowledgements
 
-- [Next.js](https://nextjs.org/)
-- [Firebase](https://firebase.google.com/)
-- [TailwindCSS](https://tailwindcss.com/)
-- [OpenWeatherMap API](https://openweathermap.org/api)
-- [Nominatim](https://nominatim.org/) for geocoding services
-- All the contributors who have helped shape SAVIOUR
+<div align="center">
+  <a href="https://nextjs.org/" target="_blank"><img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js"></a>
+  <a href="https://firebase.google.com/" target="_blank"><img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase"></a>
+  <a href="https://tailwindcss.com/" target="_blank"><img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="TailwindCSS"></a>
+  <a href="https://openweathermap.org/api" target="_blank"><img src="https://img.shields.io/badge/OpenWeatherMap-EB6E4B?style=for-the-badge&logo=openweathermap&logoColor=white" alt="OpenWeatherMap API"></a>
+  <a href="https://nominatim.org/" target="_blank"><img src="https://img.shields.io/badge/Nominatim-4A89DC?style=for-the-badge&logo=openstreetmap&logoColor=white" alt="Nominatim"></a>
+</div>
+
+## ✨ Team & Contributors
+
+<div align="center">
+
+### Project Leads
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/vikrantwiz02">
+        <img src="https://github.com/vikrantwiz02.png" width="100px;" alt="Vikrant Kumar Verma"/>
+        <br />
+        <sub><b>Vikrant Kumar Verma</b></sub>
+      </a>
+      <br />
+      <small>Project Lead</small>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Ravikumar-2016">
+        <img src="https://github.com/Ravikumar-2016.png" width="100px;" alt="Gunti Ravi Kumar"/>
+        <br />
+        <sub><b>Gunti Ravi Kumar</b></sub>
+      </a>
+      <br />
+      <a href="https://www.linkedin.com/in/ravikumar-gunti-8b360a2a8">LinkedIn</a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/harshpalas">
+        <img src="https://github.com/harshpalas.png" width="100px;" alt="Harsh Kumar Palas"/>
+        <br />
+        <sub><b>Harsh Kumar Palas</b></sub>
+      </a>
+      <br />
+      <a href="https://www.linkedin.com/in/harsh-kumar-palas-652831249/">LinkedIn</a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/">
+        <img src="https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png" width="100px;" alt="Anchal Siddharth Patil"/>
+        <br />
+        <sub><b>Anchal Siddharth Patil</b></sub>
+      </a>
+      <br />
+      <a href="https://www.linkedin.com/in/anchal-patil-67b18a299/">LinkedIn</a>
+    </td>
+  </tr>
+</table>
+
+</div>
+
+<div align="center">
+  <br>
+  <p>
+    <sub>Built with ❤️ by the SAVIOUR team</sub>
+  </p>
+</div>
