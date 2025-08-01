@@ -121,14 +121,20 @@
 ## 💻 Technical Stack
 
 <div align="center">
-  [![Next.js](https://img.shields.io/badge/Next.js-15.1.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-  [![React](https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
-  [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4.1-06B6D4?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-  [![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
-  [![TypeScript](https://img.shields.io/badge/TypeScript-5.4.2-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-  [![iOS](https://img.shields.io/badge/iOS_App-Available-black?style=for-the-badge&logo=apple)](https://github.com/vikrantwiz02/Saviour)
-  [![Android](https://img.shields.io/badge/Android_App-Available-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/vikrantwiz02/Saviour)
-  [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+  <p>
+    <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-15.1.0-black?style=for-the-badge&logo=next.js" alt="Next.js"></a>
+    <a href="https://reactjs.org/"><img src="https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react" alt="React"></a>
+    <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/TailwindCSS-3.4.1-06B6D4?style=for-the-badge&logo=tailwind-css" alt="TailwindCSS"></a>
+  </p>
+  <p>
+    <a href="https://firebase.google.com/"><img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase"></a>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.4.2-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript"></a>
+    <a href="https://github.com/vikrantwiz02/Saviour"><img src="https://img.shields.io/badge/iOS_App-Available-black?style=for-the-badge&logo=apple" alt="iOS"></a>
+  </p>
+  <p>
+    <a href="https://github.com/vikrantwiz02/Saviour"><img src="https://img.shields.io/badge/Android_App-Available-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License"></a>
+  </p>
   
   <table>
     <tr>
