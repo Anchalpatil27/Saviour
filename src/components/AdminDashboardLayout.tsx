@@ -17,8 +17,7 @@ export default function AdminDashboardLayout({ children }: AdminDashboardLayoutP
       {!isMobile && <AdminSidebar />}
       <div className="flex-1 flex flex-col overflow-hidden">
         {isMobile && (
-          <div className="bg-white border-b p-3 flex justify-between items-center">
-            <h2 className="font-bold text-lg text-indigo-700">Admin Panel</h2>
+          <div className="bg-white border-b p-3 flex justify-between itemsß-center">
             <DynamicMobileHeader />
           </div>
         )}
