@@ -1,21 +1,11 @@
-# 🌟 [![Next.js](https://img.shields.io/badge/Next.js-15.1.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4.1-06B6D4?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.4.2-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![iOS](https://img.shields.io/badge/iOS_App-Available-black?style=for-the-badge&logo=apple)](https://github.com/vikrantwiz02/Saviour)
-[![Android](https://img.shields.io/badge/Android_App-Available-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/vikrantwiz02/Saviour)
-
-# SAVIOUR - Disaster Management Platform
+# 🌟 SAVIOUR - Disaster Management Platform
 
 <div align="center">
-  <img src="/public/Saviour.png" alt="Saviour Logo" width="300px">
-  
-  [![Next.js](https://img.shields.io/badge/Next.js-15.1.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-  [![Firebase](https://img.shields.io/badge/Firebase-12.0.0-orange?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
-  [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4.1-blue?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
-  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-  [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+  <picture>
+    <source srcset="/public/Saviour2.png" media="(prefers-color-scheme: dark)" />
+    <source srcset="/public/Saviour.png" media="(prefers-color-scheme: light)" />
+    <img src="/public/Saviour.png" alt="Saviour Logo" width="300px" />
+  </picture>
   
   <h3>Empowering communities to prepare, respond, and recover from disasters</h3>
 </div>
@@ -131,6 +121,15 @@
 ## 💻 Technical Stack
 
 <div align="center">
+  [![Next.js](https://img.shields.io/badge/Next.js-15.1.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+  [![React](https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
+  [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4.1-06B6D4?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+  [![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.4.2-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+  [![iOS](https://img.shields.io/badge/iOS_App-Available-black?style=for-the-badge&logo=apple)](https://github.com/vikrantwiz02/Saviour)
+  [![Android](https://img.shields.io/badge/Android_App-Available-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/vikrantwiz02/Saviour)
+  [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+  
   <table>
     <tr>
       <th>Frontend</th>
