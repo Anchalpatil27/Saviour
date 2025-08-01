@@ -349,6 +349,7 @@ This project is licensed under the Apache License 2.0 - see the LICENSE file for
       <a href="https://github.com/vikrantwiz02">
         <img src="https://github.com/vikrantwiz02.png" width="100px;" alt="Vikrant Kumar"/>
         <br />
+        <sub><b>Vikrant Kumar</b></sub>
       </a>
       <br />
       <small>Project Lead</small>
