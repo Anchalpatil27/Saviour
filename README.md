@@ -4,7 +4,9 @@
 [![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4.2-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS_App-Available-black?style=for-the-badge&logo=apple)](https://github.com/vikrantwiz02/Saviour)
-[![Android](https://img.shields.io/badge/Android_App-Available-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/vikrantwiz02/Saviour)OUR - Disaster Management Platform
+[![Android](https://img.shields.io/badge/Android_App-Available-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/vikrantwiz02/Saviour)
+
+# SAVIOUR - Disaster Management Platform
 
 <div align="center">
   <img src="/public/Saviour.png" alt="Saviour Logo" width="300px">
@@ -31,7 +33,9 @@
 - 📱 **Available on Web, iOS, and Android platforms**
 
 <div align="center">
-  <img src="https://i.imgur.com/placeholder-screenshot.png" alt="Saviour Platform Screenshot" width="80%">
+  <a href="https://saviour-ten.vercel.app/" target="_blank">
+    <img src="https://img.shields.io/badge/🌐_Live_Demo-Visit_Saviour_Platform-4285F4?style=for-the-badge&logo=vercel" alt="Live Demo">
+  </a>
 </div>
 
 ## 📱 Mobile Apps
