@@ -373,8 +373,8 @@ This project is licensed under the Apache License 2.0 - see the LICENSE file for
       <a href="https://www.linkedin.com/in/harsh-kumar-palas-652831249/">LinkedIn</a>
     </td>
     <td align="center">
-      <a href="https://github.com/">
-        <img src="https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png" width="100px;" alt="Anchal Siddharth Patil"/>
+      <a href="https://github.com/Anchalpatil27">
+        <img src="https://github.com/Anchalpatil27.png" width="100px;" alt="Anchal Siddharth Patil"/>
         <br />
         <sub><b>Anchal Siddharth Patil</b></sub>
       </a>
