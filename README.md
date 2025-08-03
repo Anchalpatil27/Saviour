@@ -6,7 +6,6 @@
     <source srcset="/public/Saviour.png" media="(prefers-color-scheme: light)" />
     <img src="/public/Saviour.png" alt="Saviour Logo" width="300px" />
   </picture>
-  
   <h3>Empowering communities to prepare, respond, and recover from disasters</h3>
 </div>
 
