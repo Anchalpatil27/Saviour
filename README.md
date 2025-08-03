@@ -27,7 +27,7 @@
   </a>
 </div>
 
-## 📱 Mobile Apps
+## 📱 Mobile App
 
 <div align="center">
   <table>
